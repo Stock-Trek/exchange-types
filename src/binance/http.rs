@@ -1,19 +1,19 @@
 use crate::binance::{
     error::BinanceError,
     exchange_info::BinanceExchangeInfoResult,
-    signed::{BinanceSignedParams, BinanceUnsignedParams},
+    signed::{BinanceParams, BinanceUnsignedParams},
     spot::BinanceSpotOrderResult,
 };
 use serde::Deserialize;
 
 pub type BinanceHttpUnsignedMessage = BinanceUnsignedParams;
-pub type BinanceHttpSignedMessage = BinanceSignedParams;
+pub type BinanceHttpSignedMessage = BinanceParams;
 
 #[derive(Debug, Deserialize)]
 pub struct BinanceHttpResponse {
-    pub error: Option<BinanceError>,
     #[serde(flatten)]
     pub result: BinanceHttpResponseResult,
+    pub error: Option<BinanceError>,
 }
 
 #[derive(Debug, Deserialize)]

@@ -4,11 +4,11 @@ use serde_with::skip_serializing_none;
 
 #[derive(Debug, Serialize)]
 #[skip_serializing_none]
-pub struct BinanceSignedParams {
-    #[serde(flatten)]
-    pub signature: Option<BinanceSignature>,
+pub struct BinanceParams {
     #[serde(flatten)]
     pub params: BinanceUnsignedParams,
+    #[serde(flatten)]
+    pub signature: Option<BinanceSignature>,
 }
 
 #[allow(non_snake_case)]

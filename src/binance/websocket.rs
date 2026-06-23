@@ -3,7 +3,7 @@ use crate::binance::{
     exchange_info::BinanceExchangeInfoResult,
     logon::BinanceSessionAuthenticationResult,
     rate_limits::BinanceRateLimit,
-    signed::{BinanceSignedParams, BinanceUnsignedParams},
+    signed::{BinanceParams, BinanceUnsignedParams},
     spot::BinanceSpotOrderResult,
 };
 use serde::{Deserialize, Serialize};
@@ -29,18 +29,18 @@ pub enum BinanceWebsocketMethodName {
 
 #[derive(Debug, Serialize)]
 #[skip_serializing_none]
-pub struct BinanceWebsocketUnsignedMessage {
+pub struct BinanceWebsocketRequest {
     #[serde(flatten)]
     pub metadata: BinanceWebsocketMetadata,
-    pub params: BinanceUnsignedParams,
+    pub params: BinanceParams,
 }
 
 #[derive(Debug, Serialize)]
 #[skip_serializing_none]
-pub struct BinanceWebsocketSignedMessage {
+pub struct BinanceWebsocketUnsignedRequest {
     #[serde(flatten)]
     pub metadata: BinanceWebsocketMetadata,
-    pub params: BinanceSignedParams,
+    pub params: BinanceUnsignedParams,
 }
 
 #[allow(non_snake_case)]
