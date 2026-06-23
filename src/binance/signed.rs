@@ -1,4 +1,7 @@
-use crate::binance::{logon::BinanceLogonParams, spot::BinanceSpotOrderParams};
+use crate::binance::{
+    exchange_info::BinanceExchangeInfoParams, logon::BinanceLogonParams,
+    spot::BinanceSpotOrderParams,
+};
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 
@@ -21,6 +24,7 @@ pub struct BinanceSignature {
 #[derive(Debug, Hash, Serialize)]
 #[serde(untagged)]
 pub enum BinanceUnsignedParams {
-    LogonParams(BinanceLogonParams),
+    ExchangeInfo(BinanceExchangeInfoParams),
+    Logon(BinanceLogonParams),
     SpotOrderRequest(Box<BinanceSpotOrderParams>),
 }
