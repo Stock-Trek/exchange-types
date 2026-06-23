@@ -6,8 +6,8 @@ use crate::binance::{
 };
 use serde::Deserialize;
 
-pub type BinanceHttpUnsignedMessage = BinanceUnsignedParams;
-pub type BinanceHttpSignedMessage = BinanceParams;
+pub type BinanceHttpUnsignedRequest = BinanceUnsignedParams;
+pub type BinanceHttpRequest = BinanceParams;
 
 #[derive(Debug, Deserialize)]
 pub struct BinanceHttpResponse {
