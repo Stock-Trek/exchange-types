@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct BinanceError {
     pub code: String,
     pub msg: String,

@@ -5,7 +5,7 @@ use serde_with::skip_serializing_none;
 use strum::Display;
 
 #[allow(non_snake_case)]
-#[derive(Debug, Hash, Serialize)]
+#[derive(Debug, Clone, Hash, Serialize)]
 #[skip_serializing_none]
 pub struct BinanceSpotOrderParams {
     pub icebergQty: Option<Decimal>,
@@ -77,7 +77,7 @@ pub enum BinanceTimeInForce {
 }
 
 #[allow(non_snake_case, unused)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct BinanceSpotOrderResult {
     pub clientOrderId: String,
     pub cummulativeQuoteQty: Decimal,

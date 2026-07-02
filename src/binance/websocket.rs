@@ -9,7 +9,7 @@ use crate::binance::{
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BinanceWebsocketMetadata {
     pub id: String,
     pub method: BinanceWebsocketMethodName,
@@ -27,7 +27,7 @@ pub enum BinanceWebsocketMethodName {
     PlaceOrder,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[skip_serializing_none]
 pub struct BinanceWebsocketRequest {
     #[serde(flatten)]
@@ -35,7 +35,7 @@ pub struct BinanceWebsocketRequest {
     pub params: BinanceParams,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[skip_serializing_none]
 pub struct BinanceWebsocketUnsignedRequest {
     #[serde(flatten)]
@@ -44,7 +44,7 @@ pub struct BinanceWebsocketUnsignedRequest {
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct BinanceWebsocketResponse {
     pub error: Option<BinanceError>,
     pub id: String,
@@ -53,7 +53,7 @@ pub struct BinanceWebsocketResponse {
     pub status: i32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
 pub enum BinanceWebsocketResponseResult {
     ExchangeInfo(BinanceExchangeInfoResult),

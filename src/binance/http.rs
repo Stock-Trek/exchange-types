@@ -9,14 +9,14 @@ use serde::Deserialize;
 pub type BinanceHttpUnsignedRequest = BinanceUnsignedParams;
 pub type BinanceHttpRequest = BinanceParams;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct BinanceHttpResponse {
     #[serde(flatten)]
     pub result: BinanceHttpResponseResult,
     pub error: Option<BinanceError>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
 pub enum BinanceHttpResponseResult {
     ExchangeInfo(BinanceExchangeInfoResult),

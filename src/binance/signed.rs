@@ -5,7 +5,7 @@ use crate::binance::{
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[skip_serializing_none]
 pub struct BinanceParams {
     #[serde(flatten)]
@@ -15,13 +15,13 @@ pub struct BinanceParams {
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BinanceSignature {
     pub apiKey: String,
     pub signature: String,
 }
 
-#[derive(Debug, Hash, Serialize)]
+#[derive(Debug, Clone, Hash, Serialize)]
 #[serde(untagged)]
 pub enum BinanceUnsignedParams {
     ExchangeInfo(BinanceExchangeInfoParams),

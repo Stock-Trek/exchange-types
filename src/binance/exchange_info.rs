@@ -3,14 +3,14 @@ use serde::{Deserialize, Serialize};
 use strum::Display;
 
 #[allow(non_snake_case)]
-#[derive(Debug, Hash, Serialize)]
+#[derive(Debug, Clone, Hash, Serialize)]
 pub struct BinanceExchangeInfoParams {
     pub permissions: Vec<String>,
     pub symbolStatus: String,
 }
 
 #[allow(non_snake_case, unused)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct BinanceExchangeInfoResult {
     pub timezone: String,
     pub serverTime: i64,
@@ -19,7 +19,7 @@ pub struct BinanceExchangeInfoResult {
 }
 
 #[allow(non_snake_case, unused)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct BinanceExchangeInfoSymbol {
     pub baseAsset: Ticker,
     pub baseAssetPrecision: u8,
