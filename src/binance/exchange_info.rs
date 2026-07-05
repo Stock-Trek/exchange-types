@@ -5,8 +5,18 @@ use strum::Display;
 #[allow(non_snake_case)]
 #[derive(Debug, Clone, Hash, Serialize)]
 pub struct BinanceExchangeInfoParams {
-    pub permissions: Vec<String>,
-    pub symbolStatus: String,
+    pub permissions: Vec<BinanceExchangeInfoPermission>,
+    pub symbolStatus: BinanceExchangeInfoSymbolStatus,
+}
+
+#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+pub enum BinanceExchangeInfoPermission {
+    SPOT,
+}
+
+#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+pub enum BinanceExchangeInfoSymbolStatus {
+    TRADING,
 }
 
 #[allow(non_snake_case, unused)]
