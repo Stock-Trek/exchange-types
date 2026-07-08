@@ -20,5 +20,5 @@ pub struct BinanceHttpResponse {
 #[serde(untagged)]
 pub enum BinanceHttpResponseResult {
     ExchangeInfo(BinanceExchangeInfoResult),
-    SpotOrderResponse(BinanceSpotOrderResult),
+    SpotOrder(BinanceSpotOrderResult),
 }
