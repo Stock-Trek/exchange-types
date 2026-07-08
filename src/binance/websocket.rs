@@ -49,7 +49,8 @@ pub struct BinanceWebsocketResponse {
     pub error: Option<BinanceError>,
     pub id: String,
     pub rateLimits: Vec<BinanceRateLimit>,
-    pub result: BinanceWebsocketResponseResult,
+    #[serde(flatten)]
+    pub result: Option<BinanceWebsocketResponseResult>,
     pub status: i32,
 }
 

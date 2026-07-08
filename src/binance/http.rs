@@ -12,7 +12,7 @@ pub type BinanceHttpRequest = BinanceParams;
 #[derive(Debug, Clone, Deserialize)]
 pub struct BinanceHttpResponse {
     #[serde(flatten)]
-    pub result: BinanceHttpResponseResult,
+    pub result: Option<BinanceHttpResponseResult>,
     pub error: Option<BinanceError>,
 }
 
