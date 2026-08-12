@@ -26,7 +26,7 @@ pub struct BinanceSpotOrderParams {
     pub symbol: String,
     pub timeInForce: Option<BinanceTimeInForce>,
     pub timestamp: i64,
-    pub trailingDelta: Option<i32>,
+    pub trailingDelta: Option<u32>,
     pub r#type: BinanceOrderType,
 }
 
