@@ -1,5 +1,5 @@
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 #[cfg(feature = "serde")]
 use serde_with::skip_serializing_none;
 
