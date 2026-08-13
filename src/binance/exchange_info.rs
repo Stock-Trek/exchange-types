@@ -5,28 +5,33 @@ use crate::{
     },
     ticker::Ticker,
 };
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
 #[allow(non_snake_case)]
-#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Hash)]
 pub struct BinanceExchangeInfoParams {
     pub permissions: Vec<BinanceExchangeInfoPermission>,
     pub symbolStatus: BinanceExchangeInfoSymbolStatus,
 }
 
-#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceExchangeInfoPermission {
     SPOT,
 }
 
-#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceExchangeInfoSymbolStatus {
     TRADING,
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
 pub struct BinanceExchangeInfoResult {
     pub exchangeFilters: Vec<BinanceExchangeFilter>,
     pub rateLimits: Vec<BinanceRateLimit>,
@@ -36,7 +41,8 @@ pub struct BinanceExchangeInfoResult {
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
 pub struct BinanceExchangeInfoSymbol {
     pub baseAsset: Ticker,
     pub baseAssetPrecision: u8,
@@ -54,7 +60,8 @@ pub struct BinanceExchangeInfoSymbol {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Display, Clone, Copy, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Display, Clone, Copy, Hash)]
 pub enum BinanceOrderType {
     LIMIT,
     LIMIT_MAKER,
