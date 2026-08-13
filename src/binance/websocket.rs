@@ -6,56 +6,64 @@ use crate::binance::{
     signed::{BinanceParams, BinanceUnsignedParams},
     spot::BinanceSpotOrderResult,
 };
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "serde")]
 use serde_with::skip_serializing_none;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
 pub struct BinanceWebsocketMetadata {
     pub id: String,
     pub method: BinanceWebsocketMethodName,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Copy)]
 pub enum BinanceWebsocketMethodName {
-    #[serde(rename = "exchangeInfo")]
+    #[cfg_attr(feature = "serde", serde(rename = "exchangeInfo"))]
     ExchangeInfo,
-    #[serde(rename = "session.logon")]
+    #[cfg_attr(feature = "serde", serde(rename = "session.logon"))]
     Logon,
-    #[serde(rename = "session.logout")]
+    #[cfg_attr(feature = "serde", serde(rename = "session.logout"))]
     Logout,
-    #[serde(rename = "order.place")]
+    #[cfg_attr(feature = "serde", serde(rename = "order.place"))]
     PlaceOrder,
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[skip_serializing_none]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", skip_serializing_none)]
+#[derive(Debug, Clone)]
 pub struct BinanceWebsocketRequest {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub metadata: BinanceWebsocketMetadata,
     pub params: BinanceParams,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[skip_serializing_none]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", skip_serializing_none)]
+#[derive(Debug, Clone)]
 pub struct BinanceWebsocketUnsignedRequest {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub metadata: BinanceWebsocketMetadata,
     pub params: BinanceUnsignedParams,
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
 pub struct BinanceWebsocketResponse {
     pub error: Option<BinanceError>,
     pub id: String,
     pub rateLimits: Vec<BinanceRateLimit>,
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub result: Option<BinanceWebsocketResponseResult>,
     pub status: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(untagged))]
+#[derive(Debug, Clone)]
 pub enum BinanceWebsocketResponseResult {
     ExchangeInfo(BinanceExchangeInfoResult),
     Limits(BinanceExchangeInfoResult),

@@ -32,5 +32,5 @@ jobs:
       - name: Run checks
         run: |
           cargo fmt --check
-          cargo clippy
+          cargo clippy --all-features
           cargo test

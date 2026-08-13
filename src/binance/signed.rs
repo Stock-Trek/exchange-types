@@ -2,27 +2,32 @@ use crate::binance::{
     exchange_info::BinanceExchangeInfoParams, logon::BinanceLogonParams,
     spot::BinanceSpotOrderParams,
 };
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "serde")]
 use serde_with::skip_serializing_none;
 
-#[derive(Debug, Clone, Serialize)]
-#[skip_serializing_none]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", skip_serializing_none)]
+#[derive(Debug, Clone)]
 pub struct BinanceParams {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub params: BinanceUnsignedParams,
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub signature: Option<BinanceSignature>,
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, Clone, Serialize)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[derive(Debug, Clone)]
 pub struct BinanceSignature {
     pub apiKey: String,
     pub signature: String,
 }
 
-#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
-#[serde(untagged)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(untagged))]
+#[derive(Debug, Clone, Hash)]
 pub enum BinanceUnsignedParams {
     ExchangeInfo(BinanceExchangeInfoParams),
     Logon(BinanceLogonParams),

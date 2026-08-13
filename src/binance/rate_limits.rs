@@ -1,8 +1,10 @@
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
 #[allow(non_snake_case)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
 pub struct BinanceRateLimit {
     pub count: i64,
     pub interval: BinanceRateLimitInterval,
@@ -12,7 +14,8 @@ pub struct BinanceRateLimit {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone, Copy, Display, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Copy, Display)]
 pub enum BinanceRateLimitInterval {
     DAY,
     HOUR,
@@ -21,7 +24,8 @@ pub enum BinanceRateLimitInterval {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone, Copy, Display, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Copy, Display)]
 pub enum BinanceRateLimitType {
     CONNECTIONS,
     ORDERS,
