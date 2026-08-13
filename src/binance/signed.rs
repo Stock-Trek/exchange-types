@@ -2,7 +2,7 @@ use crate::binance::{
     exchange_info::BinanceExchangeInfoParams, logon::BinanceLogonParams,
     spot::BinanceSpotOrderParams,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 #[derive(Debug, Clone, Serialize)]
@@ -21,7 +21,7 @@ pub struct BinanceSignature {
     pub signature: String,
 }
 
-#[derive(Debug, Clone, Hash, Serialize)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum BinanceUnsignedParams {
     ExchangeInfo(BinanceExchangeInfoParams),

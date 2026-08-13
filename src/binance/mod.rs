@@ -1,5 +1,6 @@
 pub mod error;
 pub mod exchange_info;
+pub mod filters;
 pub mod http;
 pub mod logon;
 pub mod rate_limits;

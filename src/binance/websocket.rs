@@ -9,13 +9,13 @@ use crate::binance::{
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BinanceWebsocketMetadata {
     pub id: String,
     pub method: BinanceWebsocketMethodName,
 }
 
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum BinanceWebsocketMethodName {
     #[serde(rename = "exchangeInfo")]
     ExchangeInfo,
@@ -35,7 +35,7 @@ pub struct BinanceWebsocketRequest {
     pub params: BinanceParams,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[skip_serializing_none]
 pub struct BinanceWebsocketUnsignedRequest {
     #[serde(flatten)]
@@ -44,7 +44,7 @@ pub struct BinanceWebsocketUnsignedRequest {
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BinanceWebsocketResponse {
     pub error: Option<BinanceError>,
     pub id: String,
@@ -54,10 +54,11 @@ pub struct BinanceWebsocketResponse {
     pub status: i32,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum BinanceWebsocketResponseResult {
     ExchangeInfo(BinanceExchangeInfoResult),
+    Limits(BinanceExchangeInfoResult),
     SessionAuthentication(BinanceSessionAuthenticationResult),
     SpotOrder(BinanceSpotOrderResult),
 }

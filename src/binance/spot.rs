@@ -5,7 +5,7 @@ use serde_with::skip_serializing_none;
 use strum::Display;
 
 #[allow(non_snake_case)]
-#[derive(Debug, Clone, Hash, Serialize)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[skip_serializing_none]
 pub struct BinanceSpotOrderParams {
     pub icebergQty: Option<Decimal>,
@@ -31,7 +31,7 @@ pub struct BinanceSpotOrderParams {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Display, Clone, Copy, Hash, Serialize)]
+#[derive(Debug, Display, Clone, Copy, Hash, Serialize, Deserialize)]
 pub enum BinanceNewOrderResponseType {
     ACK,
     RESULT,
@@ -39,26 +39,26 @@ pub enum BinanceNewOrderResponseType {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Display, Clone, Copy, Hash, Serialize)]
+#[derive(Debug, Display, Clone, Copy, Hash, Serialize, Deserialize)]
 pub enum BinancePegPriceType {
     PRIMARY_PEG,
     MARKET_PEG,
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Display, Clone, Copy, Hash, Serialize)]
+#[derive(Debug, Display, Clone, Copy, Hash, Serialize, Deserialize)]
 pub enum BinancePegOffsetType {
     PRICE_LEVEL,
 }
 
-#[derive(Debug, Display, Clone, Copy, Hash, Serialize)]
+#[derive(Debug, Display, Clone, Copy, Hash, Serialize, Deserialize)]
 pub enum BinanceSide {
     BUY,
     SELL,
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Display, Clone, Copy, Hash, Serialize)]
+#[derive(Debug, Display, Clone, Copy, Hash, Serialize, Deserialize)]
 pub enum BinanceSelfTradeProtection {
     EXPIRE_BOTH,
     EXPIRE_MAKER,
@@ -69,15 +69,15 @@ pub enum BinanceSelfTradeProtection {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Display, Clone, Copy, Hash, Serialize)]
+#[derive(Debug, Display, Clone, Copy, Hash, Serialize, Deserialize)]
 pub enum BinanceTimeInForce {
     FOK,
     GTC,
     IOC,
 }
 
-#[allow(non_snake_case, unused)]
-#[derive(Debug, Clone, Deserialize)]
+#[allow(non_snake_case)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BinanceSpotOrderResult {
     pub clientOrderId: String,
     pub cummulativeQuoteQty: Decimal,

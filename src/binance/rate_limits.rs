@@ -1,8 +1,8 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use strum::Display;
 
-#[allow(non_snake_case, unused)]
-#[derive(Debug, Clone, Deserialize)]
+#[allow(non_snake_case)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BinanceRateLimit {
     pub count: i64,
     pub interval: BinanceRateLimitInterval,
@@ -12,7 +12,7 @@ pub struct BinanceRateLimit {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone, Copy, Display, Deserialize)]
+#[derive(Debug, Clone, Copy, Display, Serialize, Deserialize)]
 pub enum BinanceRateLimitInterval {
     DAY,
     HOUR,
@@ -21,7 +21,7 @@ pub enum BinanceRateLimitInterval {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone, Copy, Display, Deserialize)]
+#[derive(Debug, Clone, Copy, Display, Serialize, Deserialize)]
 pub enum BinanceRateLimitType {
     CONNECTIONS,
     ORDERS,
