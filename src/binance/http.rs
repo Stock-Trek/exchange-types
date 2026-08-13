@@ -1,14 +1,23 @@
 use crate::binance::{
     error::BinanceError,
-    exchange_info::BinanceExchangeInfoResult,
-    signed::{BinanceParams, BinanceUnsignedParams},
-    spot::BinanceSpotOrderResult,
+    exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
+    filters::BinanceAssetFilter,
+    signed::BinanceSignedParams,
+    spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
 };
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-pub type BinanceHttpUnsignedRequest = BinanceUnsignedParams;
-pub type BinanceHttpRequest = BinanceParams;
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(untagged))]
+#[derive(Debug, Clone, Hash)]
+pub enum BinanceHttpUnsignedRequest {
+    AssetLimits,
+    ExchangeInfo(BinanceExchangeInfoParams),
+    SpotOrderRequest(Box<BinanceSpotOrderParams>),
+}
+
+pub type BinanceHttpRequest = BinanceSignedParams<BinanceHttpUnsignedRequest>;
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
@@ -22,6 +31,7 @@ pub struct BinanceHttpResponse {
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]
 pub enum BinanceHttpResponseResult {
+    AssetLimits(Vec<BinanceAssetFilter>),
     ExchangeInfo(BinanceExchangeInfoResult),
     SpotOrder(BinanceSpotOrderResult),
 }
