@@ -74,6 +74,8 @@ pub enum BinanceSelfTradeProtection {
     DECREMENT,
     NONE,
     TRANSFER,
+    #[cfg_attr(feature = "serde", serde(other))]
+    UNKNOWN,
 }
 
 #[allow(non_camel_case_types)]
@@ -83,6 +85,22 @@ pub enum BinanceTimeInForce {
     FOK,
     GTC,
     IOC,
+}
+
+#[allow(non_camel_case_types)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Display, Clone, Copy)]
+pub enum BinanceOrderStatus {
+    CANCELED,
+    EXPIRED,
+    EXPIRED_IN_MATCH,
+    FILLED,
+    NEW,
+    PARTIALLY_FILLED,
+    PENDING_CANCEL,
+    REJECTED,
+    #[cfg_attr(feature = "serde", serde(other))]
+    UNKNOWN,
 }
 
 #[allow(non_snake_case)]
@@ -97,12 +115,12 @@ pub struct BinanceSpotOrderResult {
     pub origQty: Decimal,
     pub origQuoteOrderQty: Decimal,
     pub price: Decimal,
-    pub selfTradePreventionMode: String,
-    pub side: String,
-    pub status: String,
+    pub selfTradePreventionMode: BinanceSelfTradeProtection,
+    pub side: BinanceSide,
+    pub status: BinanceOrderStatus,
     pub symbol: String,
-    pub timeInForce: String,
+    pub timeInForce: BinanceTimeInForce,
     pub transactTime: i64,
-    pub r#type: String,
+    pub r#type: BinanceOrderType,
     pub workingTime: i64,
 }
