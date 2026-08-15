@@ -12,6 +12,14 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(untagged))]
+#[derive(Debug, Clone)]
+pub enum BinanceWebsocketBody {
+    Request(BinanceWebsocketRequest),
+    Response(BinanceWebsocketResponse),
+}
+
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceWebsocketMetadata {
     pub id: String,
@@ -31,7 +39,7 @@ pub enum BinanceWebsocketMethodName {
     PlaceOrder,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone)]
 pub struct BinanceWebsocketRequest {

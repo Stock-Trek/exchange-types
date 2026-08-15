@@ -10,6 +10,14 @@ use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
+#[derive(Debug, Clone)]
+pub enum BinanceHttpBody {
+    Request(BinanceHttpRequest),
+    Response(BinanceHttpResponse),
+}
+
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone, Hash)]
 pub enum BinanceHttpUnsignedRequest {
     AssetLimits,
