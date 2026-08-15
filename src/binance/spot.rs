@@ -1,4 +1,5 @@
 use crate::binance::exchange_info::BinanceOrderType;
+use query_params::QueryParams;
 use rust_decimal::Decimal;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -9,7 +10,7 @@ use strum::Display;
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceSpotOrderParams {
     pub icebergQty: Option<Decimal>,
     pub newClientOrderId: String,
