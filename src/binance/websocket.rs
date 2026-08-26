@@ -4,7 +4,7 @@ use crate::binance::{
     logon::{BinanceLogonParams, BinanceSessionAuthenticationResult},
     rate_limits::BinanceRateLimit,
     signed::BinanceSignedParams,
-    spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
+    spot::{BinanceSpotOrderCommonParams, BinanceSpotOrderResult},
 };
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -63,7 +63,16 @@ pub struct BinanceWebsocketUnsignedRequest {
 pub enum BinanceWebsocketUnsignedParams {
     ExchangeInfo(BinanceExchangeInfoParams),
     Logon(BinanceLogonParams),
-    SpotOrderRequest(Box<BinanceSpotOrderParams>),
+    SpotOrderRequest(Box<BinanceWebsocketSpotOrderParams>),
+}
+
+#[allow(non_snake_case)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Hash)]
+pub struct BinanceWebsocketSpotOrderParams {
+    pub apiKey: Option<String>,
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub common_params: BinanceSpotOrderCommonParams,
 }
 
 #[allow(non_snake_case)]
