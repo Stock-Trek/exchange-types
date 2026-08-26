@@ -11,7 +11,8 @@ use strum::Display;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone, Hash, QueryParams)]
-pub struct BinanceSpotOrderCommonParams {
+pub struct BinanceSpotOrderParams {
+    pub apiKey: Option<String>,
     pub icebergQty: Option<Decimal>,
     pub newClientOrderId: String,
     pub newOrderRespType: BinanceNewOrderResponseType,

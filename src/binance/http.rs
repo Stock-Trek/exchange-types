@@ -4,7 +4,7 @@ use crate::binance::{
     exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
     filters::BinanceAssetFilter,
     signed::BinanceSignedParams,
-    spot::{BinanceSpotOrderCommonParams, BinanceSpotOrderResult},
+    spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
 };
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -23,7 +23,7 @@ pub enum BinanceHttpBody {
 pub enum BinanceHttpUnsignedRequest {
     AssetLimits(BinanceAssetLimitsParams),
     ExchangeInfo(BinanceExchangeInfoParams),
-    SpotOrderRequest(Box<BinanceSpotOrderCommonParams>),
+    SpotOrderRequest(Box<BinanceSpotOrderParams>),
 }
 
 pub type BinanceHttpRequest = BinanceSignedParams<BinanceHttpUnsignedRequest>;
