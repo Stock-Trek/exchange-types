@@ -9,6 +9,5 @@ use serde_with::skip_serializing_none;
 pub struct BinanceSignedParams<Params> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub params: Params,
-    #[cfg_attr(feature = "serde", serde(skip_serializing_none))]
     pub signature: Option<String>,
 }
