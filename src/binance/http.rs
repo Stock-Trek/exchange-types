@@ -1,4 +1,5 @@
 use crate::binance::{
+    asset_limits::BinanceAssetLimitsParams,
     error::BinanceError,
     exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
     filters::BinanceAssetFilter,
@@ -20,7 +21,7 @@ pub enum BinanceHttpBody {
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone, Hash)]
 pub enum BinanceHttpUnsignedRequest {
-    AssetLimits,
+    AssetLimits(BinanceAssetLimitsParams),
     ExchangeInfo(BinanceExchangeInfoParams),
     SpotOrderRequest(Box<BinanceSpotOrderParams>),
 }
