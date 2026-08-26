@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceLogonParams {
+    pub apiKey: String,
     pub timestamp: i64,
 }
 
