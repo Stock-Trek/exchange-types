@@ -469,9 +469,9 @@ dependencies = [
 
 [[package]]
 name = "query-params"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+ssh://git@ssh.shipyard.rs/stock-trek/crate-index.git"
-checksum = "1b201bb85ae38baddecf64aaf4d386a8376db6f20ef27003d005180d6ca1b293"
+checksum = "3030df500ab7d078533a9e5b96fd31d0405c9ee99444c9852bdbd47e4da4ef64"
 dependencies = [
  "proc-macro2",
  "quote",
