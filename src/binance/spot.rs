@@ -31,6 +31,7 @@ pub struct BinanceSpotOrderParams {
     pub timeInForce: Option<BinanceTimeInForce>,
     pub timestamp: i64,
     pub trailingDelta: Option<u32>,
+    #[cfg_attr(feature = "serde", serde(rename = "type"))]
     pub r#type: BinanceOrderType,
 }
 
@@ -122,6 +123,7 @@ pub struct BinanceSpotOrderResult {
     pub symbol: String,
     pub timeInForce: BinanceTimeInForce,
     pub transactTime: i64,
+    #[cfg_attr(feature = "serde", serde(rename = "type"))]
     pub r#type: BinanceOrderType,
     pub workingTime: i64,
 }
