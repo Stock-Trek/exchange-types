@@ -28,11 +28,11 @@ pub enum BinanceHttpUnsignedRequest {
 pub type BinanceHttpRequest = BinanceSignedParams<BinanceHttpUnsignedRequest>;
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]
-pub struct BinanceHttpResponse {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub result: Option<BinanceHttpResponseResult>,
-    pub error: Option<BinanceError>,
+pub enum BinanceHttpResponse {
+    Result(BinanceHttpResponseResult),
+    Error(BinanceError),
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
