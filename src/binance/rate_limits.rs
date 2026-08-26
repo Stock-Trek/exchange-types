@@ -6,7 +6,10 @@ use strum::Display;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceRateLimit {
-    #[cfg_attr(feature = "serde", serde(default, skip_serializing_if = "Option::is_none"))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
     pub count: Option<i64>,
     pub interval: BinanceRateLimitInterval,
     pub intervalNum: i32,
