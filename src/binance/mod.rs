@@ -1,4 +1,6 @@
+pub mod amend;
 pub mod asset_limits;
+pub mod cancel;
 pub mod error;
 pub mod exchange_info;
 pub mod filters;
