@@ -2,6 +2,7 @@ use crate::binance::{
     error::BinanceError,
     exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
     logon::{BinanceLogonParams, BinanceSessionAuthenticationResult},
+    ping::{BinancePingParams, BinancePingResult},
     rate_limits::BinanceRateLimit,
     signed::BinanceSignedParams,
     spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
@@ -38,6 +39,8 @@ pub enum BinanceWebsocketMethodName {
     Logout,
     #[cfg_attr(feature = "serde", serde(rename = "order.place"))]
     PlaceOrder,
+    #[cfg_attr(feature = "serde", serde(rename = "ping"))]
+    Ping,
     #[cfg_attr(feature = "serde", serde(rename = "time"))]
     Time,
 }
@@ -66,6 +69,7 @@ pub struct BinanceWebsocketUnsignedRequest {
 pub enum BinanceWebsocketUnsignedParams {
     ExchangeInfo(BinanceExchangeInfoParams),
     Logon(BinanceLogonParams),
+    Ping(BinancePingParams),
     SpotOrderRequest(Box<BinanceSpotOrderParams>),
     Time(BinanceTimeParams),
 }
@@ -87,6 +91,7 @@ pub struct BinanceWebsocketResponse {
 #[derive(Debug, Clone)]
 pub enum BinanceWebsocketResponseResult {
     ExchangeInfo(BinanceExchangeInfoResult),
+    Ping(BinancePingResult),
     SessionAuthentication(BinanceSessionAuthenticationResult),
     SpotOrder(BinanceSpotOrderResult),
     Time(BinanceTimeResult),
