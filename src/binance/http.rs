@@ -3,6 +3,7 @@ use crate::binance::{
     error::BinanceError,
     exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
     filters::BinanceAssetFilter,
+    ping::{BinancePingParams, BinancePingResult},
     signed::BinanceSignedParams,
     spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
     time::{BinanceTimeParams, BinanceTimeResult},
@@ -24,6 +25,7 @@ pub enum BinanceHttpBody {
 pub enum BinanceHttpUnsignedRequest {
     AssetLimits(BinanceAssetLimitsParams),
     ExchangeInfo(BinanceExchangeInfoParams),
+    Ping(BinancePingParams),
     SpotOrderRequest(Box<BinanceSpotOrderParams>),
     Time(BinanceTimeParams),
 }
@@ -44,6 +46,7 @@ pub enum BinanceHttpResponse {
 pub enum BinanceHttpResponseResult {
     AssetLimits(Vec<BinanceAssetFilter>),
     ExchangeInfo(BinanceExchangeInfoResult),
+    Ping(BinancePingResult),
     SpotOrder(BinanceSpotOrderResult),
     Time(BinanceTimeResult),
 }
