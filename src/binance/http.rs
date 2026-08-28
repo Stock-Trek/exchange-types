@@ -5,6 +5,7 @@ use crate::binance::{
     filters::BinanceAssetFilter,
     signed::BinanceSignedParams,
     spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
+    time::{BinanceTimeParams, BinanceTimeResult},
 };
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -24,6 +25,7 @@ pub enum BinanceHttpUnsignedRequest {
     AssetLimits(BinanceAssetLimitsParams),
     ExchangeInfo(BinanceExchangeInfoParams),
     SpotOrderRequest(Box<BinanceSpotOrderParams>),
+    Time(BinanceTimeParams),
 }
 
 pub type BinanceHttpRequest = BinanceSignedParams<BinanceHttpUnsignedRequest>;
@@ -43,4 +45,5 @@ pub enum BinanceHttpResponseResult {
     AssetLimits(Vec<BinanceAssetFilter>),
     ExchangeInfo(BinanceExchangeInfoResult),
     SpotOrder(BinanceSpotOrderResult),
+    Time(BinanceTimeResult),
 }

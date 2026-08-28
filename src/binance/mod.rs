@@ -7,4 +7,5 @@ pub mod logon;
 pub mod rate_limits;
 pub mod signed;
 pub mod spot;
+pub mod time;
 pub mod websocket;
