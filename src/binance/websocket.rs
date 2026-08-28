@@ -5,6 +5,7 @@ use crate::binance::{
     rate_limits::BinanceRateLimit,
     signed::BinanceSignedParams,
     spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
+    time::{BinanceTimeParams, BinanceTimeResult},
 };
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -37,6 +38,8 @@ pub enum BinanceWebsocketMethodName {
     Logout,
     #[cfg_attr(feature = "serde", serde(rename = "order.place"))]
     PlaceOrder,
+    #[cfg_attr(feature = "serde", serde(rename = "time"))]
+    Time,
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -64,6 +67,7 @@ pub enum BinanceWebsocketUnsignedParams {
     ExchangeInfo(BinanceExchangeInfoParams),
     Logon(BinanceLogonParams),
     SpotOrderRequest(Box<BinanceSpotOrderParams>),
+    Time(BinanceTimeParams),
 }
 
 #[allow(non_snake_case)]
@@ -85,4 +89,5 @@ pub enum BinanceWebsocketResponseResult {
     ExchangeInfo(BinanceExchangeInfoResult),
     SessionAuthentication(BinanceSessionAuthenticationResult),
     SpotOrder(BinanceSpotOrderResult),
+    Time(BinanceTimeResult),
 }
