@@ -1,4 +1,6 @@
 use crate::binance::{
+    amend::{BinanceAmendOrderParams, BinanceAmendOrderResult},
+    cancel::{BinanceCancelAllOrdersParams, BinanceCancelOrderParams, BinanceCancelOrderResult},
     error::BinanceError,
     exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
     logon::{BinanceLogonParams, BinanceSessionAuthenticationResult},
@@ -37,6 +39,12 @@ pub enum BinanceWebsocketMethodName {
     Logon,
     #[cfg_attr(feature = "serde", serde(rename = "session.logout"))]
     Logout,
+    #[cfg_attr(feature = "serde", serde(rename = "order.amend.keepPriority"))]
+    AmendOrder,
+    #[cfg_attr(feature = "serde", serde(rename = "order.cancel"))]
+    CancelOrder,
+    #[cfg_attr(feature = "serde", serde(rename = "openOrders.cancelAll"))]
+    CancelAllOrders,
     #[cfg_attr(feature = "serde", serde(rename = "order.place"))]
     PlaceOrder,
     #[cfg_attr(feature = "serde", serde(rename = "ping"))]
@@ -67,6 +75,9 @@ pub struct BinanceWebsocketUnsignedRequest {
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone, Hash)]
 pub enum BinanceWebsocketUnsignedParams {
+    AmendOrderRequest(BinanceAmendOrderParams),
+    CancelAllOrdersRequest(BinanceCancelAllOrdersParams),
+    CancelOrderRequest(BinanceCancelOrderParams),
     ExchangeInfo(BinanceExchangeInfoParams),
     Logon(BinanceLogonParams),
     Ping(BinancePingParams),
@@ -90,6 +101,9 @@ pub struct BinanceWebsocketResponse {
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]
 pub enum BinanceWebsocketResponseResult {
+    AmendOrder(BinanceAmendOrderResult),
+    CancelAllOrders(Vec<BinanceCancelOrderResult>),
+    CancelOrder(BinanceCancelOrderResult),
     ExchangeInfo(BinanceExchangeInfoResult),
     Ping(BinancePingResult),
     SessionAuthentication(BinanceSessionAuthenticationResult),

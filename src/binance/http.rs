@@ -1,5 +1,7 @@
 use crate::binance::{
+    amend::{BinanceAmendOrderParams, BinanceAmendOrderResult},
     asset_limits::BinanceAssetLimitsParams,
+    cancel::{BinanceCancelAllOrdersParams, BinanceCancelOrderParams, BinanceCancelOrderResult},
     error::BinanceError,
     exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
     filters::BinanceAssetFilter,
@@ -23,7 +25,10 @@ pub enum BinanceHttpBody {
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone, Hash)]
 pub enum BinanceHttpUnsignedRequest {
+    AmendOrderRequest(BinanceAmendOrderParams),
     AssetLimits(BinanceAssetLimitsParams),
+    CancelAllOrdersRequest(BinanceCancelAllOrdersParams),
+    CancelOrderRequest(BinanceCancelOrderParams),
     ExchangeInfo(BinanceExchangeInfoParams),
     Ping(BinancePingParams),
     SpotOrderRequest(Box<BinanceSpotOrderParams>),
@@ -44,7 +49,10 @@ pub enum BinanceHttpResponse {
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]
 pub enum BinanceHttpResponseResult {
+    AmendOrder(BinanceAmendOrderResult),
     AssetLimits(Vec<BinanceAssetFilter>),
+    CancelAllOrders(Vec<BinanceCancelOrderResult>),
+    CancelOrder(BinanceCancelOrderResult),
     ExchangeInfo(BinanceExchangeInfoResult),
     Ping(BinancePingResult),
     SpotOrder(BinanceSpotOrderResult),
