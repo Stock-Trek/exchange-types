@@ -44,8 +44,8 @@ pub type BinanceHttpRequest = BinanceSignedParams<BinanceHttpUnsignedRequest>;
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]
 pub enum BinanceHttpResponse {
-    Result(BinanceHttpResponseResult),
-    Error(BinanceError),
+    Success(BinanceHttpResponseResult),
+    Failure(BinanceError),
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
