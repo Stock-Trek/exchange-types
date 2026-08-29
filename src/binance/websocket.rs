@@ -4,7 +4,6 @@ use crate::binance::{
     error::BinanceError,
     exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
     logon::{BinanceLogonParams, BinanceSessionAuthenticationResult},
-    ping::{BinancePingParams, BinancePingResult},
     rate_limits::BinanceRateLimit,
     signed::BinanceSignedParams,
     spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
@@ -47,8 +46,6 @@ pub enum BinanceWebsocketMethodName {
     CancelAllOrders,
     #[cfg_attr(feature = "serde", serde(rename = "order.place"))]
     PlaceOrder,
-    #[cfg_attr(feature = "serde", serde(rename = "ping"))]
-    Ping,
     #[cfg_attr(feature = "serde", serde(rename = "time"))]
     Time,
 }
@@ -80,7 +77,6 @@ pub enum BinanceWebsocketUnsignedParams {
     CancelOrderRequest(BinanceCancelOrderParams),
     ExchangeInfo(BinanceExchangeInfoParams),
     Logon(BinanceLogonParams),
-    Ping(BinancePingParams),
     SpotOrderRequest(Box<BinanceSpotOrderParams>),
     Time(BinanceTimeParams),
 }
@@ -105,7 +101,6 @@ pub enum BinanceWebsocketResponseResult {
     CancelAllOrders(Vec<BinanceCancelOrderResult>),
     CancelOrder(BinanceCancelOrderResult),
     ExchangeInfo(BinanceExchangeInfoResult),
-    Ping(BinancePingResult),
     SessionAuthentication(BinanceSessionAuthenticationResult),
     SpotOrder(BinanceSpotOrderResult),
     Time(BinanceTimeResult),
