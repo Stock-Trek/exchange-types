@@ -5,7 +5,6 @@ use crate::binance::{
     error::BinanceError,
     exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
     filters::BinanceAssetFilter,
-    ping::{BinancePingParams, BinancePingResult},
     signed::BinanceSignedParams,
     spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
     time::{BinanceTimeParams, BinanceTimeResult},
@@ -30,7 +29,6 @@ pub enum BinanceHttpUnsignedRequest {
     CancelAllOrdersRequest(BinanceCancelAllOrdersParams),
     CancelOrderRequest(BinanceCancelOrderParams),
     ExchangeInfo(BinanceExchangeInfoParams),
-    Ping(BinancePingParams),
     SpotOrderRequest(Box<BinanceSpotOrderParams>),
     Time(BinanceTimeParams),
 }
@@ -54,7 +52,6 @@ pub enum BinanceHttpResponseResult {
     CancelAllOrders(Vec<BinanceCancelOrderResult>),
     CancelOrder(BinanceCancelOrderResult),
     ExchangeInfo(BinanceExchangeInfoResult),
-    Ping(BinancePingResult),
     SpotOrder(BinanceSpotOrderResult),
     Time(BinanceTimeResult),
 }
