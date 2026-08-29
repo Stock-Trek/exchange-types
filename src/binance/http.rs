@@ -1,13 +1,18 @@
-use crate::binance::{
-    amend::{BinanceAmendOrderParams, BinanceAmendOrderResult},
-    asset_limits::BinanceAssetLimitsParams,
-    cancel::{BinanceCancelAllOrdersParams, BinanceCancelOrderParams, BinanceCancelOrderResult},
-    error::BinanceError,
-    exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
-    filters::BinanceAssetFilter,
-    signed::BinanceSignedParams,
-    spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
-    time::{BinanceTimeParams, BinanceTimeResult},
+use crate::{
+    binance::{
+        amend::{BinanceAmendOrderParams, BinanceAmendOrderResult},
+        asset_limits::BinanceAssetLimitsParams,
+        cancel::{
+            BinanceCancelAllOrdersParams, BinanceCancelOrderParams, BinanceCancelOrderResult,
+        },
+        error::BinanceError,
+        exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
+        filters::BinanceAssetFilter,
+        signed::BinanceSignedParams,
+        spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
+        time::{BinanceTimeParams, BinanceTimeResult},
+    },
+    http_method::HttpMethod,
 };
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -54,4 +59,29 @@ pub enum BinanceHttpResponseResult {
     ExchangeInfo(BinanceExchangeInfoResult),
     SpotOrder(BinanceSpotOrderResult),
     Time(BinanceTimeResult),
+}
+
+impl BinanceHttpUnsignedRequest {
+    pub fn http_method(&self) -> HttpMethod {
+        match self {
+            BinanceHttpUnsignedRequest::AmendOrderRequest(..) => HttpMethod::PUT,
+            BinanceHttpUnsignedRequest::AssetLimits(..) => HttpMethod::GET,
+            BinanceHttpUnsignedRequest::CancelAllOrdersRequest(..) => HttpMethod::DELETE,
+            BinanceHttpUnsignedRequest::CancelOrderRequest(..) => HttpMethod::DELETE,
+            BinanceHttpUnsignedRequest::ExchangeInfo(..) => HttpMethod::GET,
+            BinanceHttpUnsignedRequest::SpotOrderRequest(..) => HttpMethod::POST,
+            BinanceHttpUnsignedRequest::Time(..) => HttpMethod::GET,
+        }
+    }
+    pub fn endpoint(&self) -> &str {
+        match self {
+            BinanceHttpUnsignedRequest::AmendOrderRequest(..) => "order/cancelReplace",
+            BinanceHttpUnsignedRequest::AssetLimits(..) => "myFilters",
+            BinanceHttpUnsignedRequest::CancelAllOrdersRequest(..) => "openOrders",
+            BinanceHttpUnsignedRequest::CancelOrderRequest(..) => "order",
+            BinanceHttpUnsignedRequest::ExchangeInfo(..) => "exchangeInfo",
+            BinanceHttpUnsignedRequest::SpotOrderRequest(..) => "order",
+            BinanceHttpUnsignedRequest::Time(..) => "time",
+        }
+    }
 }
