@@ -11,6 +11,6 @@ use serde_with::skip_serializing_none;
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceAssetLimitsParams {
     pub recvWindow: Option<Decimal>,
-    pub symbols: Option<String>,
+    pub symbol: String,
     pub timestamp: i64,
 }
