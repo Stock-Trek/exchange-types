@@ -33,18 +33,20 @@ pub struct BinanceWebsocketMetadata {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Copy)]
 pub enum BinanceWebsocketMethodName {
+    #[cfg_attr(feature = "serde", serde(rename = "order.amend.keepPriority"))]
+    AmendOrder,
+    #[cfg_attr(feature = "serde", serde(rename = "myFilters"))]
+    AssetLimits,
+    #[cfg_attr(feature = "serde", serde(rename = "order.cancel"))]
+    CancelOrder,
+    #[cfg_attr(feature = "serde", serde(rename = "openOrders.cancelAll"))]
+    CancelAllOrders,
     #[cfg_attr(feature = "serde", serde(rename = "exchangeInfo"))]
     ExchangeInfo,
     #[cfg_attr(feature = "serde", serde(rename = "session.logon"))]
     Logon,
     #[cfg_attr(feature = "serde", serde(rename = "session.logout"))]
     Logout,
-    #[cfg_attr(feature = "serde", serde(rename = "order.amend.keepPriority"))]
-    AmendOrder,
-    #[cfg_attr(feature = "serde", serde(rename = "order.cancel"))]
-    CancelOrder,
-    #[cfg_attr(feature = "serde", serde(rename = "openOrders.cancelAll"))]
-    CancelAllOrders,
     #[cfg_attr(feature = "serde", serde(rename = "order.place"))]
     PlaceOrder,
     #[cfg_attr(feature = "serde", serde(rename = "time"))]
