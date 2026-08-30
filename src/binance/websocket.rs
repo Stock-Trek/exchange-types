@@ -1,5 +1,6 @@
 use crate::binance::{
     amend::{BinanceAmendOrderParams, BinanceAmendOrderResult},
+    asset_limits::BinanceAssetLimitsParams,
     cancel::{BinanceCancelAllOrdersParams, BinanceCancelOrderParams, BinanceCancelOrderResult},
     error::BinanceError,
     exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
@@ -73,6 +74,7 @@ pub struct BinanceWebsocketUnsignedRequest {
 #[derive(Debug, Clone, Hash)]
 pub enum BinanceWebsocketUnsignedParams {
     AmendOrderRequest(BinanceAmendOrderParams),
+    AssetLimits(BinanceAssetLimitsParams),
     CancelAllOrdersRequest(BinanceCancelAllOrdersParams),
     CancelOrderRequest(BinanceCancelOrderParams),
     ExchangeInfo(BinanceExchangeInfoParams),
