@@ -2,6 +2,7 @@
 use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone, Hash)]
 pub struct BinanceTimeParams {}
 
