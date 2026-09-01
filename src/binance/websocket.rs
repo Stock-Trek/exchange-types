@@ -1,14 +1,20 @@
-use crate::binance::{
-    amend::{BinanceAmendOrderParams, BinanceAmendOrderResult},
-    asset_limits::BinanceAssetLimitsParams,
-    cancel::{BinanceCancelAllOrdersParams, BinanceCancelOrderParams, BinanceCancelOrderResult},
-    error::BinanceError,
-    exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
-    logon::{BinanceLogonParams, BinanceSessionAuthenticationResult},
-    rate_limits::BinanceRateLimit,
-    signed::BinanceSignedParams,
-    spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
-    time::{BinanceTimeParams, BinanceTimeResult},
+use crate::{
+    binance::{
+        amend::{BinanceAmendOrderParams, BinanceAmendOrderResult},
+        asset_limits::BinanceAssetLimitsParams,
+        cancel::{
+            BinanceCancelAllOrdersParams, BinanceCancelOrderParams, BinanceCancelOrderResult,
+        },
+        error::BinanceError,
+        exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
+        logon::{BinanceLogonParams, BinanceSessionAuthenticationResult},
+        rate_limits::BinanceRateLimit,
+        signed::BinanceSignedParams,
+        spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
+        time::{BinanceTimeParams, BinanceTimeResult},
+    },
+    error::EncryptResult,
+    signer::Signer,
 };
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -108,4 +114,45 @@ pub enum BinanceWebsocketResponseResult {
     SessionAuthentication(BinanceSessionAuthenticationResult),
     SpotOrder(BinanceSpotOrderResult),
     Time(BinanceTimeResult),
+}
+
+impl BinanceWebsocketUnsignedRequest {
+    pub fn into_signed(self, signer: &Signer) -> EncryptResult<BinanceWebsocketRequest> {
+        macro_rules! sign_arm {
+            ($params:expr, $variant:ident) => {{
+                let mut params = $params;
+                params.apiKey = signer.api_key();
+                let param_bytes = params.query_params(true).into_bytes();
+                let signature = signer.signature(&param_bytes)?;
+                (
+                    BinanceWebsocketUnsignedParams::$variant(params),
+                    Some(signature),
+                )
+            }};
+        }
+        let BinanceWebsocketUnsignedRequest { metadata, params } = self;
+        let (params, signature) = match params {
+            BinanceWebsocketUnsignedParams::AmendOrderRequest(params) => {
+                sign_arm!(params, AmendOrderRequest)
+            }
+            BinanceWebsocketUnsignedParams::AssetLimits(params) => {
+                sign_arm!(params, AssetLimits)
+            }
+            BinanceWebsocketUnsignedParams::CancelAllOrdersRequest(params) => {
+                sign_arm!(params, CancelAllOrdersRequest)
+            }
+            BinanceWebsocketUnsignedParams::CancelOrderRequest(params) => {
+                sign_arm!(params, CancelOrderRequest)
+            }
+            BinanceWebsocketUnsignedParams::Logon(params) => sign_arm!(params, Logon),
+            BinanceWebsocketUnsignedParams::SpotOrderRequest(params) => {
+                sign_arm!(params, SpotOrderRequest)
+            }
+            params => (params, None),
+        };
+        Ok(BinanceWebsocketRequest {
+            metadata,
+            params: BinanceSignedParams { params, signature },
+        })
+    }
 }
