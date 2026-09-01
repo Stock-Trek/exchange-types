@@ -1,4 +1,4 @@
-use crate::{encode::ByteEncoder, encrypt::Encryptor, error::EncryptResult};
+use crate::{encode::ByteEncoder, encrypt::Encryptor, error::ETResult};
 
 #[derive(Debug)]
 pub struct Signer {
@@ -11,7 +11,7 @@ impl Signer {
     pub fn api_key(&self) -> String {
         self.api_key.clone()
     }
-    pub fn signature(&self, bytes: &[u8]) -> EncryptResult<String> {
+    pub fn signature(&self, bytes: &[u8]) -> ETResult<String> {
         let encrypted = self.encryptor.encrypt(bytes)?;
         Ok(self.encoder.encode(&encrypted))
     }

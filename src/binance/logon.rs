@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceLogonParams {
-    pub apiKey: String,
     pub timestamp: i64,
 }
 
@@ -17,7 +16,6 @@ pub struct BinanceLogonParams {
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone)]
 pub struct BinanceSessionAuthenticationResult {
-    pub apiKey: String,
     pub authorizedSince: i64,
     pub connectedSince: i64,
     pub returnRateLimits: bool,
