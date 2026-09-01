@@ -1,4 +1,5 @@
 use secrecy::SecretString;
+
 #[cfg(feature = "serde")]
 use serde::Deserialize;
 

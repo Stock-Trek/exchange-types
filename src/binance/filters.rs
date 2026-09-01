@@ -1,5 +1,6 @@
 use crate::ticker::Ticker;
 use rust_decimal::Decimal;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 

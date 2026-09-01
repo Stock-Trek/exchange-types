@@ -16,6 +16,7 @@ use crate::{
     http_method::HttpMethod,
     signer::Signer,
 };
+
 #[cfg(feature = "serde")]
 use {
     crate::error::ETError,

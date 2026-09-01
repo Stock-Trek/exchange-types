@@ -1,6 +1,7 @@
+use strum::Display;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use strum::Display;
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

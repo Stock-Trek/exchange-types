@@ -1,4 +1,5 @@
 use query_params::QueryParams;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 

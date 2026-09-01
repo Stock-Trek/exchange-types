@@ -16,6 +16,7 @@ use crate::{
     error::EncryptResult,
     signer::Signer,
 };
+
 #[cfg(feature = "serde")]
 use {
     crate::error::ETError,

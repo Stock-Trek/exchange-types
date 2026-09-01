@@ -4,11 +4,13 @@ use crate::binance::{
 };
 use query_params::QueryParams;
 use rust_decimal::Decimal;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-#[cfg(feature = "serde")]
-use serde_with::skip_serializing_none;
 use strum::Display;
+
+#[cfg(feature = "serde")]
+use {
+    serde::{Deserialize, Serialize},
+    serde_with::skip_serializing_none,
+};
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
