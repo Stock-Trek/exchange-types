@@ -233,7 +233,7 @@ mod tests {
     fn serializes_method_derived_from_params() {
         let request = BinanceWebsocketUnsignedRequest {
             id: "1".into(),
-            params: BinanceWebsocketUnsignedParams::Time(BinanceTimeParams),
+            params: BinanceWebsocketUnsignedParams::Time(BinanceTimeParams {}),
         };
         assert_eq!(
             serde_json::to_value(&request).unwrap(),
@@ -278,7 +278,7 @@ mod tests {
     fn round_trips_request() {
         let request = BinanceWebsocketUnsignedRequest {
             id: "1".into(),
-            params: BinanceWebsocketUnsignedParams::Time(BinanceTimeParams),
+            params: BinanceWebsocketUnsignedParams::Time(BinanceTimeParams {}),
         };
         let json = serde_json::to_string(&request).unwrap();
         let deserialized: BinanceWebsocketUnsignedRequest = serde_json::from_str(&json).unwrap();
