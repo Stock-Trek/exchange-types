@@ -138,15 +138,15 @@ pub enum BinanceWebsocketResponseResult {
     Time(BinanceTimeResult),
 }
 
-impl RateLimited for BinanceWebsocketUnsignedRequest {
+impl RateLimited for BinanceWebsocketUnsignedParams {
     fn order_count(&self) -> u32 {
-        match self.params {
+        match self {
             BinanceWebsocketUnsignedParams::SpotOrderRequest(..) => 1,
             _ => 0,
         }
     }
     fn weight(&self) -> u32 {
-        match self.params {
+        match self {
             BinanceWebsocketUnsignedParams::AmendOrderRequest(..) => 4,
             BinanceWebsocketUnsignedParams::AssetLimits(..) => 40,
             BinanceWebsocketUnsignedParams::CancelAllOrdersRequest(..) => 1,

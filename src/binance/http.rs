@@ -81,22 +81,6 @@ impl BinanceHttpUnsignedRequest {
     }
 }
 
-impl IntoSigned for BinanceHttpUnsignedRequest {
-    type Signed = BinanceHttpRequest;
-
-    fn into_signed(self, signer: &Signer) -> ETResult<BinanceHttpRequest> {
-        let query_string = self.query_params();
-        let signature = signer.signature(&query_string.into_bytes())?;
-        Ok(BinanceHttpRequest {
-            unsigned: self,
-            signature: Some(BinanceSignature {
-                apiKey: signer.api_key(),
-                signature,
-            }),
-        })
-    }
-}
-
 impl RateLimited for BinanceHttpUnsignedRequest {
     fn order_count(&self) -> u32 {
         match self {
@@ -114,6 +98,22 @@ impl RateLimited for BinanceHttpUnsignedRequest {
             BinanceHttpUnsignedRequest::SpotOrderRequest(..) => 1,
             BinanceHttpUnsignedRequest::Time(..) => 1,
         }
+    }
+}
+
+impl IntoSigned for BinanceHttpUnsignedRequest {
+    type Signed = BinanceHttpRequest;
+
+    fn into_signed(self, signer: &Signer) -> ETResult<BinanceHttpRequest> {
+        let query_string = self.query_params();
+        let signature = signer.signature(&query_string.into_bytes())?;
+        Ok(BinanceHttpRequest {
+            unsigned: self,
+            signature: Some(BinanceSignature {
+                apiKey: signer.api_key(),
+                signature,
+            }),
+        })
     }
 }
 
