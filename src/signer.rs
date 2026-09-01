@@ -8,6 +8,13 @@ pub struct Signer {
 }
 
 impl Signer {
+    pub fn new(api_key: String, encryptor: Encryptor, encoder: ByteEncoder) -> Self {
+        Self {
+            api_key,
+            encryptor,
+            encoder,
+        }
+    }
     pub fn api_key(&self) -> String {
         self.api_key.clone()
     }
