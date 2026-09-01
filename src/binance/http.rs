@@ -13,7 +13,7 @@ use crate::{
     },
     error::ETResult,
     http_method::HttpMethod,
-    signer::Signer,
+    signer::{IntoSigned, Signer},
 };
 
 #[cfg(feature = "serde")]
@@ -67,8 +67,10 @@ pub enum BinanceHttpResponseResult {
     Time(BinanceTimeResult),
 }
 
-impl BinanceHttpUnsignedRequest {
-    pub fn into_signed(self, signer: &Signer) -> ETResult<BinanceHttpRequest> {
+impl IntoSigned for BinanceHttpUnsignedRequest {
+    type Signed = BinanceHttpRequest;
+
+    fn into_signed(self, signer: &Signer) -> ETResult<BinanceHttpRequest> {
         let query_string = match &self {
             BinanceHttpUnsignedRequest::AmendOrderRequest(params) => {
                 Some(params.query_params(true))

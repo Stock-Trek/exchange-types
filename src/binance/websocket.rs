@@ -13,7 +13,7 @@ use crate::{
         time::{BinanceTimeParams, BinanceTimeResult},
     },
     error::ETResult,
-    signer::Signer,
+    signer::{IntoSigned, Signer},
 };
 
 #[cfg(feature = "serde")]
@@ -145,8 +145,10 @@ pub enum BinanceWebsocketResponseResult {
     Time(BinanceTimeResult),
 }
 
-impl BinanceWebsocketUnsignedRequest {
-    pub fn into_signed(self, signer: &Signer) -> ETResult<BinanceWebsocketRequest> {
+impl IntoSigned for BinanceWebsocketUnsignedRequest {
+    type Signed = BinanceWebsocketRequest;
+
+    fn into_signed(self, signer: &Signer) -> ETResult<BinanceWebsocketRequest> {
         let BinanceWebsocketUnsignedRequest { id, params } = self;
         let query_string = match &params {
             BinanceWebsocketUnsignedParams::AmendOrderRequest(params) => {
