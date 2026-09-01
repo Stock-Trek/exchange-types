@@ -5,12 +5,14 @@ use crate::{
     },
     ticker::Ticker,
 };
+use strum::Display;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use strum::Display;
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone, Hash)]
 pub struct BinanceExchangeInfoParams {
     pub permissions: Vec<BinanceExchangeInfoPermission>,
@@ -31,6 +33,7 @@ pub enum BinanceExchangeInfoSymbolStatus {
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone)]
 pub struct BinanceExchangeInfoResult {
     pub exchangeFilters: Vec<BinanceExchangeFilter>,
@@ -42,6 +45,7 @@ pub struct BinanceExchangeInfoResult {
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone)]
 pub struct BinanceExchangeInfoSymbol {
     pub baseAsset: Ticker,

@@ -16,8 +16,12 @@ use crate::{
     http_method::HttpMethod,
     signer::Signer,
 };
+
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use {
+    crate::error::ETError,
+    serde::{Deserialize, Serialize},
+};
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
@@ -123,5 +127,9 @@ impl BinanceHttpRequest {
             BinanceHttpUnsignedRequest::SpotOrderRequest(..) => "order",
             BinanceHttpUnsignedRequest::Time(..) => "time",
         }
+    }
+    #[cfg(feature = "serde")]
+    pub fn serialize(&self) -> EncryptResult<String> {
+        serde_json::to_string(self).map_err(ETError::SerializeRequest)
     }
 }
