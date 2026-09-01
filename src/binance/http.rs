@@ -8,6 +8,7 @@ use crate::{
         error::BinanceError,
         exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
         filters::BinanceAssetFilter,
+        signature::BinanceSignature,
         spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
         time::{BinanceTimeParams, BinanceTimeResult},
     },
@@ -41,9 +42,8 @@ pub enum BinanceHttpUnsignedRequest {
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone)]
 pub struct BinanceHttpRequest {
-    #[cfg_attr(feature = "serde", serde(flatten))]
     pub unsigned: BinanceHttpUnsignedRequest,
-    pub signature: Option<String>,
+    pub signature: Option<BinanceSignature>,
 }
 
 #[cfg_attr(feature = "serde", derive(Deserialize))]
@@ -91,7 +91,13 @@ impl IntoSigned for BinanceHttpUnsignedRequest {
         };
         Ok(BinanceHttpRequest {
             unsigned: self,
-            signature,
+            signature: match signature {
+                Some(signature) => Some(BinanceSignature {
+                    apiKey: signer.api_key(),
+                    signature,
+                }),
+                None => None,
+            },
         })
     }
 }
