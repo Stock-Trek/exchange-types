@@ -9,6 +9,7 @@ use {
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceAssetLimitsParams {

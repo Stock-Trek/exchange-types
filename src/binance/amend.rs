@@ -13,6 +13,7 @@ use {
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceAmendOrderParams {
@@ -28,6 +29,7 @@ pub struct BinanceAmendOrderParams {
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone)]
 pub struct BinanceAmendOrderResult {
     pub transactTime: i64,
@@ -37,7 +39,7 @@ pub struct BinanceAmendOrderResult {
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", skip_serializing_none)]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone)]
 pub struct BinanceAmendedOrder {
     pub clientOrderId: String,

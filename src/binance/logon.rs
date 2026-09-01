@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceLogonParams {
     pub apiKey: String,
@@ -13,6 +14,7 @@ pub struct BinanceLogonParams {
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone)]
 pub struct BinanceSessionAuthenticationResult {
     pub apiKey: String,

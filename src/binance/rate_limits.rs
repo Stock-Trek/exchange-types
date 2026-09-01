@@ -1,3 +1,4 @@
+use serde_with::skip_serializing_none;
 use strum::Display;
 
 #[cfg(feature = "serde")]
@@ -5,6 +6,8 @@ use serde::{Deserialize, Serialize};
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone)]
 pub struct BinanceRateLimit {
     #[cfg_attr(
