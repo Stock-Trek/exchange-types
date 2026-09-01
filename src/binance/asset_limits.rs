@@ -10,6 +10,7 @@ use serde_with::skip_serializing_none;
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceAssetLimitsParams {
+    pub apiKey: String,
     pub recvWindow: Option<Decimal>,
     pub symbol: String,
     pub timestamp: i64,
