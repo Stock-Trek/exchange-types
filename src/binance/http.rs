@@ -14,6 +14,7 @@ use crate::{
     },
     error::ETResult,
     http_method::HttpMethod,
+    rate_limited::RateLimited,
     signer::{IntoSigned, Signer},
 };
 
@@ -93,6 +94,26 @@ impl IntoSigned for BinanceHttpUnsignedRequest {
                 signature,
             }),
         })
+    }
+}
+
+impl RateLimited for BinanceHttpUnsignedRequest {
+    fn order_count(&self) -> u32 {
+        match self {
+            BinanceHttpUnsignedRequest::SpotOrderRequest(..) => 1,
+            _ => 0,
+        }
+    }
+    fn weight(&self) -> u32 {
+        match self {
+            BinanceHttpUnsignedRequest::AmendOrderRequest(..) => 4,
+            BinanceHttpUnsignedRequest::AssetLimits(..) => 40,
+            BinanceHttpUnsignedRequest::CancelAllOrdersRequest(..) => 1,
+            BinanceHttpUnsignedRequest::CancelOrderRequest(..) => 1,
+            BinanceHttpUnsignedRequest::ExchangeInfo(..) => 20,
+            BinanceHttpUnsignedRequest::SpotOrderRequest(..) => 1,
+            BinanceHttpUnsignedRequest::Time(..) => 1,
+        }
     }
 }
 

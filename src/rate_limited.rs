@@ -1,0 +1,26 @@
+use std::collections::HashMap;
+use strum::Display;
+
+pub trait RateLimited {
+    fn weight(&self) -> u32;
+    fn order_count(&self) -> u32;
+}
+
+pub trait RateLimits {
+    type LimitType;
+
+    fn rate_limits(&self) -> HashMap<Self::LimitType, Vec<RateLimit>>;
+}
+
+#[derive(Debug, Clone)]
+pub struct RateLimit {
+    pub interval_nanos: u128,
+    pub capacity_per_interval: u32,
+    pub restriction: RateLimitRestriction,
+}
+
+#[derive(Debug, Display, Clone, Copy)]
+pub enum RateLimitRestriction {
+    IP,
+    ACCOUNT,
+}
