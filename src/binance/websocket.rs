@@ -9,6 +9,7 @@ use crate::{
         exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
         logon::{BinanceLogonParams, BinanceSessionAuthenticationResult},
         rate_limits::BinanceRateLimit,
+        signature::BinanceSignature,
         spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
         time::{BinanceTimeParams, BinanceTimeResult},
     },
@@ -60,16 +61,7 @@ pub struct BinanceWebsocketSignedParams {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub unsigned: BinanceWebsocketUnsignedParams,
     #[cfg_attr(feature = "serde", serde(flatten))]
-    pub signature: Option<BinanceWebsocketSignature>,
-}
-
-#[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
-#[derive(Debug, Clone)]
-pub struct BinanceWebsocketSignature {
-    pub apiKey: String,
-    pub signature: String,
+    pub signature: Option<BinanceSignature>,
 }
 
 #[derive(Debug, Clone)]
@@ -168,7 +160,7 @@ impl IntoSigned for BinanceWebsocketUnsignedRequest {
             _ => None,
         };
         let signature = match query_string {
-            Some(query_string) => Some(BinanceWebsocketSignature {
+            Some(query_string) => Some(BinanceSignature {
                 apiKey: signer.api_key(),
                 signature: signer.signature(&query_string.into_bytes())?,
             }),
@@ -238,7 +230,7 @@ mod tests {
                 unsigned: BinanceWebsocketUnsignedParams::Logon(BinanceLogonParams {
                     timestamp: 123,
                 }),
-                signature: Some(BinanceWebsocketSignature {
+                signature: Some(BinanceSignature {
                     apiKey: "api-key".into(),
                     signature: "signature".into(),
                 }),
