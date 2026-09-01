@@ -88,7 +88,7 @@ impl BinanceExchangeInfoParams {
                 .join(",");
             pairs.push(format!("permissions={}", permissions_string));
         }
-        pairs.push(format!("symbolStatus={}", self.symbolStatus.to_string()));
+        pairs.push(format!("symbolStatus={}", self.symbolStatus));
         pairs.join("&")
     }
 }
