@@ -75,3 +75,20 @@ pub enum BinanceOrderType {
     TAKE_PROFIT,
     TAKE_PROFIT_LIMIT,
 }
+
+impl BinanceExchangeInfoParams {
+    pub fn query_params(&self) -> String {
+        let mut pairs = Vec::new();
+        if !self.permissions.is_empty() {
+            let permissions_string = self
+                .permissions
+                .iter()
+                .map(|p| p.to_string())
+                .collect::<Vec<_>>()
+                .join(",");
+            pairs.push(format!("permissions={}", permissions_string));
+        }
+        pairs.push(format!("symbolStatus={}", self.symbolStatus.to_string()));
+        pairs.join("&")
+    }
+}

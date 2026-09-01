@@ -13,3 +13,9 @@ pub struct BinanceTimeParams {}
 pub struct BinanceTimeResult {
     pub serverTime: i64,
 }
+
+impl BinanceTimeParams {
+    pub fn query_params(&self) -> String {
+        "".into()
+    }
+}

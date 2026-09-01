@@ -19,7 +19,6 @@ use crate::{
 
 #[cfg(feature = "serde")]
 use {
-    crate::error::ETError,
     serde::{Deserialize, Serialize},
     serde_with::skip_serializing_none,
 };
@@ -67,53 +66,37 @@ pub enum BinanceHttpResponseResult {
     Time(BinanceTimeResult),
 }
 
+impl BinanceHttpUnsignedRequest {
+    fn query_params(&self) -> String {
+        match &self {
+            BinanceHttpUnsignedRequest::AmendOrderRequest(params) => params.query_params(true),
+            BinanceHttpUnsignedRequest::AssetLimits(params) => params.query_params(true),
+            BinanceHttpUnsignedRequest::CancelAllOrdersRequest(params) => params.query_params(true),
+            BinanceHttpUnsignedRequest::CancelOrderRequest(params) => params.query_params(true),
+            BinanceHttpUnsignedRequest::SpotOrderRequest(params) => params.query_params(true),
+            BinanceHttpUnsignedRequest::ExchangeInfo(params) => params.query_params(),
+            BinanceHttpUnsignedRequest::Time(params) => params.query_params(),
+        }
+    }
+}
+
 impl IntoSigned for BinanceHttpUnsignedRequest {
     type Signed = BinanceHttpRequest;
 
     fn into_signed(self, signer: &Signer) -> ETResult<BinanceHttpRequest> {
-        let query_string = match &self {
-            BinanceHttpUnsignedRequest::AmendOrderRequest(params) => {
-                Some(params.query_params(true))
-            }
-            BinanceHttpUnsignedRequest::AssetLimits(params) => Some(params.query_params(true)),
-            BinanceHttpUnsignedRequest::CancelAllOrdersRequest(params) => {
-                Some(params.query_params(true))
-            }
-            BinanceHttpUnsignedRequest::CancelOrderRequest(params) => {
-                Some(params.query_params(true))
-            }
-            BinanceHttpUnsignedRequest::SpotOrderRequest(params) => Some(params.query_params(true)),
-            _ => None,
-        };
-        let signature = match query_string {
-            Some(query_string) => Some(signer.signature(&query_string.into_bytes())?),
-            None => None,
-        };
+        let query_string = self.query_params();
+        let signature = signer.signature(&query_string.into_bytes())?;
         Ok(BinanceHttpRequest {
             unsigned: self,
-            signature: match signature {
-                Some(signature) => Some(BinanceSignature {
-                    apiKey: signer.api_key(),
-                    signature,
-                }),
-                None => None,
-            },
+            signature: Some(BinanceSignature {
+                apiKey: signer.api_key(),
+                signature,
+            }),
         })
     }
 }
 
 impl BinanceHttpRequest {
-    pub fn http_method(&self) -> HttpMethod {
-        match self.unsigned {
-            BinanceHttpUnsignedRequest::AssetLimits(..)
-            | BinanceHttpUnsignedRequest::ExchangeInfo(..)
-            | BinanceHttpUnsignedRequest::Time(..) => HttpMethod::GET,
-            BinanceHttpUnsignedRequest::CancelAllOrdersRequest(..)
-            | BinanceHttpUnsignedRequest::CancelOrderRequest(..) => HttpMethod::DELETE,
-            BinanceHttpUnsignedRequest::SpotOrderRequest(..) => HttpMethod::POST,
-            BinanceHttpUnsignedRequest::AmendOrderRequest(..) => HttpMethod::PUT,
-        }
-    }
     pub fn endpoint(&self) -> &str {
         match self.unsigned {
             BinanceHttpUnsignedRequest::AmendOrderRequest(..) => "order/cancelReplace",
@@ -125,8 +108,28 @@ impl BinanceHttpRequest {
             BinanceHttpUnsignedRequest::Time(..) => "time",
         }
     }
-    #[cfg(feature = "serde")]
-    pub fn serialize(&self) -> ETResult<String> {
-        serde_json::to_string(self).map_err(ETError::SerializeRequest)
+    pub fn http_method(&self) -> HttpMethod {
+        match self.unsigned {
+            BinanceHttpUnsignedRequest::AssetLimits(..)
+            | BinanceHttpUnsignedRequest::ExchangeInfo(..)
+            | BinanceHttpUnsignedRequest::Time(..) => HttpMethod::GET,
+            BinanceHttpUnsignedRequest::CancelAllOrdersRequest(..)
+            | BinanceHttpUnsignedRequest::CancelOrderRequest(..) => HttpMethod::DELETE,
+            BinanceHttpUnsignedRequest::SpotOrderRequest(..) => HttpMethod::POST,
+            BinanceHttpUnsignedRequest::AmendOrderRequest(..) => HttpMethod::PUT,
+        }
+    }
+    pub fn headers(&self) -> Vec<(String, String)> {
+        match &self.signature {
+            Some(signature) => vec![("X-MBX-APIKEY".into(), signature.apiKey.clone())],
+            None => vec![],
+        }
+    }
+    pub fn query_params(&self) -> String {
+        let query_params = self.unsigned.query_params();
+        match &self.signature {
+            Some(signature) => format!("{}&signature={}", query_params, signature.signature),
+            None => query_params,
+        }
     }
 }
