@@ -33,11 +33,6 @@ pub enum BinanceWebsocketBody {
     Response(BinanceWebsocketResponse),
 }
 
-/// The websocket method name for a request. Each variant corresponds to exactly
-/// one `BinanceWebsocketUnsignedParams` variant, so the method is derived from
-/// the params (via `BinanceWebsocketUnsignedParams::method_name`) instead of
-/// being stored independently on the request. This ensures the serialized
-/// method always matches the serialized parameters.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinanceWebsocketMethodName {
@@ -61,18 +56,12 @@ pub enum BinanceWebsocketMethodName {
     Time,
 }
 
-/// A signed websocket request. The `method` field is not stored on the request;
-/// it is derived from the params on serialization and validated on
-/// deserialization, so the method name always corresponds with the parameters.
 #[derive(Debug, Clone)]
 pub struct BinanceWebsocketRequest {
     pub id: String,
     pub params: BinanceSignedParams<BinanceWebsocketUnsignedParams>,
 }
 
-/// An unsigned websocket request. The `method` field is not stored on the
-/// request; it is derived from the params on serialization and validated on
-/// deserialization, so the method name always corresponds with the parameters.
 #[derive(Debug, Clone)]
 pub struct BinanceWebsocketUnsignedRequest {
     pub id: String,
