@@ -1,4 +1,4 @@
-pub type EncryptResult<T> = Result<T, ETError>;
+pub type ETResult<T> = Result<T, ETError>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ETError {

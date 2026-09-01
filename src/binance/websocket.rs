@@ -1,5 +1,3 @@
-use serde_with::skip_serializing_none;
-
 use crate::{
     binance::{
         amend::{BinanceAmendOrderParams, BinanceAmendOrderResult},
@@ -11,30 +9,19 @@ use crate::{
         exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
         logon::{BinanceLogonParams, BinanceSessionAuthenticationResult},
         rate_limits::BinanceRateLimit,
-        signed::BinanceSignedParams,
         spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
         time::{BinanceTimeParams, BinanceTimeResult},
     },
-    error::EncryptResult,
+    error::ETResult,
     signer::Signer,
 };
 
 #[cfg(feature = "serde")]
 use {
     crate::error::ETError,
-    serde::{
-        Deserialize, Deserializer, Serialize, Serializer, de::Error as DeError,
-        ser::SerializeStruct,
-    },
+    serde::{Deserialize, Serialize, Serializer, ser::SerializeStruct},
+    serde_with::skip_serializing_none,
 };
-
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
-#[derive(Debug, Clone)]
-pub enum BinanceWebsocketBody {
-    Request(BinanceWebsocketRequest),
-    Response(BinanceWebsocketResponse),
-}
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -62,7 +49,27 @@ pub enum BinanceWebsocketMethodName {
 #[derive(Debug, Clone)]
 pub struct BinanceWebsocketRequest {
     pub id: String,
-    pub params: BinanceSignedParams<BinanceWebsocketUnsignedParams>,
+    pub params: BinanceWebsocketSignedParams,
+}
+
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "serde", skip_serializing_none)]
+#[derive(Debug, Clone)]
+pub struct BinanceWebsocketSignedParams {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub unsigned: BinanceWebsocketUnsignedParams,
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub signature: Option<BinanceWebsocketSignature>,
+}
+
+#[allow(non_snake_case)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[derive(Debug, Clone)]
+pub struct BinanceWebsocketSignature {
+    pub apiKey: String,
+    pub signature: String,
 }
 
 #[derive(Debug, Clone)]
@@ -113,9 +120,8 @@ impl BinanceWebsocketUnsignedParams {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
-#[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone)]
 pub struct BinanceWebsocketResponse {
     pub error: Option<BinanceError>,
@@ -139,53 +145,47 @@ pub enum BinanceWebsocketResponseResult {
     Time(BinanceTimeResult),
 }
 
-impl BinanceWebsocketRequest {
-    #[cfg(feature = "serde")]
-    pub fn serialize(&self) -> EncryptResult<String> {
-        serde_json::to_string(self).map_err(ETError::SerializeRequest)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl Serialize for BinanceWebsocketRequest {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut state = serializer.serialize_struct("BinanceWebsocketRequest", 4)?;
-        state.serialize_field("id", &self.id)?;
-        state.serialize_field("method", &self.params.params.method_name())?;
-        state.serialize_field("params", &self.params.params)?;
-        if let Some(signature) = &self.params.signature {
-            state.serialize_field("signature", signature)?;
-        }
-        state.end()
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for BinanceWebsocketRequest {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        #[derive(Deserialize)]
-        struct BinanceWebsocketRequestFields {
-            id: String,
-            method: BinanceWebsocketMethodName,
-            params: BinanceWebsocketUnsignedParams,
-            #[serde(default)]
-            signature: Option<String>,
-        }
-        let fields = BinanceWebsocketRequestFields::deserialize(deserializer)?;
-        let method = fields.params.method_name();
-        if fields.method != method {
-            return Err(DeError::custom(format!(
-                "websocket request method {:?} does not correspond with the params method {:?}",
-                fields.method, method
-            )));
-        }
+impl BinanceWebsocketUnsignedRequest {
+    pub fn into_signed(self, signer: &Signer) -> ETResult<BinanceWebsocketRequest> {
+        let BinanceWebsocketUnsignedRequest { id, params } = self;
+        let query_string = match &params {
+            BinanceWebsocketUnsignedParams::AmendOrderRequest(params) => {
+                Some(params.query_params(true))
+            }
+            BinanceWebsocketUnsignedParams::AssetLimits(params) => Some(params.query_params(true)),
+            BinanceWebsocketUnsignedParams::CancelAllOrdersRequest(params) => {
+                Some(params.query_params(true))
+            }
+            BinanceWebsocketUnsignedParams::CancelOrderRequest(params) => {
+                Some(params.query_params(true))
+            }
+            BinanceWebsocketUnsignedParams::Logon(params) => Some(params.query_params(true)),
+            BinanceWebsocketUnsignedParams::SpotOrderRequest(params) => {
+                Some(params.query_params(true))
+            }
+            _ => None,
+        };
+        let signature = match query_string {
+            Some(query_string) => Some(BinanceWebsocketSignature {
+                apiKey: signer.api_key(),
+                signature: signer.signature(&query_string.into_bytes())?,
+            }),
+            None => None,
+        };
         Ok(BinanceWebsocketRequest {
-            id: fields.id,
-            params: BinanceSignedParams {
-                params: fields.params,
-                signature: fields.signature,
+            id,
+            params: BinanceWebsocketSignedParams {
+                unsigned: params,
+                signature,
             },
         })
+    }
+}
+
+impl BinanceWebsocketRequest {
+    #[cfg(feature = "serde")]
+    pub fn serialize(&self) -> ETResult<String> {
+        serde_json::to_string(self).map_err(ETError::SerializeRequest)
     }
 }
 
@@ -201,26 +201,13 @@ impl Serialize for BinanceWebsocketUnsignedRequest {
 }
 
 #[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for BinanceWebsocketUnsignedRequest {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        #[derive(Deserialize)]
-        struct BinanceWebsocketUnsignedRequestFields {
-            id: String,
-            method: BinanceWebsocketMethodName,
-            params: BinanceWebsocketUnsignedParams,
-        }
-        let fields = BinanceWebsocketUnsignedRequestFields::deserialize(deserializer)?;
-        let method = fields.params.method_name();
-        if fields.method != method {
-            return Err(DeError::custom(format!(
-                "websocket request method {:?} does not correspond with the params method {:?}",
-                fields.method, method
-            )));
-        }
-        Ok(BinanceWebsocketUnsignedRequest {
-            id: fields.id,
-            params: fields.params,
-        })
+impl Serialize for BinanceWebsocketRequest {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut state = serializer.serialize_struct("BinanceWebsocketRequest", 4)?;
+        state.serialize_field("id", &self.id)?;
+        state.serialize_field("method", &self.params.unsigned.method_name())?;
+        state.serialize_field("params", &self.params)?;
+        state.end()
     }
 }
 
@@ -245,12 +232,14 @@ mod tests {
     fn signed_request_serializes_method_derived_from_params() {
         let request = BinanceWebsocketRequest {
             id: "1".into(),
-            params: BinanceSignedParams {
-                params: BinanceWebsocketUnsignedParams::Logon(BinanceLogonParams {
-                    apiKey: "api-key".into(),
+            params: BinanceWebsocketSignedParams {
+                unsigned: BinanceWebsocketUnsignedParams::Logon(BinanceLogonParams {
                     timestamp: 123,
                 }),
-                signature: Some("signature".into()),
+                signature: Some(BinanceWebsocketSignature {
+                    apiKey: "api-key".into(),
+                    signature: "signature".into(),
+                }),
             },
         };
         assert_eq!(
@@ -258,71 +247,8 @@ mod tests {
             json!({
                 "id": "1",
                 "method": "session.logon",
-                "params": { "apiKey": "api-key", "timestamp": 123 },
-                "signature": "signature"
+                "params": { "apiKey": "api-key", "timestamp": 123, "signature": "signature" },
             })
         );
-    }
-
-    #[test]
-    fn rejects_method_that_does_not_correspond_with_params() {
-        let result = serde_json::from_value::<BinanceWebsocketUnsignedRequest>(json!({
-            "id": "1",
-            "method": "time",
-            "params": { "symbol": "BTCUSDT", "timestamp": 123 }
-        }));
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn round_trips_request() {
-        let request = BinanceWebsocketUnsignedRequest {
-            id: "1".into(),
-            params: BinanceWebsocketUnsignedParams::Time(BinanceTimeParams {}),
-        };
-        let json = serde_json::to_string(&request).unwrap();
-        let deserialized: BinanceWebsocketUnsignedRequest = serde_json::from_str(&json).unwrap();
-        assert_eq!(deserialized.id, request.id);
-    }
-}
-
-impl BinanceWebsocketUnsignedRequest {
-    pub fn into_signed(self, signer: &Signer) -> EncryptResult<BinanceWebsocketRequest> {
-        macro_rules! sign_arm {
-            ($params:expr, $variant:ident) => {{
-                let mut params = $params;
-                params.apiKey = signer.api_key();
-                let param_bytes = params.query_params(true).into_bytes();
-                let signature = signer.signature(&param_bytes)?;
-                (
-                    BinanceWebsocketUnsignedParams::$variant(params),
-                    Some(signature),
-                )
-            }};
-        }
-        let BinanceWebsocketUnsignedRequest { id, params } = self;
-        let (params, signature) = match params {
-            BinanceWebsocketUnsignedParams::AmendOrderRequest(params) => {
-                sign_arm!(params, AmendOrderRequest)
-            }
-            BinanceWebsocketUnsignedParams::AssetLimits(params) => {
-                sign_arm!(params, AssetLimits)
-            }
-            BinanceWebsocketUnsignedParams::CancelAllOrdersRequest(params) => {
-                sign_arm!(params, CancelAllOrdersRequest)
-            }
-            BinanceWebsocketUnsignedParams::CancelOrderRequest(params) => {
-                sign_arm!(params, CancelOrderRequest)
-            }
-            BinanceWebsocketUnsignedParams::Logon(params) => sign_arm!(params, Logon),
-            BinanceWebsocketUnsignedParams::SpotOrderRequest(params) => {
-                sign_arm!(params, SpotOrderRequest)
-            }
-            params => (params, None),
-        };
-        Ok(BinanceWebsocketRequest {
-            id,
-            params: BinanceSignedParams { params, signature },
-        })
     }
 }

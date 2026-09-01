@@ -1,6 +1,6 @@
 use crate::{
     api_key_credential::ApiKeyCredentials,
-    error::{ETError, EncryptResult},
+    error::{ETError, ETResult},
 };
 use hmac::{Hmac, Mac};
 use p256::ecdsa::signature::Signer as SignerTrait;
@@ -27,7 +27,7 @@ pub enum Encryptor {
 }
 
 impl EncryptionAlgorithm {
-    pub fn encryptor(&self, api_key_credentials: ApiKeyCredentials) -> EncryptResult<Encryptor> {
+    pub fn encryptor(&self, api_key_credentials: ApiKeyCredentials) -> ETResult<Encryptor> {
         let secret_key_bytes = api_key_credentials.secret.expose_secret().as_bytes();
         match self {
             Self::EcdsaP256 => {
@@ -60,7 +60,7 @@ impl EncryptionAlgorithm {
 }
 
 impl Encryptor {
-    pub fn encrypt(&self, bytes: &[u8]) -> EncryptResult<Vec<u8>> {
+    pub fn encrypt(&self, bytes: &[u8]) -> ETResult<Vec<u8>> {
         match self {
             Self::EcdsaP256(signing_key) => {
                 let signature: p256::ecdsa::Signature = signing_key.sign(bytes);

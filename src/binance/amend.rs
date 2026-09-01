@@ -17,7 +17,6 @@ use {
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceAmendOrderParams {
-    pub apiKey: String,
     pub newClientOrderId: Option<String>,
     pub newQty: Decimal,
     pub orderId: Option<i64>,

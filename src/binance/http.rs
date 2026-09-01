@@ -8,11 +8,10 @@ use crate::{
         error::BinanceError,
         exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
         filters::BinanceAssetFilter,
-        signed::BinanceSignedParams,
         spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
         time::{BinanceTimeParams, BinanceTimeResult},
     },
-    error::EncryptResult,
+    error::ETResult,
     http_method::HttpMethod,
     signer::Signer,
 };
@@ -21,17 +20,10 @@ use crate::{
 use {
     crate::error::ETError,
     serde::{Deserialize, Serialize},
+    serde_with::skip_serializing_none,
 };
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
-#[derive(Debug, Clone)]
-pub enum BinanceHttpBody {
-    Request(BinanceHttpRequest),
-    Response(BinanceHttpResponse),
-}
-
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone, Hash)]
 pub enum BinanceHttpUnsignedRequest {
@@ -44,9 +36,17 @@ pub enum BinanceHttpUnsignedRequest {
     Time(BinanceTimeParams),
 }
 
-pub type BinanceHttpRequest = BinanceSignedParams<BinanceHttpUnsignedRequest>;
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "serde", skip_serializing_none)]
+#[derive(Debug, Clone)]
+pub struct BinanceHttpRequest {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub unsigned: BinanceHttpUnsignedRequest,
+    pub signature: Option<String>,
+}
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]
 pub enum BinanceHttpResponse {
@@ -54,7 +54,7 @@ pub enum BinanceHttpResponse {
     Failure(BinanceError),
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]
 pub enum BinanceHttpResponseResult {
@@ -68,46 +68,35 @@ pub enum BinanceHttpResponseResult {
 }
 
 impl BinanceHttpUnsignedRequest {
-    pub fn into_signed(self, signer: &Signer) -> EncryptResult<BinanceHttpRequest> {
-        macro_rules! sign_arm {
-            ($params:expr, $variant:ident) => {{
-                let mut params = $params;
-                params.apiKey = signer.api_key();
-                let param_bytes = params.query_params(true).into_bytes();
-                let signature = signer.signature(&param_bytes)?;
-                Ok(BinanceHttpRequest {
-                    params: BinanceHttpUnsignedRequest::$variant(params),
-                    signature: Some(signature),
-                })
-            }};
-        }
-        match self {
+    pub fn into_signed(self, signer: &Signer) -> ETResult<BinanceHttpRequest> {
+        let query_string = match &self {
             BinanceHttpUnsignedRequest::AmendOrderRequest(params) => {
-                sign_arm!(params, AmendOrderRequest)
+                Some(params.query_params(true))
             }
-            BinanceHttpUnsignedRequest::AssetLimits(params) => {
-                sign_arm!(params, AssetLimits)
-            }
+            BinanceHttpUnsignedRequest::AssetLimits(params) => Some(params.query_params(true)),
             BinanceHttpUnsignedRequest::CancelAllOrdersRequest(params) => {
-                sign_arm!(params, CancelAllOrdersRequest)
+                Some(params.query_params(true))
             }
             BinanceHttpUnsignedRequest::CancelOrderRequest(params) => {
-                sign_arm!(params, CancelOrderRequest)
+                Some(params.query_params(true))
             }
-            BinanceHttpUnsignedRequest::SpotOrderRequest(params) => {
-                sign_arm!(params, SpotOrderRequest)
-            }
-            params => Ok(BinanceHttpRequest {
-                params,
-                signature: None,
-            }),
-        }
+            BinanceHttpUnsignedRequest::SpotOrderRequest(params) => Some(params.query_params(true)),
+            _ => None,
+        };
+        let signature = match query_string {
+            Some(query_string) => Some(signer.signature(&query_string.into_bytes())?),
+            None => None,
+        };
+        Ok(BinanceHttpRequest {
+            unsigned: self,
+            signature,
+        })
     }
 }
 
 impl BinanceHttpRequest {
     pub fn http_method(&self) -> HttpMethod {
-        match self.params {
+        match self.unsigned {
             BinanceHttpUnsignedRequest::AssetLimits(..)
             | BinanceHttpUnsignedRequest::ExchangeInfo(..)
             | BinanceHttpUnsignedRequest::Time(..) => HttpMethod::GET,
@@ -118,7 +107,7 @@ impl BinanceHttpRequest {
         }
     }
     pub fn endpoint(&self) -> &str {
-        match self.params {
+        match self.unsigned {
             BinanceHttpUnsignedRequest::AmendOrderRequest(..) => "order/cancelReplace",
             BinanceHttpUnsignedRequest::AssetLimits(..) => "myFilters",
             BinanceHttpUnsignedRequest::CancelAllOrdersRequest(..) => "openOrders",
@@ -129,7 +118,7 @@ impl BinanceHttpRequest {
         }
     }
     #[cfg(feature = "serde")]
-    pub fn serialize(&self) -> EncryptResult<String> {
+    pub fn serialize(&self) -> ETResult<String> {
         serde_json::to_string(self).map_err(ETError::SerializeRequest)
     }
 }
