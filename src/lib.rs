@@ -1,3 +1,8 @@
+pub mod api_key_credential;
 pub mod binance;
+pub mod encode;
+pub mod encrypt;
+pub mod error;
 pub mod http_method;
+pub mod signer;
 pub mod ticker;

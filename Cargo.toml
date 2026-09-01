@@ -4,15 +4,24 @@ version = "0.4.16"
 edition = "2024"
 
 [dependencies]
+bs58 = "0.5.1"
+data-encoding = "2.11.0"
+ed25519-compact = "2.3.0"
+hmac = "0.12"
+p256 = "0.13"
+p384 = "0.13"
 query-params = { version = "1.0.2", registry = "shipyard" }
 rust_decimal = "1.42.1"
+secrecy = "0.10.3"
 serde = { version = "1.0.228", features = ["derive"], optional = true }
 serde_with = { version = "3.21.0", optional = true }
+sha2 = "0.10"
 strum = { version = "0.28.0", features = ["derive"] }
+thiserror = "2.0.18"
 
 [features]
 default = []
-serde = ["dep:serde", "dep:serde_with", "rust_decimal/serde"]
+serde = ["dep:serde", "dep:serde_with", "rust_decimal/serde", "secrecy/serde"]
 
 [package.metadata.docs.rs]
 default-target = "x86_64-unknown-linux-gnu"
