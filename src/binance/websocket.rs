@@ -1,21 +1,28 @@
-use crate::binance::{
-    amend::{BinanceAmendOrderParams, BinanceAmendOrderResult},
-    asset_limits::BinanceAssetLimitsParams,
-    cancel::{BinanceCancelAllOrdersParams, BinanceCancelOrderParams, BinanceCancelOrderResult},
-    error::BinanceError,
-    exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
-    logon::{BinanceLogonParams, BinanceSessionAuthenticationResult},
-    rate_limits::BinanceRateLimit,
-    signed::BinanceSignedParams,
-    spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
-    time::{BinanceTimeParams, BinanceTimeResult},
+use crate::{
+    binance::{
+        amend::{BinanceAmendOrderParams, BinanceAmendOrderResult},
+        asset_limits::BinanceAssetLimitsParams,
+        cancel::{
+            BinanceCancelAllOrdersParams, BinanceCancelOrderParams, BinanceCancelOrderResult,
+        },
+        error::BinanceError,
+        exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
+        logon::{BinanceLogonParams, BinanceSessionAuthenticationResult},
+        rate_limits::BinanceRateLimit,
+        signed::BinanceSignedParams,
+        spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
+        time::{BinanceTimeParams, BinanceTimeResult},
+    },
+    error::EncryptResult,
 };
 #[cfg(feature = "serde")]
-use serde::de::Error as DeError;
-#[cfg(feature = "serde")]
-use serde::ser::SerializeStruct;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use {
+    crate::error::ETError,
+    serde::{
+        Deserialize, Deserializer, Serialize, Serializer, de::Error as DeError,
+        ser::SerializeStruct,
+    },
+};
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
@@ -135,6 +142,13 @@ pub enum BinanceWebsocketResponseResult {
     SessionAuthentication(BinanceSessionAuthenticationResult),
     SpotOrder(BinanceSpotOrderResult),
     Time(BinanceTimeResult),
+}
+
+impl BinanceWebsocketRequest {
+    #[cfg(feature = "serde")]
+    pub fn serialize(&self) -> EncryptResult<String> {
+        serde_json::to_string(self).map_err(ETError::SerializeRequest)
+    }
 }
 
 #[cfg(feature = "serde")]
