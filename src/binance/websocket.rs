@@ -14,6 +14,7 @@ use crate::{
         time::{BinanceTimeParams, BinanceTimeResult},
     },
     error::ETResult,
+    rate_limited::RateLimited,
     signer::{IntoSigned, Signer},
 };
 
@@ -135,6 +136,27 @@ pub enum BinanceWebsocketResponseResult {
     SessionAuthentication(BinanceSessionAuthenticationResult),
     SpotOrder(BinanceSpotOrderResult),
     Time(BinanceTimeResult),
+}
+
+impl RateLimited for BinanceWebsocketUnsignedRequest {
+    fn order_count(&self) -> u32 {
+        match self.params {
+            BinanceWebsocketUnsignedParams::SpotOrderRequest(..) => 1,
+            _ => 0,
+        }
+    }
+    fn weight(&self) -> u32 {
+        match self.params {
+            BinanceWebsocketUnsignedParams::AmendOrderRequest(..) => 4,
+            BinanceWebsocketUnsignedParams::AssetLimits(..) => 40,
+            BinanceWebsocketUnsignedParams::CancelAllOrdersRequest(..) => 1,
+            BinanceWebsocketUnsignedParams::CancelOrderRequest(..) => 1,
+            BinanceWebsocketUnsignedParams::ExchangeInfo(..) => 20,
+            BinanceWebsocketUnsignedParams::Logon(..) => 2,
+            BinanceWebsocketUnsignedParams::SpotOrderRequest(..) => 1,
+            BinanceWebsocketUnsignedParams::Time(..) => 1,
+        }
+    }
 }
 
 impl IntoSigned for BinanceWebsocketUnsignedRequest {

@@ -10,4 +10,5 @@ pub mod rate_limits;
 pub mod signature;
 pub mod spot;
 pub mod time;
+pub mod urls;
 pub mod websocket;
