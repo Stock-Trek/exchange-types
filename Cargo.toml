@@ -21,7 +21,7 @@ thiserror = "2.0.18"
 
 [features]
 default = []
-serde = ["dep:serde", "dep:serde_with", "rust_decimal/serde"]
+serde = ["dep:serde", "dep:serde_with", "rust_decimal/serde", "secrecy/serde"]
 
 [package.metadata.docs.rs]
 default-target = "x86_64-unknown-linux-gnu"
