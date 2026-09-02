@@ -1,8 +1,7 @@
 use strum::Display;
 
 pub trait Urls {
-    const NAME: &str;
-
+    fn name(&self) -> &'static str;
     fn url(&self, protocol: Protocol, trading_mode: TradingMode) -> &str;
 }
 
