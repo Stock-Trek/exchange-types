@@ -3,8 +3,9 @@ use crate::urls::{Protocol, TradingMode, Urls};
 pub struct BinanceUrls;
 
 impl Urls for BinanceUrls {
-    const NAME: &str = "BINANCE";
-
+    fn name(&self) -> &'static str {
+        "BINANCE"
+    }
     fn url(&self, protocol: Protocol, trading_mode: TradingMode) -> &str {
         match protocol {
             Protocol::Http => match trading_mode {
