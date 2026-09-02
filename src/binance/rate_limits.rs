@@ -1,4 +1,4 @@
-use crate::rate_limited::{RateLimit, RateLimitRestriction, RateLimits};
+use crate::rate_limited::{RateLimit, RateLimitRestriction, RateLimitType, RateLimits};
 use std::{collections::HashMap, time::Duration};
 use strum::Display;
 
@@ -47,13 +47,33 @@ pub enum BinanceRateLimitType {
 
 pub struct BinanceRateLimits;
 
-impl RateLimits for BinanceRateLimits {
-    type LimitType = BinanceRateLimitType;
+impl BinanceRateLimitInterval {
+    pub fn into_nanos(self) -> i64 {
+        match self {
+            BinanceRateLimitInterval::DAY => 24 * 60 * 60 * 1_000_000_000,
+            BinanceRateLimitInterval::HOUR => 60 * 60 * 1_000_000_000,
+            BinanceRateLimitInterval::MINUTE => 60 * 1_000_000_000,
+            BinanceRateLimitInterval::SECOND => 1_000_000_000,
+        }
+    }
+}
 
-    fn rate_limits(&self) -> HashMap<Self::LimitType, Vec<RateLimit>> {
+impl From<BinanceRateLimitType> for RateLimitType {
+    fn from(value: BinanceRateLimitType) -> Self {
+        match value {
+            BinanceRateLimitType::CONNECTIONS => RateLimitType::Connection,
+            BinanceRateLimitType::ORDERS => RateLimitType::OrderCount,
+            BinanceRateLimitType::RAW_REQUESTS => RateLimitType::RawRequests,
+            BinanceRateLimitType::REQUEST_WEIGHT => RateLimitType::Weight,
+        }
+    }
+}
+
+impl RateLimits for BinanceRateLimits {
+    fn rate_limits(&self) -> HashMap<RateLimitType, Vec<RateLimit>> {
         let mut map = HashMap::new();
         map.insert(
-            BinanceRateLimitType::REQUEST_WEIGHT,
+            RateLimitType::Weight,
             vec![RateLimit {
                 capacity_per_interval: 6000,
                 interval_nanos: Duration::from_mins(1).as_nanos(),
@@ -61,17 +81,17 @@ impl RateLimits for BinanceRateLimits {
             }],
         );
         map.insert(
-            BinanceRateLimitType::ORDERS,
+            RateLimitType::OrderCount,
             vec![
                 RateLimit {
                     capacity_per_interval: 50,
                     interval_nanos: Duration::from_secs(10).as_nanos(),
-                    restriction: RateLimitRestriction::ACCOUNT,
+                    restriction: RateLimitRestriction::Account,
                 },
                 RateLimit {
                     capacity_per_interval: 160_000,
                     interval_nanos: Duration::from_hours(24).as_nanos(),
-                    restriction: RateLimitRestriction::ACCOUNT,
+                    restriction: RateLimitRestriction::Account,
                 },
             ],
         );
