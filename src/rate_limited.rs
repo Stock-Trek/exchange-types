@@ -7,9 +7,7 @@ pub trait RateLimited {
 }
 
 pub trait RateLimits {
-    type LimitType;
-
-    fn rate_limits(&self) -> HashMap<Self::LimitType, Vec<RateLimit>>;
+    fn rate_limits(&self) -> HashMap<RateLimitType, Vec<RateLimit>>;
 }
 
 #[derive(Debug, Clone)]
@@ -22,5 +20,13 @@ pub struct RateLimit {
 #[derive(Debug, Display, Clone, Copy)]
 pub enum RateLimitRestriction {
     IP,
-    ACCOUNT,
+    Account,
+}
+
+#[derive(Debug, Clone, Copy, Display, Hash, PartialEq, Eq)]
+pub enum RateLimitType {
+    Connection,
+    OrderCount,
+    RawRequests,
+    Weight,
 }
