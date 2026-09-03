@@ -203,7 +203,7 @@ mod tests {
     #[test]
     fn serializes_recv_window_as_an_integer() {
         let mut params = params(None);
-        params.recvWindow = Some(BinanceRecvWindow::new(60_000));
+        params.recvWindow = BinanceRecvWindow::try_new(60_000);
         let json = serde_json::to_value(&params).unwrap();
         assert_eq!(json["recvWindow"], 60_000);
         assert!(params.query_params(true).contains("recvWindow=60000"));

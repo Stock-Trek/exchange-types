@@ -5,8 +5,6 @@ use strum::Display;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-pub const BINANCE_DEFAULT_RECV_WINDOW_MILLIS: u64 = 5000;
-
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
