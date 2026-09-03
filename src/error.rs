@@ -6,4 +6,6 @@ pub enum ETError {
     CryptoKey(String),
     #[error("Serialize request error: {0}")]
     SerializeRequest(serde_json::Error),
+    #[error("Deserialize response error: {0}")]
+    DeserializeResponse(serde_json::Error),
 }
