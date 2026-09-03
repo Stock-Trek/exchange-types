@@ -39,9 +39,8 @@ pub enum BinanceHttpUnsignedRequest {
     Time(BinanceTimeParams),
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceHttpRequest {
     pub unsigned: BinanceHttpUnsignedRequest,
@@ -301,6 +300,41 @@ mod tests {
                 ref filters
             )) if filters.is_empty()
         ));
+    }
+
+    #[test]
+    fn success_result_tolerates_unknown_fields() {
+        // Binance adds response fields over time; unknown fields must not
+        // fail parsing.
+        let response = response(
+            200,
+            &[],
+            br#"{"serverTime":1700000000000,"futureField":true}"#,
+        );
+        let response = BinanceHttpResponse::try_from(response).unwrap();
+        match response.payload {
+            BinanceHttpResponsePayload::Success(BinanceHttpResponseResult::Time(result)) => {
+                assert_eq!(result.serverTime, 1700000000000);
+            }
+            other => panic!("expected Time, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn error_payload_tolerates_unknown_fields() {
+        let response = response(
+            400,
+            &[],
+            br#"{"code":-2014,"msg":"API-key format invalid.","extra":true}"#,
+        );
+        let response = BinanceHttpResponse::try_from(response).unwrap();
+        match response.payload {
+            BinanceHttpResponsePayload::Failure(error) => {
+                assert_eq!(error.code, -2014);
+                assert_eq!(error.msg, "API-key format invalid.");
+            }
+            other => panic!("expected Failure, got: {other:?}"),
+        }
     }
 
     #[test]

@@ -7,6 +7,7 @@ pub mod filters;
 pub mod http;
 pub mod logon;
 pub mod rate_limits;
+pub mod recv_window;
 pub mod signature;
 pub mod spot;
 pub mod time;

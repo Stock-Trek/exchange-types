@@ -54,9 +54,8 @@ pub struct BinanceWebsocketRequest {
     pub params: BinanceWebsocketSignedParams,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceWebsocketSignedParams {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -114,11 +113,11 @@ impl BinanceWebsocketUnsignedParams {
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Deserialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone)]
 pub struct BinanceWebsocketResponse {
     pub error: Option<BinanceError>,
     pub id: String,
+    #[cfg_attr(feature = "serde", serde(default))]
     pub rateLimits: Vec<BinanceRateLimit>,
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub result: Option<BinanceWebsocketResponseResult>,
@@ -266,5 +265,38 @@ mod tests {
                 "params": { "apiKey": "api-key", "timestamp": 123, "signature": "signature" },
             })
         );
+    }
+
+    #[test]
+    fn deserializes_response_without_rate_limits() {
+        // Some methods (e.g. session.logout, error responses) omit rateLimits.
+        let response: BinanceWebsocketResponse = serde_json::from_str(
+            r#"{"id":"1","status":200,"result":{"serverTime":1700000000000}}"#,
+        )
+        .unwrap();
+        assert!(response.rateLimits.is_empty());
+        assert!(response.error.is_none());
+    }
+
+    #[test]
+    fn response_tolerates_unknown_fields() {
+        // Binance adds fields over time; unknown fields must not fail parsing.
+        let response: BinanceWebsocketResponse = serde_json::from_str(
+            r#"{"id":"1","status":200,"rateLimits":[],"futureField":true,"result":{"serverTime":1700000000000,"alsoFuture":1}}"#,
+        )
+        .unwrap();
+        assert!(response.rateLimits.is_empty());
+        assert!(response.error.is_none());
+    }
+
+    #[test]
+    fn error_response_tolerates_unknown_fields() {
+        let response: BinanceWebsocketResponse = serde_json::from_str(
+            r#"{"id":"1","status":400,"error":{"code":-2014,"msg":"API-key format invalid.","extra":true}}"#,
+        )
+        .unwrap();
+        let error = response.error.expect("expected an error");
+        assert_eq!(error.code, -2014);
+        assert_eq!(error.msg, "API-key format invalid.");
     }
 }
