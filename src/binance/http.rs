@@ -1,13 +1,13 @@
 use crate::{
     binance::{
         amend::{BinanceAmendOrderParams, BinanceAmendOrderResult},
-        asset_limits::BinanceAssetLimitsParams,
+        asset_limits::{BinanceAssetLimitsParams, BinanceAssetLimitsResult},
         cancel::{
-            BinanceCancelAllOrdersParams, BinanceCancelOrderParams, BinanceCancelOrderResult,
+            BinanceCancelAllOrdersParams, BinanceCancelOrderListResult, BinanceCancelOrderParams,
+            BinanceCancelOrderResult, BinanceCancelReport,
         },
         error::BinanceError,
         exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoResult},
-        filters::BinanceAssetFilter,
         signature::BinanceSignature,
         spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
         time::{BinanceTimeParams, BinanceTimeResult},
@@ -50,6 +50,11 @@ pub struct BinanceHttpRequest {
 
 /// The deserialized body of a Binance REST response: either a successful
 /// result payload or a Binance API error payload (`{"code":…,"msg":…}`).
+///
+/// Response payloads are deserialization targets that are matched once and
+/// then dropped, so the larger `Success` variant is not boxed: boxing would
+/// only add indirection to every consumer's pattern match.
+#[allow(clippy::large_enum_variant)]
 #[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]
@@ -120,14 +125,22 @@ pub struct BinanceHttpResponse {
     pub payload: BinanceHttpResponsePayload,
 }
 
+/// The deserialized result of a Binance REST response.
+///
+/// The variants are ordered so that an untagged payload is matched against
+/// the most specific result shape first, and so that a payload Binance
+/// returns for one request can never be mistaken for another request's
+/// result (e.g. an order-list cancel report has no `origClientOrderId` and
+/// an order cancel report has no `contingencyType`).
 #[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]
 pub enum BinanceHttpResponseResult {
     AmendOrder(BinanceAmendOrderResult),
-    AssetLimits(Vec<BinanceAssetFilter>),
-    CancelAllOrders(Vec<BinanceCancelOrderResult>),
+    AssetLimits(BinanceAssetLimitsResult),
+    CancelAllOrders(Vec<BinanceCancelReport>),
     CancelOrder(BinanceCancelOrderResult),
+    CancelOrderList(BinanceCancelOrderListResult),
     ExchangeInfo(BinanceExchangeInfoResult),
     SpotOrder(BinanceSpotOrderResult),
     Time(BinanceTimeResult),
@@ -266,6 +279,8 @@ impl TryFrom<HttpResponse> for BinanceHttpResponse {
 #[cfg(all(test, feature = "serde"))]
 mod tests {
     use super::*;
+    use crate::binance::spot::BinanceOrderStatus;
+    use serde_json::json;
 
     fn response(status: u16, headers: &[(&str, &str)], body: &[u8]) -> HttpResponse {
         HttpResponse {
@@ -285,7 +300,7 @@ mod tests {
         assert_eq!(response.status, 200);
         match response.payload {
             BinanceHttpResponsePayload::Success(BinanceHttpResponseResult::Time(result)) => {
-                assert_eq!(result.serverTime, 1700000000000);
+                assert_eq!(result.serverTime, 1700000000000_i64);
             }
             other => panic!("expected Time, got: {other:?}"),
         }
@@ -293,14 +308,462 @@ mod tests {
 
     #[test]
     fn any_2xx_http_response_with_result_body_becomes_success() {
-        let response = response(201, &[], br#"[]"#);
+        let body = serde_json::to_vec(&json!({
+            "exchangeFilters": [],
+            "symbolFilters": [],
+            "assetFilters": [
+                {
+                    "filterType": "MAX_ASSET",
+                    "asset": "JPY",
+                    "limit": "1000000.00000000",
+                }
+            ],
+        }))
+        .unwrap();
+        let response = response(201, &[], &body);
         let response = BinanceHttpResponse::try_from(response).unwrap();
-        assert!(matches!(
-            response.payload,
-            BinanceHttpResponsePayload::Success(BinanceHttpResponseResult::AssetLimits(
-                ref filters
-            )) if filters.is_empty()
-        ));
+        match response.payload {
+            BinanceHttpResponsePayload::Success(BinanceHttpResponseResult::AssetLimits(result)) => {
+                assert!(result.exchangeFilters.is_empty());
+                assert!(result.symbolFilters.is_empty());
+                assert_eq!(result.assetFilters.len(), 1);
+            }
+            other => panic!("expected AssetLimits, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_exchange_info_with_a_real_symbol() {
+        // Mirrors the shape Binance returns for every currently listed
+        // symbol, including the trading-capability fields and the open-ended
+        // TRD_GRP_* trading-group permissions.
+        let body = serde_json::to_vec(&json!({
+            "timezone": "UTC",
+            "serverTime": 1700000000000_i64,
+            "rateLimits": [],
+            "exchangeFilters": [],
+            "sors": [
+                {
+                    "baseAsset": "BTC",
+                    "symbols": ["BTCUSDT", "BTCUSDC"],
+                }
+            ],
+            "symbols": [
+                {
+                    "symbol": "BTCUSDT",
+                    "status": "TRADING",
+                    "baseAsset": "BTC",
+                    "baseAssetPrecision": 8,
+                    "quoteAsset": "USDT",
+                    "quotePrecision": 8,
+                    "quoteAssetPrecision": 8,
+                    "baseCommissionPrecision": 8,
+                    "quoteCommissionPrecision": 8,
+                    "orderTypes": ["LIMIT", "MARKET", "STOP_LOSS"],
+                    "icebergAllowed": true,
+                    "ocoAllowed": true,
+                    "otoAllowed": true,
+                    "opoAllowed": true,
+                    "quoteOrderQtyMarketAllowed": true,
+                    "allowTrailingStop": true,
+                    "cancelReplaceAllowed": true,
+                    "amendAllowed": true,
+                    "pegInstructionsAllowed": true,
+                    "isSpotTradingAllowed": true,
+                    "isMarginTradingAllowed": true,
+                    "permissions": [],
+                    "permissionSets": [
+                        ["SPOT", "MARGIN", "TRD_GRP_004", "TRD_GRP_005"],
+                        ["LEVERAGED", "TRD_GRP_049"],
+                    ],
+                    "defaultSelfTradePreventionMode": "NONE",
+                    "allowedSelfTradePreventionModes": [
+                        "EXPIRE_TAKER",
+                        "EXPIRE_MAKER",
+                        "EXPIRE_BOTH",
+                        "NONE",
+                    ],
+                    "filters": [
+                        {
+                            "filterType": "PRICE_FILTER",
+                            "minPrice": "0.01000000",
+                            "maxPrice": "1000000.00000000",
+                            "tickSize": "0.01000000",
+                        },
+                        {
+                            "filterType": "LOT_SIZE",
+                            "minQty": "0.00001000",
+                            "maxQty": "9000.00000000",
+                            "stepSize": "0.00001000",
+                        },
+                    ],
+                }
+            ],
+        }))
+        .unwrap();
+        let response = response(200, &[], &body);
+        let response = BinanceHttpResponse::try_from(response).unwrap();
+        match response.payload {
+            BinanceHttpResponsePayload::Success(BinanceHttpResponseResult::ExchangeInfo(
+                result,
+            )) => {
+                assert_eq!(result.symbols.len(), 1);
+                let symbol = &result.symbols[0];
+                assert!(symbol.icebergAllowed);
+                assert!(symbol.isMarginTradingAllowed);
+                assert_eq!(symbol.permissions.len(), 0);
+                assert_eq!(symbol.permissionSets.len(), 2);
+                assert_eq!(result.sors.as_ref().unwrap().len(), 1);
+            }
+            other => panic!("expected ExchangeInfo, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_order_place_ack_result_and_full_payloads() {
+        // ACK: only the five mandatory fields.
+        let ack = serde_json::to_vec(&json!({
+            "symbol": "BTCUSDT",
+            "orderId": 28,
+            "orderListId": -1,
+            "clientOrderId": "6gCrw2kRUAF9CvJDGP16IP",
+            "transactTime": 1507725176595_i64,
+        }))
+        .unwrap();
+        let parsed = BinanceHttpResponse::try_from(response(200, &[], &ack)).unwrap();
+        match parsed.payload {
+            BinanceHttpResponsePayload::Success(BinanceHttpResponseResult::SpotOrder(result)) => {
+                assert_eq!(result.orderId, 28);
+                assert_eq!(result.orderListId, -1);
+                assert_eq!(result.price, None);
+                assert_eq!(result.status, None);
+            }
+            other => panic!("expected SpotOrder, got: {other:?}"),
+        }
+
+        // RESULT with conditional fields for a trailing stop-loss order.
+        let result = serde_json::to_vec(&json!({
+            "symbol": "BTCUSDT",
+            "orderId": 28,
+            "orderListId": -1,
+            "clientOrderId": "6gCrw2kRUAF9CvJDGP16IP",
+            "transactTime": 1507725176595_i64,
+            "price": "0.00000000",
+            "origQty": "10.00000000",
+            "executedQty": "10.00000000",
+            "origQuoteOrderQty": "0.000000",
+            "cummulativeQuoteQty": "10.00000000",
+            "status": "FILLED",
+            "timeInForce": "GTC",
+            "type": "MARKET",
+            "side": "SELL",
+            "workingTime": 1507725176595_i64,
+            "selfTradePreventionMode": "NONE",
+            "stopPrice": "60000.00000000",
+            "trailingDelta": 5000,
+            "trailingTime": 1507725176000_i64,
+            "icebergQty": "0.00000000",
+            "strategyId": 37463720,
+            "strategyType": 1000000,
+        }))
+        .unwrap();
+        let parsed = BinanceHttpResponse::try_from(response(200, &[], &result)).unwrap();
+        match parsed.payload {
+            BinanceHttpResponsePayload::Success(BinanceHttpResponseResult::SpotOrder(result)) => {
+                assert_eq!(result.status, Some(BinanceOrderStatus::FILLED));
+                assert_eq!(result.strategyId, Some(37463720));
+                assert_eq!(result.strategyType, Some(1000000));
+                assert!(result.fills.is_none());
+            }
+            other => panic!("expected SpotOrder, got: {other:?}"),
+        }
+
+        // FULL: includes fills.
+        let full = serde_json::to_vec(&json!({
+            "symbol": "BTCUSDT",
+            "orderId": 28,
+            "orderListId": -1,
+            "clientOrderId": "6gCrw2kRUAF9CvJDGP16IP",
+            "transactTime": 1507725176595_i64,
+            "price": "0.00000000",
+            "origQty": "10.00000000",
+            "executedQty": "10.00000000",
+            "origQuoteOrderQty": "0.000000",
+            "cummulativeQuoteQty": "10.00000000",
+            "status": "FILLED",
+            "timeInForce": "GTC",
+            "type": "MARKET",
+            "side": "SELL",
+            "workingTime": 1507725176595_i64,
+            "selfTradePreventionMode": "NONE",
+            "fills": [
+                {
+                    "price": "4000.00000000",
+                    "qty": "1.00000000",
+                    "commission": "4.00000000",
+                    "commissionAsset": "USDT",
+                    "tradeId": 56,
+                }
+            ],
+        }))
+        .unwrap();
+        let parsed = BinanceHttpResponse::try_from(response(200, &[], &full)).unwrap();
+        match parsed.payload {
+            BinanceHttpResponsePayload::Success(BinanceHttpResponseResult::SpotOrder(result)) => {
+                assert_eq!(result.fills.as_ref().unwrap().len(), 1);
+                assert_eq!(result.fills.as_ref().unwrap()[0].tradeId, 56);
+            }
+            other => panic!("expected SpotOrder, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_cancel_order_without_working_time() {
+        let body = serde_json::to_vec(&json!({
+            "symbol": "LTCBTC",
+            "origClientOrderId": "myOrder1",
+            "orderId": 4,
+            "orderListId": -1,
+            "clientOrderId": "cancelMyOrder1",
+            "transactTime": 1684804350068_i64,
+            "price": "2.00000000",
+            "origQty": "1.00000000",
+            "executedQty": "0.00000000",
+            "origQuoteOrderQty": "0.000000",
+            "cummulativeQuoteQty": "0.00000000",
+            "status": "CANCELED",
+            "timeInForce": "GTC",
+            "type": "LIMIT",
+            "side": "BUY",
+            "selfTradePreventionMode": "NONE",
+            "strategyId": 37463720,
+            "strategyType": 1000000,
+        }))
+        .unwrap();
+        let response = response(200, &[], &body);
+        let response = BinanceHttpResponse::try_from(response).unwrap();
+        match response.payload {
+            BinanceHttpResponsePayload::Success(BinanceHttpResponseResult::CancelOrder(result)) => {
+                assert_eq!(result.workingTime, None);
+                assert_eq!(result.transactTime, Some(1684804350068_i64));
+                assert_eq!(result.status, BinanceOrderStatus::CANCELED);
+                assert_eq!(result.strategyId, Some(37463720));
+            }
+            other => panic!("expected CancelOrder, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_cancel_order_list_shaped_result() {
+        // DELETE /api/v3/orderList response: an order-list-shaped object with
+        // per-leg order reports and no `origClientOrderId` at the top level.
+        let body = serde_json::to_vec(&json!({
+            "orderListId": 0,
+            "contingencyType": "OCO",
+            "listStatusType": "ALL_DONE",
+            "listOrderStatus": "ALL_DONE",
+            "listClientOrderId": "C3wyj4WVEktd7u9aVBRXcN",
+            "transactionTime": 1574040868128_i64,
+            "symbol": "LTCBTC",
+            "orders": [
+                {
+                    "symbol": "LTCBTC",
+                    "orderId": 2,
+                    "clientOrderId": "pO9ufTiFGg3nw2fOdgeOXa",
+                }
+            ],
+            "orderReports": [
+                {
+                    "symbol": "LTCBTC",
+                    "origClientOrderId": "pO9ufTiFGg3nw2fOdgeOXa",
+                    "orderId": 2,
+                    "orderListId": 0,
+                    "clientOrderId": "unfWT8ig8i0uj6lPuYLez6",
+                    "transactTime": 1688005070874_i64,
+                    "price": "1.00000000",
+                    "origQty": "10.00000000",
+                    "executedQty": "0.00000000",
+                    "origQuoteOrderQty": "0.000000",
+                    "cummulativeQuoteQty": "0.00000000",
+                    "status": "CANCELED",
+                    "timeInForce": "GTC",
+                    "type": "STOP_LOSS_LIMIT",
+                    "side": "SELL",
+                    "stopPrice": "1.00000000",
+                    "selfTradePreventionMode": "NONE",
+                }
+            ],
+        }))
+        .unwrap();
+        let response = response(200, &[], &body);
+        let response = BinanceHttpResponse::try_from(response).unwrap();
+        match response.payload {
+            BinanceHttpResponsePayload::Success(BinanceHttpResponseResult::CancelOrderList(
+                result,
+            )) => {
+                assert_eq!(result.contingencyType, "OCO");
+                assert_eq!(result.orders.len(), 1);
+                assert_eq!(result.orderReports.len(), 1);
+                assert_eq!(result.orderReports[0].symbol, "LTCBTC");
+            }
+            other => panic!("expected CancelOrderList, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_cancel_all_mixed_order_and_order_list_reports() {
+        // DELETE /api/v3/openOrders: an array whose elements are either
+        // individual order reports or, for cancelled order lists, list-shaped
+        // reports.
+        let body = serde_json::to_vec(&json!([
+            {
+                "symbol": "BTCUSDT",
+                "origClientOrderId": "4d96324ff9d44481926157",
+                "orderId": 12569099453_i64,
+                "orderListId": -1,
+                "clientOrderId": "91fe37ce9e69c90d6358c0",
+                "transactTime": 1684804350068_i64,
+                "price": "23416.10000000",
+                "origQty": "0.00847000",
+                "executedQty": "0.00001000",
+                "origQuoteOrderQty": "0.000000",
+                "cummulativeQuoteQty": "0.23416100",
+                "status": "CANCELED",
+                "timeInForce": "GTC",
+                "type": "LIMIT",
+                "side": "SELL",
+                "stopPrice": "0.00000000",
+                "trailingDelta": 0,
+                "trailingTime": -1,
+                "icebergQty": "0.00000000",
+                "strategyId": 37463720,
+                "strategyType": 1000000,
+                "selfTradePreventionMode": "NONE",
+            },
+            {
+                "orderListId": 19431,
+                "contingencyType": "OCO",
+                "listStatusType": "ALL_DONE",
+                "listOrderStatus": "ALL_DONE",
+                "listClientOrderId": "iuVNVJYYrByz6C4yGOPPK0",
+                "transactionTime": 1660803702431_i64,
+                "symbol": "BTCUSDT",
+                "orders": [
+                    {
+                        "symbol": "BTCUSDT",
+                        "orderId": 12569099453_i64,
+                        "clientOrderId": "bX5wROblo6YeDwa9iTLeyY",
+                    }
+                ],
+                "orderReports": [
+                    {
+                        "symbol": "BTCUSDT",
+                        "origClientOrderId": "bX5wROblo6YeDwa9iTLeyY",
+                        "orderId": 12569099453_i64,
+                        "orderListId": 19431,
+                        "clientOrderId": "OFFXQtxVFZ6Nbcg4PgE2DA",
+                        "transactTime": 1684804350068_i64,
+                        "price": "23450.50000000",
+                        "origQty": "0.00850000",
+                        "executedQty": "0.00000000",
+                        "origQuoteOrderQty": "0.000000",
+                        "cummulativeQuoteQty": "0.00000000",
+                        "status": "CANCELED",
+                        "timeInForce": "GTC",
+                        "type": "STOP_LOSS_LIMIT",
+                        "side": "BUY",
+                        "stopPrice": "23430.00000000",
+                        "selfTradePreventionMode": "NONE",
+                    }
+                ],
+            },
+        ]))
+        .unwrap();
+        let response = response(200, &[], &body);
+        let response = BinanceHttpResponse::try_from(response).unwrap();
+        match response.payload {
+            BinanceHttpResponsePayload::Success(BinanceHttpResponseResult::CancelAllOrders(
+                reports,
+            )) => {
+                assert_eq!(reports.len(), 2);
+                match &reports[0] {
+                    BinanceCancelReport::Order(order) => {
+                        assert_eq!(order.orderId, 12569099453_i64);
+                    }
+                    other => panic!("expected Order report, got: {other:?}"),
+                }
+                match &reports[1] {
+                    BinanceCancelReport::OrderList(list) => {
+                        assert_eq!(list.orderListId, 19431);
+                        assert_eq!(list.orderReports.len(), 1);
+                    }
+                    other => panic!("expected OrderList report, got: {other:?}"),
+                }
+            }
+            other => panic!("expected CancelAllOrders, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_my_filters_asset_limits_result() {
+        let body = serde_json::to_vec(&json!({
+            "exchangeFilters": [
+                {
+                    "filterType": "EXCHANGE_MAX_NUM_ORDERS",
+                    "maxNumOrders": 1000,
+                }
+            ],
+            "symbolFilters": [
+                {
+                    "filterType": "MAX_NUM_ORDER_LISTS",
+                    "maxNumOrderLists": 20,
+                }
+            ],
+            "assetFilters": [
+                {
+                    "filterType": "MAX_ASSET",
+                    "asset": "JPY",
+                    "limit": "1000000.00000000",
+                }
+            ],
+        }))
+        .unwrap();
+        let response = response(200, &[], &body);
+        let response = BinanceHttpResponse::try_from(response).unwrap();
+        match response.payload {
+            BinanceHttpResponsePayload::Success(BinanceHttpResponseResult::AssetLimits(result)) => {
+                assert_eq!(result.exchangeFilters.len(), 1);
+                assert_eq!(result.symbolFilters.len(), 1);
+                assert_eq!(result.assetFilters.len(), 1);
+            }
+            other => panic!("expected AssetLimits, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_error_payload_with_extra_data_field() {
+        // Failed cancel-replace responses carry a `data` member describing
+        // which part failed; it must not break error parsing.
+        let body = serde_json::to_vec(&json!({
+            "code": -2022,
+            "msg": "Order cancel-replace failed.",
+            "data": {
+                "cancelResult": "FAILURE",
+                "newOrderResult": "NOT_ATTEMPTED",
+                "cancelResponse": { "code": -2011, "msg": "Unknown order sent." },
+                "newOrderResponse": null,
+            },
+        }))
+        .unwrap();
+        let response = response(400, &[], &body);
+        let response = BinanceHttpResponse::try_from(response).unwrap();
+        match response.payload {
+            BinanceHttpResponsePayload::Failure(error) => {
+                assert_eq!(error.code, -2022);
+                assert_eq!(error.msg, "Order cancel-replace failed.");
+            }
+            other => panic!("expected Failure, got: {other:?}"),
+        }
     }
 
     #[test]

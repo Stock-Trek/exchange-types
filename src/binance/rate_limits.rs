@@ -12,7 +12,6 @@ pub const BINANCE_DEFAULT_RECV_WINDOW_MILLIS: u64 = 5000;
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone)]
 pub struct BinanceRateLimit {

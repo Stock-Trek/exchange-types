@@ -1,4 +1,4 @@
-use crate::binance::exchange_info::BinanceOrderType;
+use crate::{binance::exchange_info::BinanceOrderType, ticker::Ticker};
 use query_params::QueryParams;
 use rust_decimal::Decimal;
 use strum::Display;
@@ -94,7 +94,7 @@ pub enum BinanceTimeInForce {
 
 #[allow(non_camel_case_types)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Display, Clone, Copy)]
+#[derive(Debug, Display, Clone, Copy, PartialEq, Eq)]
 pub enum BinanceOrderStatus {
     CANCELED,
     EXPIRED,
@@ -108,26 +108,58 @@ pub enum BinanceOrderStatus {
     UNKNOWN,
 }
 
+/// A single trade fill reported in an order response. Binance includes
+/// `fills` when an order is placed with `newOrderRespType=FULL`.
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[derive(Debug, Clone)]
+pub struct BinanceFill {
+    pub commission: Decimal,
+    pub commissionAsset: Ticker,
+    pub price: Decimal,
+    pub qty: Decimal,
+    pub tradeId: i64,
+}
+
+/// The response to an order placement (`order.place` / `POST /api/v3/order`).
+///
+/// Binance shapes the payload by `newOrderRespType`:
+/// - `ACK` returns only `symbol`, `orderId`, `orderListId`, `clientOrderId`
+///   and `transactTime`;
+/// - `RESULT` additionally includes the order details;
+/// - `FULL` additionally includes `fills`.
+///
+/// Only the five fields present in every `ACK` payload are mandatory; all
+/// other fields are optional so that any of the three response types parses.
+#[allow(non_snake_case)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone)]
 pub struct BinanceSpotOrderResult {
     pub clientOrderId: String,
-    pub cummulativeQuoteQty: Decimal,
-    pub executedQty: Decimal,
     pub orderId: i64,
     pub orderListId: i32,
-    pub origQty: Decimal,
-    pub origQuoteOrderQty: Decimal,
-    pub price: Decimal,
-    pub selfTradePreventionMode: BinanceSelfTradeProtection,
-    pub side: BinanceSide,
-    pub status: BinanceOrderStatus,
     pub symbol: String,
-    pub timeInForce: BinanceTimeInForce,
     pub transactTime: i64,
+    pub cummulativeQuoteQty: Option<Decimal>,
+    pub executedQty: Option<Decimal>,
+    pub fills: Option<Vec<BinanceFill>>,
+    pub icebergQty: Option<Decimal>,
+    pub origQty: Option<Decimal>,
+    pub origQuoteOrderQty: Option<Decimal>,
+    pub preventedMatchId: Option<i64>,
+    pub preventedQuantity: Option<Decimal>,
+    pub price: Option<Decimal>,
+    pub selfTradePreventionMode: Option<BinanceSelfTradeProtection>,
+    pub side: Option<BinanceSide>,
+    pub status: Option<BinanceOrderStatus>,
+    pub stopPrice: Option<Decimal>,
+    pub strategyId: Option<i64>,
+    pub strategyType: Option<i32>,
+    pub timeInForce: Option<BinanceTimeInForce>,
+    pub trailingDelta: Option<i64>,
+    pub trailingTime: Option<i64>,
     #[cfg_attr(feature = "serde", serde(rename = "type"))]
-    pub r#type: BinanceOrderType,
-    pub workingTime: i64,
+    pub r#type: Option<BinanceOrderType>,
+    pub workingTime: Option<i64>,
 }
