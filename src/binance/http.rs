@@ -20,7 +20,9 @@ use crate::{
 
 #[cfg(feature = "serde")]
 use {
+    crate::http::HttpResponse,
     serde::{Deserialize, Serialize},
+    serde_json,
     serde_with::skip_serializing_none,
 };
 
@@ -156,6 +158,89 @@ impl From<BinanceHttpRequest> for HttpRequest {
             query,
             headers,
             body,
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl From<HttpResponse> for BinanceHttpResponse {
+    fn from(value: HttpResponse) -> Self {
+        serde_json::from_slice(&value.body).unwrap_or_else(|_| {
+            // The body is not a Binance result or error JSON payload (e.g. an
+            // HTML page from an intermediary proxy). Surface it as a failure
+            // carrying the HTTP status and the raw body so nothing is lost.
+            BinanceHttpResponse::Failure(BinanceError {
+                code: i64::from(value.status),
+                msg: String::from_utf8_lossy(&value.body).into_owned(),
+            })
+        })
+    }
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod tests {
+    use super::*;
+
+    fn response(status: u16, body: &[u8]) -> HttpResponse {
+        HttpResponse {
+            status,
+            headers: vec![],
+            body: body.to_vec(),
+        }
+    }
+
+    #[test]
+    fn http_response_with_result_body_becomes_success() {
+        let response = response(200, br#"{"serverTime":1700000000000}"#);
+        match BinanceHttpResponse::from(response) {
+            BinanceHttpResponse::Success(BinanceHttpResponseResult::Time(result)) => {
+                assert_eq!(result.serverTime, 1700000000000);
+            }
+            other => panic!("expected Time, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn any_2xx_http_response_with_result_body_becomes_success() {
+        let response = response(201, br#"[]"#);
+        assert!(matches!(
+            BinanceHttpResponse::from(response),
+            BinanceHttpResponse::Success(BinanceHttpResponseResult::AssetLimits(ref filters))
+                if filters.is_empty()
+        ));
+    }
+
+    #[test]
+    fn http_response_with_error_body_becomes_failure_regardless_of_status() {
+        // Binance reports API errors with a 4xx status...
+        let http_response = response(400, br#"{"code":-2014,"msg":"API-key format invalid."}"#);
+        match BinanceHttpResponse::from(http_response) {
+            BinanceHttpResponse::Failure(error) => {
+                assert_eq!(error.code, -2014);
+                assert_eq!(error.msg, "API-key format invalid.");
+            }
+            other => panic!("expected Failure, got: {other:?}"),
+        }
+        // ...and sometimes with a 2xx status, which must still be a failure.
+        let http_response = response(200, br#"{"code":-2015,"msg":"Invalid API-key."}"#);
+        match BinanceHttpResponse::from(http_response) {
+            BinanceHttpResponse::Failure(error) => {
+                assert_eq!(error.code, -2015);
+                assert_eq!(error.msg, "Invalid API-key.");
+            }
+            other => panic!("expected Failure, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn undecodable_body_becomes_failure_carrying_status_and_body() {
+        let response = response(502, b"<html>Bad Gateway</html>");
+        match BinanceHttpResponse::from(response) {
+            BinanceHttpResponse::Failure(error) => {
+                assert_eq!(error.code, 502);
+                assert_eq!(error.msg, "<html>Bad Gateway</html>");
+            }
+            other => panic!("expected Failure, got: {other:?}"),
         }
     }
 }
