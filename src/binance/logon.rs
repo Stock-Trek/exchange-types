@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceLogonParams {
     pub timestamp: i64,

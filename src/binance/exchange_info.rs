@@ -9,11 +9,13 @@ use crate::{
 use strum::Display;
 
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use {
+    serde::{Deserialize, Serialize},
+    serde_with::skip_serializing_none,
+};
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[derive(Debug, Clone, Hash)]
 pub struct BinanceExchangeInfoParams {
     pub permissions: Vec<BinanceExchangeInfoPermission>,
@@ -22,6 +24,7 @@ pub struct BinanceExchangeInfoParams {
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(non_camel_case_types)]
 pub enum BinanceExchangeInfoPermission {
     LEVERAGED,
     MARGIN,
@@ -34,8 +37,23 @@ pub enum BinanceExchangeInfoPermission {
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceExchangeInfoSymbolStatus {
     TRADING,
+    HALT,
+    BREAK,
     #[cfg_attr(feature = "serde", serde(other))]
     Unknown,
+}
+
+#[allow(non_snake_case)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", skip_serializing_none)]
+#[derive(Debug, Clone)]
+pub struct BinanceExchangeInfoResult {
+    pub exchangeFilters: Vec<BinanceExchangeFilter>,
+    pub rateLimits: Vec<BinanceRateLimit>,
+    pub serverTime: i64,
+    pub sors: Option<Vec<BinanceExchangeInfoSors>>,
+    pub symbols: Vec<BinanceExchangeInfoSymbol>,
+    pub timezone: String,
 }
 
 #[allow(non_snake_case)]
@@ -44,22 +62,6 @@ pub enum BinanceExchangeInfoSymbolStatus {
 pub struct BinanceExchangeInfoSors {
     pub baseAsset: Ticker,
     pub symbols: Vec<Ticker>,
-}
-
-#[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Clone)]
-pub struct BinanceExchangeInfoResult {
-    pub exchangeFilters: Vec<BinanceExchangeFilter>,
-    pub rateLimits: Vec<BinanceRateLimit>,
-    pub serverTime: i64,
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
-    pub sors: Option<Vec<BinanceExchangeInfoSors>>,
-    pub symbols: Vec<BinanceExchangeInfoSymbol>,
-    pub timezone: String,
 }
 
 #[allow(non_snake_case)]
@@ -123,5 +125,64 @@ impl BinanceExchangeInfoParams {
         }
         pairs.push(format!("symbolStatus={}", self.symbolStatus));
         pairs.join("&")
+    }
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn serializes_the_permissions_and_symbol_status_filter() {
+        let params = BinanceExchangeInfoParams {
+            permissions: vec![
+                BinanceExchangeInfoPermission::SPOT,
+                BinanceExchangeInfoPermission::MARGIN,
+                BinanceExchangeInfoPermission::LEVERAGED,
+            ],
+            symbolStatus: BinanceExchangeInfoSymbolStatus::HALT,
+        };
+        assert_eq!(
+            params.query_params(),
+            "permissions=SPOT,MARGIN,LEVERAGED&symbolStatus=HALT"
+        );
+    }
+
+    #[test]
+    fn recognizes_documented_permissions_and_symbol_statuses() {
+        for permission in [
+            BinanceExchangeInfoPermission::SPOT,
+            BinanceExchangeInfoPermission::MARGIN,
+            BinanceExchangeInfoPermission::LEVERAGED,
+        ] {
+            let json = serde_json::to_string(&permission).unwrap();
+            assert_eq!(
+                serde_json::from_str::<BinanceExchangeInfoPermission>(&json).unwrap(),
+                permission
+            );
+        }
+        for status in [
+            BinanceExchangeInfoSymbolStatus::TRADING,
+            BinanceExchangeInfoSymbolStatus::HALT,
+            BinanceExchangeInfoSymbolStatus::BREAK,
+        ] {
+            let json = serde_json::to_string(&status).unwrap();
+            assert_eq!(
+                serde_json::from_str::<BinanceExchangeInfoSymbolStatus>(&json).unwrap(),
+                status
+            );
+        }
+    }
+
+    #[test]
+    fn unknown_enum_values_deserialize_as_unknown() {
+        let permission: BinanceExchangeInfoPermission =
+            serde_json::from_str(r#""FUTURE_PERMISSION""#).unwrap();
+        assert!(matches!(permission, BinanceExchangeInfoPermission::Unknown));
+        let status: BinanceExchangeInfoSymbolStatus =
+            serde_json::from_str(r#""PRE_TRADING""#).unwrap();
+        assert!(matches!(status, BinanceExchangeInfoSymbolStatus::Unknown));
+        let order_type: BinanceOrderType = serde_json::from_str(r#""FUTURE_ORDER_TYPE""#).unwrap();
+        assert!(matches!(order_type, BinanceOrderType::Unknown));
     }
 }

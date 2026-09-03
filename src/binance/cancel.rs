@@ -1,5 +1,6 @@
 use crate::binance::{
     exchange_info::BinanceOrderType,
+    recv_window::BinanceRecvWindow,
     spot::{BinanceOrderStatus, BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce},
 };
 use query_params::QueryParams;
@@ -13,27 +14,25 @@ use {
 };
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceCancelAllOrdersParams {
-    pub recvWindow: Option<Decimal>,
+    pub recvWindow: Option<BinanceRecvWindow>,
     pub symbol: String,
     pub timestamp: i64,
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceCancelOrderParams {
     pub cancelRestrictions: Option<BinanceCancelRestrictions>,
     pub newClientOrderId: Option<String>,
     pub orderId: Option<i64>,
     pub origClientOrderId: Option<String>,
-    pub recvWindow: Option<Decimal>,
+    pub recvWindow: Option<BinanceRecvWindow>,
     pub symbol: String,
     pub timestamp: i64,
 }
@@ -114,4 +113,16 @@ pub struct BinanceCancelOrderListResult {
 pub enum BinanceCancelReport {
     Order(BinanceCancelOrderResult),
     OrderList(BinanceCancelOrderListResult),
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unknown_cancel_restrictions_deserialize_as_unknown() {
+        let restrictions: BinanceCancelRestrictions =
+            serde_json::from_str(r#""FUTURE_RESTRICTION""#).unwrap();
+        assert!(matches!(restrictions, BinanceCancelRestrictions::Unknown));
+    }
 }

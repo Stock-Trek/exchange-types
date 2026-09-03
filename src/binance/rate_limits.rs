@@ -8,17 +8,11 @@ use {
     serde_with::skip_serializing_none,
 };
 
-pub const BINANCE_DEFAULT_RECV_WINDOW_MILLIS: u64 = 5000;
-
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone)]
 pub struct BinanceRateLimit {
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
     pub count: Option<i64>,
     pub interval: BinanceRateLimitInterval,
     pub intervalNum: i32,
@@ -107,5 +101,19 @@ impl RateLimits for BinanceRateLimits {
             ],
         );
         map
+    }
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unknown_rate_limit_enums_deserialize_as_unknown() {
+        let interval: BinanceRateLimitInterval = serde_json::from_str(r#""FORTNIGHT""#).unwrap();
+        assert!(matches!(interval, BinanceRateLimitInterval::Unknown));
+        let rate_limit_type: BinanceRateLimitType =
+            serde_json::from_str(r#""FUTURE_TYPE""#).unwrap();
+        assert!(matches!(rate_limit_type, BinanceRateLimitType::Unknown));
     }
 }
