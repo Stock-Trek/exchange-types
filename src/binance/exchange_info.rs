@@ -2,6 +2,7 @@ use crate::{
     binance::{
         filters::{BinanceExchangeFilter, BinanceSymbolFilter},
         rate_limits::BinanceRateLimit,
+        spot::BinanceSelfTradeProtection,
     },
     ticker::Ticker,
 };
@@ -11,7 +12,7 @@ use strum::Display;
 use serde::{Deserialize, Serialize};
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash)]
 pub struct BinanceExchangeInfoParams {
     pub permissions: Vec<BinanceExchangeInfoPermission>,
@@ -22,68 +23,64 @@ pub struct BinanceExchangeInfoParams {
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 #[allow(non_camel_case_types)]
 pub enum BinanceExchangeInfoPermission {
-    SPOT,
-    MARGIN,
     LEVERAGED,
-    TRD_GRP_002,
-    TRD_GRP_003,
-    TRD_GRP_004,
-    TRD_GRP_005,
-    TRD_GRP_006,
-    TRD_GRP_007,
-    TRD_GRP_008,
-    TRD_GRP_009,
-    TRD_GRP_010,
-    TRD_GRP_011,
-    TRD_GRP_012,
-    TRD_GRP_013,
-    TRD_GRP_014,
-    TRD_GRP_015,
-    TRD_GRP_016,
-    TRD_GRP_017,
-    TRD_GRP_018,
-    TRD_GRP_019,
-    TRD_GRP_020,
-    TRD_GRP_021,
-    TRD_GRP_022,
-    TRD_GRP_023,
-    TRD_GRP_024,
-    TRD_GRP_025,
+    MARGIN,
+    SPOT,
     #[cfg_attr(feature = "serde", serde(other))]
     Unknown,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceExchangeInfoSymbolStatus {
     TRADING,
     HALT,
     BREAK,
-    #[cfg_attr(feature = "serde", serde(other))]
-    Unknown,
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceExchangeInfoResult {
     pub exchangeFilters: Vec<BinanceExchangeFilter>,
     pub rateLimits: Vec<BinanceRateLimit>,
     pub serverTime: i64,
+    pub sors: Option<Vec<BinanceExchangeInfoSors>>,
     pub symbols: Vec<BinanceExchangeInfoSymbol>,
     pub timezone: String,
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
+#[derive(Debug, Clone)]
+pub struct BinanceExchangeInfoSors {
+    pub baseAsset: Ticker,
+    pub symbols: Vec<Ticker>,
+}
+
+#[allow(non_snake_case)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceExchangeInfoSymbol {
+    pub allowTrailingStop: bool,
+    pub allowedSelfTradePreventionModes: Vec<BinanceSelfTradeProtection>,
+    pub amendAllowed: bool,
     pub baseAsset: Ticker,
     pub baseAssetPrecision: u8,
     pub baseCommissionPrecision: u8,
+    pub cancelReplaceAllowed: bool,
+    pub defaultSelfTradePreventionMode: BinanceSelfTradeProtection,
     pub filters: Vec<BinanceSymbolFilter>,
+    pub icebergAllowed: bool,
+    pub isMarginTradingAllowed: bool,
     pub isSpotTradingAllowed: bool,
+    pub ocoAllowed: bool,
+    pub opoAllowed: bool,
     pub orderTypes: Vec<BinanceOrderType>,
+    pub otoAllowed: bool,
+    pub pegInstructionsAllowed: bool,
+    pub permissionSets: Vec<Vec<BinanceExchangeInfoPermission>>,
+    pub permissions: Vec<BinanceExchangeInfoPermission>,
     pub quoteAsset: Ticker,
     pub quoteAssetPrecision: u8,
     pub quoteCommissionPrecision: u8,
@@ -151,24 +148,11 @@ mod tests {
             BinanceExchangeInfoPermission::SPOT,
             BinanceExchangeInfoPermission::MARGIN,
             BinanceExchangeInfoPermission::LEVERAGED,
-            BinanceExchangeInfoPermission::TRD_GRP_002,
-            BinanceExchangeInfoPermission::TRD_GRP_025,
         ] {
             let json = serde_json::to_string(&permission).unwrap();
             assert_eq!(
                 serde_json::from_str::<BinanceExchangeInfoPermission>(&json).unwrap(),
                 permission
-            );
-        }
-        for status in [
-            BinanceExchangeInfoSymbolStatus::TRADING,
-            BinanceExchangeInfoSymbolStatus::HALT,
-            BinanceExchangeInfoSymbolStatus::BREAK,
-        ] {
-            let json = serde_json::to_string(&status).unwrap();
-            assert_eq!(
-                serde_json::from_str::<BinanceExchangeInfoSymbolStatus>(&json).unwrap(),
-                status
             );
         }
     }
@@ -178,9 +162,6 @@ mod tests {
         let permission: BinanceExchangeInfoPermission =
             serde_json::from_str(r#""FUTURE_PERMISSION""#).unwrap();
         assert!(matches!(permission, BinanceExchangeInfoPermission::Unknown));
-        let status: BinanceExchangeInfoSymbolStatus =
-            serde_json::from_str(r#""PRE_TRADING""#).unwrap();
-        assert!(matches!(status, BinanceExchangeInfoSymbolStatus::Unknown));
         let order_type: BinanceOrderType = serde_json::from_str(r#""FUTURE_ORDER_TYPE""#).unwrap();
         assert!(matches!(order_type, BinanceOrderType::Unknown));
     }

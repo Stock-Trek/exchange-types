@@ -1,4 +1,7 @@
-use crate::binance::{exchange_info::BinanceOrderType, recv_window::BinanceRecvWindow};
+use crate::{
+    binance::{exchange_info::BinanceOrderType, recv_window::BinanceRecvWindow},
+    ticker::Ticker,
+};
 use query_params::QueryParams;
 use rust_decimal::Decimal;
 use strum::Display;
@@ -11,7 +14,7 @@ use {
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceSpotOrderParams {
     pub icebergQty: Option<Decimal>,
@@ -38,41 +41,27 @@ pub struct BinanceSpotOrderParams {
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceNewOrderResponseType {
     ACK,
     RESULT,
     FULL,
-    #[cfg_attr(feature = "serde", serde(other))]
-    Unknown,
-}
-
-impl Default for BinanceNewOrderResponseType {
-    /// The `newOrderRespType` Binance applies when the parameter is omitted:
-    /// `FULL` for `MARKET`/`LIMIT` orders.
-    fn default() -> Self {
-        Self::FULL
-    }
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Display, Clone, Copy, Hash)]
 pub enum BinancePegPriceType {
     PRIMARY_PEG,
     MARKET_PEG,
-    #[cfg_attr(feature = "serde", serde(other))]
-    Unknown,
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Display, Clone, Copy, Hash)]
 pub enum BinancePegOffsetType {
     PRICE_LEVEL,
-    #[cfg_attr(feature = "serde", serde(other))]
-    Unknown,
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -95,7 +84,7 @@ pub enum BinanceSelfTradeProtection {
     NONE,
     TRANSFER,
     #[cfg_attr(feature = "serde", serde(other))]
-    UNKNOWN,
+    Unknown,
 }
 
 #[allow(non_camel_case_types)]
@@ -110,8 +99,8 @@ pub enum BinanceTimeInForce {
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Display, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
+#[derive(Debug, Display, Clone, Copy, PartialEq, Eq)]
 pub enum BinanceOrderStatus {
     CANCELED,
     EXPIRED,
@@ -122,30 +111,51 @@ pub enum BinanceOrderStatus {
     PENDING_CANCEL,
     REJECTED,
     #[cfg_attr(feature = "serde", serde(other))]
-    UNKNOWN,
+    Unknown,
+}
+
+#[allow(non_snake_case)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
+#[cfg_attr(feature = "serde", skip_serializing_none)]
+#[derive(Debug, Clone)]
+pub struct BinanceSpotOrderResult {
+    pub clientOrderId: String,
+    pub cummulativeQuoteQty: Option<Decimal>,
+    pub executedQty: Option<Decimal>,
+    pub fills: Option<Vec<BinanceFill>>,
+    pub icebergQty: Option<Decimal>,
+    pub orderId: i64,
+    pub orderListId: i32,
+    pub origQty: Option<Decimal>,
+    pub origQuoteOrderQty: Option<Decimal>,
+    pub preventedMatchId: Option<i64>,
+    pub preventedQuantity: Option<Decimal>,
+    pub price: Option<Decimal>,
+    pub selfTradePreventionMode: Option<BinanceSelfTradeProtection>,
+    pub side: Option<BinanceSide>,
+    pub status: Option<BinanceOrderStatus>,
+    pub stopPrice: Option<Decimal>,
+    pub strategyId: Option<i64>,
+    pub strategyType: Option<i32>,
+    pub symbol: String,
+    pub timeInForce: Option<BinanceTimeInForce>,
+    pub trailingDelta: Option<i64>,
+    pub trailingTime: Option<i64>,
+    pub transactTime: i64,
+    #[cfg_attr(feature = "serde", serde(rename = "type"))]
+    pub r#type: Option<BinanceOrderType>,
+    pub workingTime: Option<i64>,
 }
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
-pub struct BinanceSpotOrderResult {
-    pub clientOrderId: String,
-    pub cummulativeQuoteQty: Decimal,
-    pub executedQty: Decimal,
-    pub orderId: i64,
-    pub orderListId: i32,
-    pub origQty: Decimal,
-    pub origQuoteOrderQty: Decimal,
+pub struct BinanceFill {
+    pub commission: Decimal,
+    pub commissionAsset: Ticker,
     pub price: Decimal,
-    pub selfTradePreventionMode: BinanceSelfTradeProtection,
-    pub side: BinanceSide,
-    pub status: BinanceOrderStatus,
-    pub symbol: String,
-    pub timeInForce: BinanceTimeInForce,
-    pub transactTime: i64,
-    #[cfg_attr(feature = "serde", serde(rename = "type"))]
-    pub r#type: BinanceOrderType,
-    pub workingTime: i64,
+    pub qty: Decimal,
+    pub tradeId: i64,
 }
 
 #[cfg(all(test, feature = "serde"))]
@@ -203,14 +213,6 @@ mod tests {
     }
 
     #[test]
-    fn defaults_to_the_documented_full_response_type() {
-        assert_eq!(
-            BinanceNewOrderResponseType::default(),
-            BinanceNewOrderResponseType::FULL
-        );
-    }
-
-    #[test]
     fn serializes_recv_window_as_an_integer() {
         let mut params = params(None);
         params.recvWindow = BinanceRecvWindow::try_new(60_000);
@@ -225,16 +227,5 @@ mod tests {
         assert!(matches!(side, BinanceSide::Unknown));
         let time_in_force: BinanceTimeInForce = serde_json::from_str(r#""FUTURE_TIF""#).unwrap();
         assert!(matches!(time_in_force, BinanceTimeInForce::Unknown));
-        let response_type: BinanceNewOrderResponseType =
-            serde_json::from_str(r#""FUTURE_RESP""#).unwrap();
-        assert!(matches!(
-            response_type,
-            BinanceNewOrderResponseType::Unknown
-        ));
-        let peg_price_type: BinancePegPriceType = serde_json::from_str(r#""FUTURE_PEG""#).unwrap();
-        assert!(matches!(peg_price_type, BinancePegPriceType::Unknown));
-        let peg_offset_type: BinancePegOffsetType =
-            serde_json::from_str(r#""FUTURE_OFFSET""#).unwrap();
-        assert!(matches!(peg_offset_type, BinancePegOffsetType::Unknown));
     }
 }

@@ -2,9 +2,9 @@ use crate::ticker::Ticker;
 use rust_decimal::Decimal;
 
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", serde(tag = "filterType"))]
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, non_camel_case_types)]
@@ -25,7 +25,7 @@ pub enum BinanceExchangeFilter {
     Unknown,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", serde(tag = "filterType"))]
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, non_camel_case_types)]
@@ -100,7 +100,7 @@ pub enum BinanceSymbolFilter {
     Unknown,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", serde(tag = "filterType"))]
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, non_camel_case_types)]

@@ -3,16 +3,12 @@ use std::{collections::HashMap, time::Duration};
 use strum::Display;
 
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceRateLimit {
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
     pub count: Option<i64>,
     pub interval: BinanceRateLimitInterval,
     pub intervalNum: i32,
@@ -21,7 +17,7 @@ pub struct BinanceRateLimit {
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone, Copy, Display)]
 pub enum BinanceRateLimitInterval {
     DAY,
@@ -33,7 +29,7 @@ pub enum BinanceRateLimitInterval {
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone, Copy, Display, Hash, PartialEq, Eq)]
 pub enum BinanceRateLimitType {
     CONNECTIONS,
