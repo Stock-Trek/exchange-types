@@ -1,5 +1,5 @@
+use crate::binance::recv_window::BinanceRecvWindow;
 use query_params::QueryParams;
-use rust_decimal::Decimal;
 
 #[cfg(feature = "serde")]
 use {
@@ -8,12 +8,11 @@ use {
 };
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceAssetLimitsParams {
-    pub recvWindow: Option<Decimal>,
+    pub recvWindow: Option<BinanceRecvWindow>,
     pub symbol: String,
     pub timestamp: i64,
 }
