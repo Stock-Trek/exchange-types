@@ -43,6 +43,8 @@ pub struct BinanceCancelOrderParams {
 pub enum BinanceCancelRestrictions {
     ONLY_NEW,
     ONLY_PARTIALLY_FILLED,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[allow(non_snake_case)]
@@ -67,4 +69,16 @@ pub struct BinanceCancelOrderResult {
     #[cfg_attr(feature = "serde", serde(rename = "type"))]
     pub r#type: BinanceOrderType,
     pub workingTime: i64,
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unknown_cancel_restrictions_deserialize_as_unknown() {
+        let restrictions: BinanceCancelRestrictions =
+            serde_json::from_str(r#""FUTURE_RESTRICTION""#).unwrap();
+        assert!(matches!(restrictions, BinanceCancelRestrictions::Unknown));
+    }
 }

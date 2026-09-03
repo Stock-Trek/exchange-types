@@ -49,6 +49,8 @@ pub enum BinanceExchangeInfoPermission {
     TRD_GRP_023,
     TRD_GRP_024,
     TRD_GRP_025,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -57,6 +59,8 @@ pub enum BinanceExchangeInfoSymbolStatus {
     TRADING,
     HALT,
     BREAK,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[allow(non_snake_case)]
@@ -100,6 +104,8 @@ pub enum BinanceOrderType {
     STOP_LOSS_LIMIT,
     TAKE_PROFIT,
     TAKE_PROFIT_LIMIT,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 impl BinanceExchangeInfoParams {
@@ -165,5 +171,17 @@ mod tests {
                 status
             );
         }
+    }
+
+    #[test]
+    fn unknown_enum_values_deserialize_as_unknown() {
+        let permission: BinanceExchangeInfoPermission =
+            serde_json::from_str(r#""FUTURE_PERMISSION""#).unwrap();
+        assert!(matches!(permission, BinanceExchangeInfoPermission::Unknown));
+        let status: BinanceExchangeInfoSymbolStatus =
+            serde_json::from_str(r#""PRE_TRADING""#).unwrap();
+        assert!(matches!(status, BinanceExchangeInfoSymbolStatus::Unknown));
+        let order_type: BinanceOrderType = serde_json::from_str(r#""FUTURE_ORDER_TYPE""#).unwrap();
+        assert!(matches!(order_type, BinanceOrderType::Unknown));
     }
 }

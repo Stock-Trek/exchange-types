@@ -46,6 +46,8 @@ pub enum BinanceWebsocketMethodName {
     PlaceOrder,
     #[cfg_attr(feature = "serde", serde(rename = "time"))]
     Time,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[derive(Debug, Clone)]
@@ -298,5 +300,12 @@ mod tests {
         let error = response.error.expect("expected an error");
         assert_eq!(error.code, -2014);
         assert_eq!(error.msg, "API-key format invalid.");
+    }
+
+    #[test]
+    fn unknown_method_name_deserializes_as_unknown() {
+        let method: BinanceWebsocketMethodName =
+            serde_json::from_str(r#""future.method""#).unwrap();
+        assert!(matches!(method, BinanceWebsocketMethodName::Unknown));
     }
 }

@@ -28,6 +28,8 @@ pub enum BinanceRateLimitInterval {
     HOUR,
     MINUTE,
     SECOND,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[allow(non_camel_case_types)]
@@ -38,6 +40,8 @@ pub enum BinanceRateLimitType {
     ORDERS,
     RAW_REQUESTS,
     REQUEST_WEIGHT,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 pub struct BinanceRateLimits;
@@ -49,6 +53,9 @@ impl BinanceRateLimitInterval {
             BinanceRateLimitInterval::HOUR => 60 * 60 * 1_000_000_000,
             BinanceRateLimitInterval::MINUTE => 60 * 1_000_000_000,
             BinanceRateLimitInterval::SECOND => 1_000_000_000,
+            BinanceRateLimitInterval::Unknown => {
+                panic!("unsupported Binance rate limit interval: {self}")
+            }
         }
     }
 }
@@ -60,6 +67,9 @@ impl From<BinanceRateLimitType> for RateLimitType {
             BinanceRateLimitType::ORDERS => RateLimitType::OrderCount,
             BinanceRateLimitType::RAW_REQUESTS => RateLimitType::RawRequests,
             BinanceRateLimitType::REQUEST_WEIGHT => RateLimitType::Weight,
+            BinanceRateLimitType::Unknown => {
+                panic!("unsupported Binance rate limit type: {value}")
+            }
         }
     }
 }
@@ -91,5 +101,19 @@ impl RateLimits for BinanceRateLimits {
             ],
         );
         map
+    }
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unknown_rate_limit_enums_deserialize_as_unknown() {
+        let interval: BinanceRateLimitInterval = serde_json::from_str(r#""FORTNIGHT""#).unwrap();
+        assert!(matches!(interval, BinanceRateLimitInterval::Unknown));
+        let rate_limit_type: BinanceRateLimitType =
+            serde_json::from_str(r#""FUTURE_TYPE""#).unwrap();
+        assert!(matches!(rate_limit_type, BinanceRateLimitType::Unknown));
     }
 }

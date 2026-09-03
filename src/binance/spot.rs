@@ -44,6 +44,8 @@ pub enum BinanceNewOrderResponseType {
     ACK,
     RESULT,
     FULL,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 impl Default for BinanceNewOrderResponseType {
@@ -60,6 +62,8 @@ impl Default for BinanceNewOrderResponseType {
 pub enum BinancePegPriceType {
     PRIMARY_PEG,
     MARKET_PEG,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[allow(non_camel_case_types)]
@@ -67,6 +71,8 @@ pub enum BinancePegPriceType {
 #[derive(Debug, Display, Clone, Copy, Hash)]
 pub enum BinancePegOffsetType {
     PRICE_LEVEL,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -74,6 +80,8 @@ pub enum BinancePegOffsetType {
 pub enum BinanceSide {
     BUY,
     SELL,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[allow(non_camel_case_types)]
@@ -97,6 +105,8 @@ pub enum BinanceTimeInForce {
     FOK,
     GTC,
     IOC,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[allow(non_camel_case_types)]
@@ -207,5 +217,24 @@ mod tests {
         let json = serde_json::to_value(&params).unwrap();
         assert_eq!(json["recvWindow"], 60_000);
         assert!(params.query_params(true).contains("recvWindow=60000"));
+    }
+
+    #[test]
+    fn unknown_enum_values_deserialize_as_unknown() {
+        let side: BinanceSide = serde_json::from_str(r#""FUTURE_SIDE""#).unwrap();
+        assert!(matches!(side, BinanceSide::Unknown));
+        let time_in_force: BinanceTimeInForce = serde_json::from_str(r#""FUTURE_TIF""#).unwrap();
+        assert!(matches!(time_in_force, BinanceTimeInForce::Unknown));
+        let response_type: BinanceNewOrderResponseType =
+            serde_json::from_str(r#""FUTURE_RESP""#).unwrap();
+        assert!(matches!(
+            response_type,
+            BinanceNewOrderResponseType::Unknown
+        ));
+        let peg_price_type: BinancePegPriceType = serde_json::from_str(r#""FUTURE_PEG""#).unwrap();
+        assert!(matches!(peg_price_type, BinancePegPriceType::Unknown));
+        let peg_offset_type: BinancePegOffsetType =
+            serde_json::from_str(r#""FUTURE_OFFSET""#).unwrap();
+        assert!(matches!(peg_offset_type, BinancePegOffsetType::Unknown));
     }
 }
