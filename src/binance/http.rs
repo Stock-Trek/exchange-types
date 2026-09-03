@@ -12,7 +12,7 @@ use crate::{
         spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
         time::{BinanceTimeParams, BinanceTimeResult},
     },
-    error::{ETError, ETResult},
+    error::ETResult,
     http::{HttpMethod, HttpRequest},
     rate_limited::RateLimited,
     signer::{IntoSigned, Signer},
@@ -20,7 +20,7 @@ use crate::{
 
 #[cfg(feature = "serde")]
 use {
-    crate::http::HttpResponse,
+    crate::{error::ETError, http::HttpResponse},
     serde::{Deserialize, Serialize},
     serde_json,
     serde_with::skip_serializing_none,
@@ -92,6 +92,7 @@ pub struct BinanceHttpResponseHeaders {
 impl BinanceHttpResponseHeaders {
     /// Parses the Binance rate-limit usage headers out of an HTTP response's
     /// headers. Header names are matched case-insensitively.
+    #[cfg(feature = "serde")]
     fn parse(headers: &[(String, String)]) -> Self {
         let mut parsed = Self::default();
         for (name, value) in headers {
