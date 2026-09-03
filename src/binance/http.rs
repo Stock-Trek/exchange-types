@@ -12,7 +12,7 @@ use crate::{
         spot::{BinanceSpotOrderParams, BinanceSpotOrderResult},
         time::{BinanceTimeParams, BinanceTimeResult},
     },
-    error::ETResult,
+    error::{ETError, ETResult},
     http::{HttpMethod, HttpRequest},
     rate_limited::RateLimited,
     signer::{IntoSigned, Signer},
@@ -20,7 +20,7 @@ use crate::{
 
 #[cfg(feature = "serde")]
 use {
-    crate::{error::ETError, http::HttpResponse},
+    crate::http::HttpResponse,
     serde::{Deserialize, Serialize},
     serde_json,
     serde_with::skip_serializing_none,
@@ -136,6 +136,19 @@ pub enum BinanceHttpResponseResult {
 }
 
 impl BinanceHttpUnsignedRequest {
+    fn api_key(&self) -> Option<&str> {
+        match &self {
+            BinanceHttpUnsignedRequest::AmendOrderRequest(params) => params.apiKey.as_deref(),
+            BinanceHttpUnsignedRequest::AssetLimits(params) => params.apiKey.as_deref(),
+            BinanceHttpUnsignedRequest::CancelAllOrdersRequest(params) => params.apiKey.as_deref(),
+            BinanceHttpUnsignedRequest::CancelOrderRequest(params) => params.apiKey.as_deref(),
+            BinanceHttpUnsignedRequest::SpotOrderRequest(params) => params.apiKey.as_deref(),
+            BinanceHttpUnsignedRequest::ExchangeInfo(..) | BinanceHttpUnsignedRequest::Time(..) => {
+                None
+            }
+        }
+    }
+
     fn query_params(&self) -> String {
         match &self {
             BinanceHttpUnsignedRequest::AmendOrderRequest(params) => params.query_params(true),
@@ -173,12 +186,18 @@ impl IntoSigned for BinanceHttpUnsignedRequest {
     type Signed = BinanceHttpRequest;
 
     fn into_signed(self, signer: &Signer) -> ETResult<BinanceHttpRequest> {
+        // REST requests send the API key in the `X-MBX-APIKEY` header, so it
+        // must not be set on the params (it would leak into the signed query
+        // string and break the signature).
+        if self.api_key().is_some() {
+            return Err(ETError::HttpParamsApiKey);
+        }
         let query_string = self.query_params();
         let signature = signer.signature(&query_string.into_bytes())?;
         Ok(BinanceHttpRequest {
             unsigned: self,
             signature: Some(BinanceSignature {
-                apiKey: signer.api_key(),
+                apiKey: Some(signer.api_key()),
                 signature,
             }),
         })
@@ -215,7 +234,10 @@ impl From<BinanceHttpRequest> for HttpRequest {
         };
         let query = Some(format!("{}?{}", endpoint, query_params));
         let headers = match &value.signature {
-            Some(signature) => vec![("X-MBX-APIKEY".into(), signature.apiKey.clone())],
+            Some(signature) => vec![(
+                "X-MBX-APIKEY".into(),
+                signature.apiKey.clone().unwrap_or_default(),
+            )],
             None => vec![],
         };
         let body = None;
@@ -899,5 +921,68 @@ mod tests {
             response.payload,
             BinanceHttpResponsePayload::Failure(..)
         ));
+    }
+
+    #[test]
+    fn http_into_signed_signs_without_api_key_in_payload() {
+        // REST requests carry the API key in the `X-MBX-APIKEY` header, so it
+        // must not appear in the signed query string.
+        use crate::{
+            binance::{cancel::BinanceCancelOrderParams, recv_window::BinanceRecvWindow},
+            encode::ByteEncoder,
+            encrypt::Encryptor,
+            signer::Signer,
+        };
+        use secrecy::SecretSlice;
+
+        let signer = Signer::new(
+            "api-key".into(),
+            Encryptor::HmacSha256(SecretSlice::from(b"secret".to_vec())),
+            ByteEncoder::HexLower,
+        );
+        let request = BinanceHttpUnsignedRequest::CancelOrderRequest(BinanceCancelOrderParams {
+            apiKey: None,
+            cancelRestrictions: None,
+            newClientOrderId: Some("client order/1".into()),
+            orderId: Some(123),
+            origClientOrderId: None,
+            recvWindow: BinanceRecvWindow::try_new(5000),
+            symbol: "BTCUSDT".into(),
+            timestamp: 1700000000000,
+        })
+        .into_signed(&signer)
+        .unwrap();
+        // The signature covers the alphabetical query string without `apiKey`.
+        assert_eq!(
+            request.signature.unwrap().signature,
+            "28a956d64d671ba79627a129ff26ff157a0675054e2772a6228c1c9cc19fe0de"
+        );
+    }
+
+    #[test]
+    fn http_into_signed_rejects_params_that_set_api_key() {
+        use crate::{
+            binance::cancel::BinanceCancelOrderParams, encode::ByteEncoder, encrypt::Encryptor,
+            signer::Signer,
+        };
+        use secrecy::SecretSlice;
+
+        let signer = Signer::new(
+            "api-key".into(),
+            Encryptor::HmacSha256(SecretSlice::from(b"secret".to_vec())),
+            ByteEncoder::HexLower,
+        );
+        let result = BinanceHttpUnsignedRequest::CancelOrderRequest(BinanceCancelOrderParams {
+            apiKey: Some("sneaky-api-key".into()),
+            cancelRestrictions: None,
+            newClientOrderId: None,
+            orderId: Some(123),
+            origClientOrderId: None,
+            recvWindow: None,
+            symbol: "BTCUSDT".into(),
+            timestamp: 1700000000000,
+        })
+        .into_signed(&signer);
+        assert!(matches!(result, Err(ETError::HttpParamsApiKey)));
     }
 }

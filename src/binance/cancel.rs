@@ -18,6 +18,9 @@ use {
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceCancelAllOrdersParams {
+    /// The API key. `into_signed` sets it from the signer when signing a
+    /// WebSocket API request; it must be `None` for HTTP requests.
+    pub apiKey: Option<String>,
     pub recvWindow: Option<BinanceRecvWindow>,
     pub symbol: String,
     pub timestamp: i64,
@@ -28,6 +31,9 @@ pub struct BinanceCancelAllOrdersParams {
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceCancelOrderParams {
+    /// The API key. `into_signed` sets it from the signer when signing a
+    /// WebSocket API request; it must be `None` for HTTP requests.
+    pub apiKey: Option<String>,
     pub cancelRestrictions: Option<BinanceCancelRestrictions>,
     pub newClientOrderId: Option<String>,
     pub orderId: Option<i64>,
