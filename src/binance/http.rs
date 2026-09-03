@@ -13,7 +13,7 @@ use crate::{
         time::{BinanceTimeParams, BinanceTimeResult},
     },
     error::ETResult,
-    http_method::HttpMethod,
+    http::{HttpMethod, HttpRequest, IntoHttpRequest},
     rate_limited::RateLimited,
     signer::{IntoSigned, Signer},
 };
@@ -117,20 +117,9 @@ impl IntoSigned for BinanceHttpUnsignedRequest {
     }
 }
 
-impl BinanceHttpRequest {
-    pub fn endpoint(&self) -> &str {
-        match self.unsigned {
-            BinanceHttpUnsignedRequest::AmendOrderRequest(..) => "order/cancelReplace",
-            BinanceHttpUnsignedRequest::AssetLimits(..) => "myFilters",
-            BinanceHttpUnsignedRequest::CancelAllOrdersRequest(..) => "openOrders",
-            BinanceHttpUnsignedRequest::CancelOrderRequest(..) => "order",
-            BinanceHttpUnsignedRequest::ExchangeInfo(..) => "exchangeInfo",
-            BinanceHttpUnsignedRequest::SpotOrderRequest(..) => "order",
-            BinanceHttpUnsignedRequest::Time(..) => "time",
-        }
-    }
-    pub fn http_method(&self) -> HttpMethod {
-        match self.unsigned {
+impl IntoHttpRequest for BinanceHttpRequest {
+    fn into_http_request(self) -> HttpRequest {
+        let method = match self.unsigned {
             BinanceHttpUnsignedRequest::AssetLimits(..)
             | BinanceHttpUnsignedRequest::ExchangeInfo(..)
             | BinanceHttpUnsignedRequest::Time(..) => HttpMethod::GET,
@@ -138,19 +127,35 @@ impl BinanceHttpRequest {
             | BinanceHttpUnsignedRequest::CancelOrderRequest(..) => HttpMethod::DELETE,
             BinanceHttpUnsignedRequest::SpotOrderRequest(..) => HttpMethod::POST,
             BinanceHttpUnsignedRequest::AmendOrderRequest(..) => HttpMethod::PUT,
-        }
-    }
-    pub fn headers(&self) -> Vec<(String, String)> {
-        match &self.signature {
+        };
+        let endpoint = match self.unsigned {
+            BinanceHttpUnsignedRequest::AmendOrderRequest(..) => "order/cancelReplace",
+            BinanceHttpUnsignedRequest::AssetLimits(..) => "myFilters",
+            BinanceHttpUnsignedRequest::CancelAllOrdersRequest(..) => "openOrders",
+            BinanceHttpUnsignedRequest::CancelOrderRequest(..) => "order",
+            BinanceHttpUnsignedRequest::ExchangeInfo(..) => "exchangeInfo",
+            BinanceHttpUnsignedRequest::SpotOrderRequest(..) => "order",
+            BinanceHttpUnsignedRequest::Time(..) => "time",
+        };
+        let unsigned_query_params = self.unsigned.query_params();
+        let query_params = match &self.signature {
+            Some(signature) => format!(
+                "{}&signature={}",
+                unsigned_query_params, signature.signature
+            ),
+            None => unsigned_query_params,
+        };
+        let query = Some(format!("{}?{}", endpoint, query_params));
+        let headers = match &self.signature {
             Some(signature) => vec![("X-MBX-APIKEY".into(), signature.apiKey.clone())],
             None => vec![],
-        }
-    }
-    pub fn query_params(&self) -> String {
-        let query_params = self.unsigned.query_params();
-        match &self.signature {
-            Some(signature) => format!("{}&signature={}", query_params, signature.signature),
-            None => query_params,
+        };
+        let body = None;
+        HttpRequest {
+            method,
+            query,
+            headers,
+            body,
         }
     }
 }
