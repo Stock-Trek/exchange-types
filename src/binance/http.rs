@@ -195,7 +195,7 @@ impl From<BinanceHttpRequest> for HttpRequest {
             BinanceHttpUnsignedRequest::AmendOrderRequest(..) => HttpMethod::PUT,
         };
         let endpoint = match value.unsigned {
-            BinanceHttpUnsignedRequest::AmendOrderRequest(..) => "order/cancelReplace",
+            BinanceHttpUnsignedRequest::AmendOrderRequest(..) => "order/amend/keepPriority",
             BinanceHttpUnsignedRequest::AssetLimits(..) => "myFilters",
             BinanceHttpUnsignedRequest::CancelAllOrdersRequest(..) => "openOrders",
             BinanceHttpUnsignedRequest::CancelOrderRequest(..) => "order",
