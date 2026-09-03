@@ -11,6 +11,7 @@ hmac = "0.12"
 p256 = "0.13"
 p384 = "0.13"
 query-params = { version = "1.0.2", registry = "shipyard" }
+rsa = { version = "0.9", features = ["sha2"] }
 rust_decimal = "1.42.1"
 secrecy = "0.10.3"
 serde = { version = "1.0.228", features = ["derive"], optional = true }
