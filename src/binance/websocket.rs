@@ -167,27 +167,63 @@ impl IntoSigned for BinanceWebsocketUnsignedRequest {
 
     fn into_signed(self, signer: &Signer) -> ETResult<BinanceWebsocketRequest> {
         let BinanceWebsocketUnsignedRequest { id, params } = self;
-        let query_string = match &params {
-            BinanceWebsocketUnsignedParams::AmendOrderRequest(params) => {
-                Some(params.query_params(true))
+        let api_key = signer.api_key();
+        let (params, query_string) = match params {
+            BinanceWebsocketUnsignedParams::AmendOrderRequest(mut params) => {
+                params.apiKey = Some(api_key.clone());
+                let query_string = params.query_params(true);
+                (
+                    BinanceWebsocketUnsignedParams::AmendOrderRequest(params),
+                    Some(query_string),
+                )
             }
-            BinanceWebsocketUnsignedParams::AssetLimits(params) => Some(params.query_params(true)),
-            BinanceWebsocketUnsignedParams::CancelAllOrdersRequest(params) => {
-                Some(params.query_params(true))
+            BinanceWebsocketUnsignedParams::AssetLimits(mut params) => {
+                params.apiKey = Some(api_key.clone());
+                let query_string = params.query_params(true);
+                (
+                    BinanceWebsocketUnsignedParams::AssetLimits(params),
+                    Some(query_string),
+                )
             }
-            BinanceWebsocketUnsignedParams::CancelOrderRequest(params) => {
-                Some(params.query_params(true))
+            BinanceWebsocketUnsignedParams::CancelAllOrdersRequest(mut params) => {
+                params.apiKey = Some(api_key.clone());
+                let query_string = params.query_params(true);
+                (
+                    BinanceWebsocketUnsignedParams::CancelAllOrdersRequest(params),
+                    Some(query_string),
+                )
             }
-            BinanceWebsocketUnsignedParams::Logon(params) => Some(params.query_params(true)),
-            BinanceWebsocketUnsignedParams::SpotOrderRequest(params) => {
-                Some(params.query_params(true))
+            BinanceWebsocketUnsignedParams::CancelOrderRequest(mut params) => {
+                params.apiKey = Some(api_key.clone());
+                let query_string = params.query_params(true);
+                (
+                    BinanceWebsocketUnsignedParams::CancelOrderRequest(params),
+                    Some(query_string),
+                )
             }
-            _ => None,
+            BinanceWebsocketUnsignedParams::Logon(mut params) => {
+                params.apiKey = Some(api_key.clone());
+                let query_string = params.query_params(true);
+                (
+                    BinanceWebsocketUnsignedParams::Logon(params),
+                    Some(query_string),
+                )
+            }
+            BinanceWebsocketUnsignedParams::SpotOrderRequest(mut params) => {
+                params.apiKey = Some(api_key.clone());
+                let query_string = params.query_params(true);
+                (
+                    BinanceWebsocketUnsignedParams::SpotOrderRequest(params),
+                    Some(query_string),
+                )
+            }
+            params @ (BinanceWebsocketUnsignedParams::ExchangeInfo(..)
+            | BinanceWebsocketUnsignedParams::Time(..)) => (params, None),
         };
         let signature = match query_string {
             Some(query_string) => Some(BinanceSignature {
-                apiKey: signer.api_key(),
-                signature: signer.signature(&query_string.into_bytes())?,
+                apiKey: api_key,
+                signature: signer.signature(query_string.as_bytes())?,
             }),
             None => None,
         };
@@ -233,7 +269,25 @@ impl Serialize for BinanceWebsocketRequest {
 #[cfg(all(test, feature = "serde"))]
 mod tests {
     use super::*;
+    use crate::{
+        binance::{
+            cancel::BinanceCancelOrderParams, logon::BinanceLogonParams,
+            recv_window::BinanceRecvWindow, time::BinanceTimeParams,
+        },
+        encode::ByteEncoder,
+        encrypt::Encryptor,
+        signer::Signer,
+    };
+    use secrecy::SecretSlice;
     use serde_json::json;
+
+    fn hmac_signer(api_key: &str, secret: &[u8]) -> Signer {
+        Signer::new(
+            api_key.to_string(),
+            Encryptor::HmacSha256(SecretSlice::from(secret.to_vec())),
+            ByteEncoder::HexLower,
+        )
+    }
 
     #[test]
     fn serializes_method_derived_from_params() {
@@ -253,6 +307,7 @@ mod tests {
             id: "1".into(),
             params: BinanceWebsocketSignedParams {
                 unsigned: BinanceWebsocketUnsignedParams::Logon(BinanceLogonParams {
+                    apiKey: Some("api-key".into()),
                     timestamp: 123,
                 }),
                 signature: Some(BinanceSignature {
@@ -269,6 +324,93 @@ mod tests {
                 "params": { "apiKey": "api-key", "timestamp": 123, "signature": "signature" },
             })
         );
+    }
+
+    #[test]
+    fn logon_signature_matches_binance_documented_example() {
+        let signer = hmac_signer(
+            "vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A",
+            b"NhqPtmdSJYdKjVHjA7PZj4Mge3R5YNiP1e3UZjInClVN65XAbvqqM6A7H5fATj0j",
+        );
+        let request = BinanceWebsocketUnsignedRequest {
+            id: "c174a2b1-3f51-4580-b200-8528bd237cb7".into(),
+            params: BinanceWebsocketUnsignedParams::Logon(BinanceLogonParams {
+                apiKey: None,
+                timestamp: 1649729878532,
+            }),
+        }
+        .into_signed(&signer)
+        .unwrap();
+        match &request.params.unsigned {
+            BinanceWebsocketUnsignedParams::Logon(params) => assert_eq!(
+                params.apiKey.as_deref(),
+                Some("vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A")
+            ),
+            other => panic!("expected logon params, got: {other:?}"),
+        }
+        let signature = request.params.signature.unwrap();
+        assert_eq!(signature.apiKey, signer.api_key());
+        assert_eq!(
+            signature.signature,
+            "1cf54395b336b0a9727ef27d5d98987962bc47aca6e13fe978612d0adee066ed"
+        );
+    }
+
+    #[test]
+    fn signature_covers_all_params_including_api_key() {
+        let signer = hmac_signer("my-api-key", b"my-secret");
+        let params = BinanceWebsocketUnsignedParams::CancelOrderRequest(BinanceCancelOrderParams {
+            apiKey: None,
+            cancelRestrictions: None,
+            newClientOrderId: Some("client order/1".into()),
+            orderId: Some(123),
+            origClientOrderId: None,
+            recvWindow: BinanceRecvWindow::try_new(5000),
+            symbol: "BTCUSDT".into(),
+            timestamp: 1700000000000,
+        });
+        let request = BinanceWebsocketUnsignedRequest {
+            id: "1".into(),
+            params,
+        }
+        .into_signed(&signer)
+        .unwrap();
+
+        let signed_params = match &request.params.unsigned {
+            BinanceWebsocketUnsignedParams::CancelOrderRequest(params) => params,
+            other => panic!("expected CancelOrderRequest, got: {other:?}"),
+        };
+        assert_eq!(signed_params.apiKey.as_deref(), Some("my-api-key"));
+        assert_eq!(
+            signed_params.query_params(true),
+            "apiKey=my-api-key&newClientOrderId=client%20order%2F1&orderId=123&recvWindow=5000&symbol=BTCUSDT&timestamp=1700000000000"
+        );
+        assert_eq!(
+            request.params.signature.as_ref().unwrap().signature,
+            "d09ea137fb4f0f1a68db5e5a4a3a5068d6c3e8e94f7ded4d89b748259a04381f"
+        );
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["params"]["apiKey"], "my-api-key");
+        assert_eq!(json["params"]["timestamp"].as_i64(), Some(1700000000000));
+        assert!(json["params"]["signature"].is_string());
+        let raw = request.serialize().unwrap();
+        assert_eq!(
+            raw.matches("\"apiKey\"").count(),
+            1,
+            "apiKey must appear exactly once in the serialized request: {raw}"
+        );
+    }
+
+    #[test]
+    fn unsigned_params_get_no_signature() {
+        let signer = hmac_signer("api-key", b"secret");
+        let request = BinanceWebsocketUnsignedRequest {
+            id: "1".into(),
+            params: BinanceWebsocketUnsignedParams::Time(BinanceTimeParams {}),
+        }
+        .into_signed(&signer)
+        .unwrap();
+        assert!(request.params.signature.is_none());
     }
 
     #[test]

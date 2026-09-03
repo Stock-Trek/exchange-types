@@ -15,6 +15,7 @@ use {
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceAssetLimitsParams {
+    pub apiKey: Option<String>,
     pub recvWindow: Option<BinanceRecvWindow>,
     pub symbol: String,
     pub timestamp: i64,
