@@ -1,11 +1,6 @@
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// A Binance API error payload (`{"code":…,"msg":…}`).
-///
-/// Some errors carry additional context in unmodeled fields (e.g. the
-/// `data` member of a failed order cancel-replace), so unknown fields are
-/// ignored rather than rejected.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceError {

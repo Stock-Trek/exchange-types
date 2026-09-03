@@ -23,24 +23,21 @@ pub struct BinanceExchangeInfoParams {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceExchangeInfoPermission {
-    SPOT,
-    MARGIN,
     LEVERAGED,
-    /// Any other permission value. Binance returns an open-ended set of
-    /// permissions (e.g. `TRD_GRP_*` trading-group permissions), so unknown
-    /// values must not fail deserialization.
+    MARGIN,
+    SPOT,
     #[cfg_attr(feature = "serde", serde(other))]
-    UNKNOWN,
+    Unknown,
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceExchangeInfoSymbolStatus {
     TRADING,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
-/// The `sors` member of an exchange-info response, present only when smart
-/// order routing is available.
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
@@ -56,21 +53,15 @@ pub struct BinanceExchangeInfoResult {
     pub exchangeFilters: Vec<BinanceExchangeFilter>,
     pub rateLimits: Vec<BinanceRateLimit>,
     pub serverTime: i64,
-    pub symbols: Vec<BinanceExchangeInfoSymbol>,
-    pub timezone: String,
     #[cfg_attr(
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub sors: Option<Vec<BinanceExchangeInfoSors>>,
+    pub symbols: Vec<BinanceExchangeInfoSymbol>,
+    pub timezone: String,
 }
 
-/// One symbol of an exchange-info response.
-///
-/// Real exchange-info payloads include the trading-permission and order-type
-/// capability fields below (all verified to be present on every currently
-/// listed symbol), so they are mandatory here. Unknown permission values are
-/// tolerated by [`BinanceExchangeInfoPermission::UNKNOWN`].
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
@@ -114,6 +105,8 @@ pub enum BinanceOrderType {
     STOP_LOSS_LIMIT,
     TAKE_PROFIT,
     TAKE_PROFIT_LIMIT,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 impl BinanceExchangeInfoParams {

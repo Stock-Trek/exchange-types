@@ -11,12 +11,6 @@ pub struct BinanceLogonParams {
     pub timestamp: i64,
 }
 
-/// The result of a `session.logon` (or `session.status`/`session.logout`)
-/// request.
-///
-/// Real payloads include the authenticated `apiKey`, and unauthenticated
-/// `session.status`/`session.logout` payloads report `apiKey` and
-/// `authorizedSince` as JSON `null`, so both are optional.
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]

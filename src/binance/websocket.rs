@@ -47,6 +47,8 @@ pub enum BinanceWebsocketMethodName {
     PlaceOrder,
     #[cfg_attr(feature = "serde", serde(rename = "time"))]
     Time,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[derive(Debug, Clone)]
@@ -124,13 +126,6 @@ pub struct BinanceWebsocketResponse {
     pub status: i32,
 }
 
-/// The deserialized `result` of a Binance WebSocket API response.
-///
-/// The variants are ordered so that an untagged payload is matched against
-/// the most specific result shape first, and so that a payload Binance
-/// returns for one request can never be mistaken for another request's
-/// result (e.g. an order-list cancel report has no `origClientOrderId` and
-/// an order cancel report has no `contingencyType`).
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]
@@ -307,8 +302,6 @@ mod tests {
 
     #[test]
     fn parses_unauthenticated_status_with_null_api_key() {
-        // session.status/session.logout on an unauthenticated connection
-        // report apiKey and authorizedSince as JSON null.
         let response = serde_json::from_value::<BinanceWebsocketResponse>(json!({
             "id": "c174a2b1-3f51-4580-b200-8528bd237cb7",
             "status": 200,
@@ -334,8 +327,6 @@ mod tests {
 
     #[test]
     fn parses_cancel_all_with_order_list_reports() {
-        // openOrders.cancelAll returns an array of cancellation reports;
-        // cancelled order lists appear as order-list-shaped reports.
         let response = serde_json::from_value::<BinanceWebsocketResponse>(json!({
             "id": "778f938f-9041-4b88-9914-efbf64eeacc8",
             "status": 200,
@@ -385,7 +376,6 @@ mod tests {
                 match &reports[1] {
                     BinanceCancelReport::OrderList(list) => {
                         assert_eq!(list.orderListId, 19431);
-                        // The list element above carries no orderReports.
                         assert!(list.orderReports.is_empty());
                     }
                     other => panic!("expected OrderList report, got: {other:?}"),
@@ -397,8 +387,6 @@ mod tests {
 
     #[test]
     fn parses_cancel_of_order_list_member_as_list_report() {
-        // Cancelling an order that is part of an order list cancels the whole
-        // order list; the order.cancel result is then order-list-shaped.
         let response = serde_json::from_value::<BinanceWebsocketResponse>(json!({
             "id": "16eaf097-bbec-44b9-96ff-e97e6e875870",
             "status": 200,

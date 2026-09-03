@@ -44,49 +44,43 @@ pub struct BinanceCancelOrderParams {
 pub enum BinanceCancelRestrictions {
     ONLY_NEW,
     ONLY_PARTIALLY_FILLED,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
-/// The cancellation report for one order.
-///
-/// Canceling an order that is part of an order list cancels the whole order
-/// list; in that case Binance returns an order-list-shaped report instead
-/// (see [`BinanceCancelOrderListResult`]). Cancel reports are also missing
-/// `workingTime` even though Binance documents it for other order payloads,
-/// so only the fields every report contains are mandatory.
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone)]
 pub struct BinanceCancelOrderResult {
     pub clientOrderId: String,
-    pub orderId: i64,
-    pub orderListId: i32,
-    pub origClientOrderId: String,
-    pub side: BinanceSide,
-    pub status: BinanceOrderStatus,
-    pub symbol: String,
-    #[cfg_attr(feature = "serde", serde(rename = "type"))]
-    pub r#type: BinanceOrderType,
     pub cummulativeQuoteQty: Option<Decimal>,
     pub executedQty: Option<Decimal>,
     pub icebergQty: Option<Decimal>,
+    pub orderId: i64,
+    pub orderListId: i32,
+    pub origClientOrderId: String,
     pub origQty: Option<Decimal>,
     pub origQuoteOrderQty: Option<Decimal>,
     pub preventedMatchId: Option<i64>,
     pub preventedQuantity: Option<Decimal>,
     pub price: Option<Decimal>,
     pub selfTradePreventionMode: Option<BinanceSelfTradeProtection>,
+    pub side: BinanceSide,
+    pub status: BinanceOrderStatus,
     pub stopPrice: Option<Decimal>,
     pub strategyId: Option<i64>,
     pub strategyType: Option<i32>,
+    pub symbol: String,
     pub timeInForce: Option<BinanceTimeInForce>,
     pub trailingDelta: Option<i64>,
     pub trailingTime: Option<i64>,
     pub transactTime: Option<i64>,
+    #[cfg_attr(feature = "serde", serde(rename = "type"))]
+    pub r#type: BinanceOrderType,
     pub workingTime: Option<i64>,
 }
 
-/// One order contained in an order-list-shaped payload.
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
@@ -96,11 +90,6 @@ pub struct BinanceOrderListOrder {
     pub symbol: String,
 }
 
-/// The order-list-shaped report Binance returns when a cancel request
-/// cancels an entire order list: cancelling an order that is a member of an
-/// order list (`order.cancel` / `DELETE /api/v3/order`), cancelling an order
-/// list directly (`DELETE /api/v3/orderList`), and the order-list elements
-/// of a cancel-all (`openOrders.cancelAll`) response.
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
@@ -111,16 +100,14 @@ pub struct BinanceCancelOrderListResult {
     pub listOrderStatus: String,
     pub listStatusType: String,
     pub orderListId: i32,
-    pub symbol: String,
-    pub transactionTime: i64,
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub orders: Vec<BinanceOrderListOrder>,
     #[cfg_attr(feature = "serde", serde(default))]
     pub orderReports: Vec<BinanceCancelOrderResult>,
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub orders: Vec<BinanceOrderListOrder>,
+    pub symbol: String,
+    pub transactionTime: i64,
 }
 
-/// One element of a cancel-all response: an order-list-shaped report is
-/// returned for every order list that the cancel-all cancelled.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]

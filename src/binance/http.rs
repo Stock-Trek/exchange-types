@@ -50,10 +50,6 @@ pub struct BinanceHttpRequest {
 
 /// The deserialized body of a Binance REST response: either a successful
 /// result payload or a Binance API error payload (`{"code":…,"msg":…}`).
-///
-/// Response payloads are deserialization targets that are matched once and
-/// then dropped, so the larger `Success` variant is not boxed: boxing would
-/// only add indirection to every consumer's pattern match.
 #[allow(clippy::large_enum_variant)]
 #[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
@@ -125,13 +121,6 @@ pub struct BinanceHttpResponse {
     pub payload: BinanceHttpResponsePayload,
 }
 
-/// The deserialized result of a Binance REST response.
-///
-/// The variants are ordered so that an untagged payload is matched against
-/// the most specific result shape first, and so that a payload Binance
-/// returns for one request can never be mistaken for another request's
-/// result (e.g. an order-list cancel report has no `origClientOrderId` and
-/// an order cancel report has no `contingencyType`).
 #[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]
@@ -208,7 +197,7 @@ impl From<BinanceHttpRequest> for HttpRequest {
             BinanceHttpUnsignedRequest::AmendOrderRequest(..) => HttpMethod::PUT,
         };
         let endpoint = match value.unsigned {
-            BinanceHttpUnsignedRequest::AmendOrderRequest(..) => "order/cancelReplace",
+            BinanceHttpUnsignedRequest::AmendOrderRequest(..) => "order/amend/keepPriority",
             BinanceHttpUnsignedRequest::AssetLimits(..) => "myFilters",
             BinanceHttpUnsignedRequest::CancelAllOrdersRequest(..) => "openOrders",
             BinanceHttpUnsignedRequest::CancelOrderRequest(..) => "order",
@@ -334,9 +323,6 @@ mod tests {
 
     #[test]
     fn parses_exchange_info_with_a_real_symbol() {
-        // Mirrors the shape Binance returns for every currently listed
-        // symbol, including the trading-capability fields and the open-ended
-        // TRD_GRP_* trading-group permissions.
         let body = serde_json::to_vec(&json!({
             "timezone": "UTC",
             "serverTime": 1700000000000_i64,
@@ -421,7 +407,6 @@ mod tests {
 
     #[test]
     fn parses_order_place_ack_result_and_full_payloads() {
-        // ACK: only the five mandatory fields.
         let ack = serde_json::to_vec(&json!({
             "symbol": "BTCUSDT",
             "orderId": 28,
@@ -441,7 +426,6 @@ mod tests {
             other => panic!("expected SpotOrder, got: {other:?}"),
         }
 
-        // RESULT with conditional fields for a trailing stop-loss order.
         let result = serde_json::to_vec(&json!({
             "symbol": "BTCUSDT",
             "orderId": 28,
@@ -478,7 +462,6 @@ mod tests {
             other => panic!("expected SpotOrder, got: {other:?}"),
         }
 
-        // FULL: includes fills.
         let full = serde_json::to_vec(&json!({
             "symbol": "BTCUSDT",
             "orderId": 28,
@@ -555,8 +538,6 @@ mod tests {
 
     #[test]
     fn parses_cancel_order_list_shaped_result() {
-        // DELETE /api/v3/orderList response: an order-list-shaped object with
-        // per-leg order reports and no `origClientOrderId` at the top level.
         let body = serde_json::to_vec(&json!({
             "orderListId": 0,
             "contingencyType": "OCO",
@@ -612,9 +593,6 @@ mod tests {
 
     #[test]
     fn parses_cancel_all_mixed_order_and_order_list_reports() {
-        // DELETE /api/v3/openOrders: an array whose elements are either
-        // individual order reports or, for cancelled order lists, list-shaped
-        // reports.
         let body = serde_json::to_vec(&json!([
             {
                 "symbol": "BTCUSDT",
@@ -742,8 +720,6 @@ mod tests {
 
     #[test]
     fn parses_error_payload_with_extra_data_field() {
-        // Failed cancel-replace responses carry a `data` member describing
-        // which part failed; it must not break error parsing.
         let body = serde_json::to_vec(&json!({
             "code": -2022,
             "msg": "Order cancel-replace failed.",

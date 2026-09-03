@@ -45,6 +45,8 @@ pub enum BinanceNewOrderResponseType {
     ACK,
     RESULT,
     FULL,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[allow(non_camel_case_types)]
@@ -53,6 +55,8 @@ pub enum BinanceNewOrderResponseType {
 pub enum BinancePegPriceType {
     PRIMARY_PEG,
     MARKET_PEG,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[allow(non_camel_case_types)]
@@ -60,6 +64,8 @@ pub enum BinancePegPriceType {
 #[derive(Debug, Display, Clone, Copy, Hash)]
 pub enum BinancePegOffsetType {
     PRICE_LEVEL,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -67,6 +73,8 @@ pub enum BinancePegOffsetType {
 pub enum BinanceSide {
     BUY,
     SELL,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[allow(non_camel_case_types)]
@@ -80,7 +88,7 @@ pub enum BinanceSelfTradeProtection {
     NONE,
     TRANSFER,
     #[cfg_attr(feature = "serde", serde(other))]
-    UNKNOWN,
+    Unknown,
 }
 
 #[allow(non_camel_case_types)]
@@ -90,6 +98,8 @@ pub enum BinanceTimeInForce {
     FOK,
     GTC,
     IOC,
+    #[cfg_attr(feature = "serde", serde(other))]
+    Unknown,
 }
 
 #[allow(non_camel_case_types)]
@@ -105,11 +115,9 @@ pub enum BinanceOrderStatus {
     PENDING_CANCEL,
     REJECTED,
     #[cfg_attr(feature = "serde", serde(other))]
-    UNKNOWN,
+    Unknown,
 }
 
-/// A single trade fill reported in an order response. Binance includes
-/// `fills` when an order is placed with `newOrderRespType=FULL`.
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
@@ -121,30 +129,18 @@ pub struct BinanceFill {
     pub tradeId: i64,
 }
 
-/// The response to an order placement (`order.place` / `POST /api/v3/order`).
-///
-/// Binance shapes the payload by `newOrderRespType`:
-/// - `ACK` returns only `symbol`, `orderId`, `orderListId`, `clientOrderId`
-///   and `transactTime`;
-/// - `RESULT` additionally includes the order details;
-/// - `FULL` additionally includes `fills`.
-///
-/// Only the five fields present in every `ACK` payload are mandatory; all
-/// other fields are optional so that any of the three response types parses.
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone)]
 pub struct BinanceSpotOrderResult {
     pub clientOrderId: String,
-    pub orderId: i64,
-    pub orderListId: i32,
-    pub symbol: String,
-    pub transactTime: i64,
     pub cummulativeQuoteQty: Option<Decimal>,
     pub executedQty: Option<Decimal>,
     pub fills: Option<Vec<BinanceFill>>,
     pub icebergQty: Option<Decimal>,
+    pub orderId: i64,
+    pub orderListId: i32,
     pub origQty: Option<Decimal>,
     pub origQuoteOrderQty: Option<Decimal>,
     pub preventedMatchId: Option<i64>,
@@ -156,9 +152,11 @@ pub struct BinanceSpotOrderResult {
     pub stopPrice: Option<Decimal>,
     pub strategyId: Option<i64>,
     pub strategyType: Option<i32>,
+    pub symbol: String,
     pub timeInForce: Option<BinanceTimeInForce>,
     pub trailingDelta: Option<i64>,
     pub trailingTime: Option<i64>,
+    pub transactTime: i64,
     #[cfg_attr(feature = "serde", serde(rename = "type"))]
     pub r#type: Option<BinanceOrderType>,
     pub workingTime: Option<i64>,
