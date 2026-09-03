@@ -47,8 +47,6 @@ pub struct BinanceHttpRequest {
     pub signature: Option<BinanceSignature>,
 }
 
-/// The deserialized body of a Binance REST response: either a successful
-/// result payload or a Binance API error payload (`{"code":…,"msg":…}`).
 #[allow(clippy::large_enum_variant)]
 #[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
@@ -58,40 +56,17 @@ pub enum BinanceHttpResponsePayload {
     Failure(BinanceError),
 }
 
-/// The rate-limit usage and retry information Binance returns in REST
-/// response headers.
-///
-/// Per the "LIMITS" and "HTTP Return Codes" sections of the Binance spot
-/// REST API docs:
-/// - every response includes an `X-MBX-USED-WEIGHT-(intervalNum)(intervalLetter)`
-///   header with the current request weight used by the IP;
-/// - every successful order response includes an
-///   `X-MBX-ORDER-COUNT-(intervalNum)(intervalLetter)` header with the number
-///   of orders placed in that interval;
-/// - HTTP 429/418 responses include a `Retry-After` header with the number of
-///   seconds to wait before retrying.
-///
-/// A header that is absent (or present with a value that is not a valid
-/// number) parses as `None`.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct BinanceHttpResponseHeaders {
-    /// `X-MBX-USED-WEIGHT-1M`: current request weight used by the IP.
     pub used_weight_1m: Option<u32>,
-    /// `X-MBX-ORDER-COUNT-10S`: orders placed in the last 10 seconds.
     pub order_count_10s: Option<u32>,
-    /// `X-MBX-ORDER-COUNT-1M`: orders placed in the last minute.
     pub order_count_1m: Option<u32>,
-    /// `X-MBX-ORDER-COUNT-1H`: orders placed in the last hour.
     pub order_count_1h: Option<u32>,
-    /// `X-MBX-ORDER-COUNT-1D`: orders placed in the last day.
     pub order_count_1d: Option<u32>,
-    /// `Retry-After`: seconds to wait before retrying (sent with HTTP 429/418).
     pub retry_after: Option<u64>,
 }
 
 impl BinanceHttpResponseHeaders {
-    /// Parses the Binance rate-limit usage headers out of an HTTP response's
-    /// headers. Header names are matched case-insensitively.
     #[cfg(feature = "serde")]
     fn parse(headers: &[(String, String)]) -> Self {
         let mut parsed = Self::default();
@@ -112,8 +87,6 @@ impl BinanceHttpResponseHeaders {
     }
 }
 
-/// A Binance REST response parsed from an [`HttpResponse`]: the HTTP status,
-/// the rate-limit usage headers Binance returned, and the deserialized body.
 #[derive(Debug, Clone)]
 pub struct BinanceHttpResponse {
     pub status: u16,
@@ -251,15 +224,8 @@ impl TryFrom<HttpResponse> for BinanceHttpResponse {
             }),
             Err(error) => {
                 if (200..300).contains(&value.status) {
-                    // A 2xx body that is neither a Binance result nor a
-                    // Binance error payload is not a Binance response (e.g.
-                    // an HTML page served by an intermediary proxy).
                     Err(ETError::DeserializeResponse(error))
                 } else {
-                    // Non-2xx responses can have an empty or non-JSON body
-                    // (e.g. HTTP 429/418 rate limiting, 5xx gateway pages).
-                    // Surface them as a failure carrying the HTTP status and
-                    // the raw body so nothing is lost.
                     Ok(BinanceHttpResponse {
                         status: value.status,
                         headers,
@@ -753,8 +719,6 @@ mod tests {
 
     #[test]
     fn success_result_tolerates_unknown_fields() {
-        // Binance adds response fields over time; unknown fields must not
-        // fail parsing.
         let response = response(
             200,
             &[],
@@ -788,7 +752,6 @@ mod tests {
 
     #[test]
     fn http_response_with_error_body_becomes_failure_regardless_of_status() {
-        // Binance reports API errors with a 4xx status...
         let http_response = response(
             400,
             &[],
@@ -802,7 +765,6 @@ mod tests {
             }
             other => panic!("expected Failure, got: {other:?}"),
         }
-        // ...and sometimes with a 2xx status, which must still be a failure.
         let http_response = response(200, &[], br#"{"code":-2015,"msg":"Invalid API-key."}"#);
         let parsed = BinanceHttpResponse::try_from(http_response).unwrap();
         match parsed.payload {
@@ -860,7 +822,6 @@ mod tests {
 
     #[test]
     fn parses_retry_after_on_rate_limited_response() {
-        // Binance rate limiting responds with HTTP 429/418 and no JSON body.
         let response = response(429, &[("Retry-After", "30")], b"");
         let response = BinanceHttpResponse::try_from(response).unwrap();
         assert_eq!(response.headers.retry_after, Some(30));

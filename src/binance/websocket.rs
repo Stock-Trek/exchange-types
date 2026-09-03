@@ -611,7 +611,6 @@ mod tests {
     }
     #[test]
     fn deserializes_response_without_rate_limits() {
-        // Some methods (e.g. session.logout, error responses) omit rateLimits.
         let response: BinanceWebsocketResponse = serde_json::from_str(
             r#"{"id":"1","status":200,"result":{"serverTime":1700000000000}}"#,
         )
@@ -622,7 +621,6 @@ mod tests {
 
     #[test]
     fn response_tolerates_unknown_fields() {
-        // Binance adds fields over time; unknown fields must not fail parsing.
         let response: BinanceWebsocketResponse = serde_json::from_str(
             r#"{"id":"1","status":200,"rateLimits":[],"futureField":true,"result":{"serverTime":1700000000000,"alsoFuture":1}}"#,
         )
