@@ -1,12 +1,12 @@
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash)]
 pub struct BinanceTimeParams {}
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceTimeResult {
     pub serverTime: i64,

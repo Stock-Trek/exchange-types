@@ -14,7 +14,7 @@ use {
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceSpotOrderParams {
     pub icebergQty: Option<Decimal>,
@@ -41,33 +41,27 @@ pub struct BinanceSpotOrderParams {
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceNewOrderResponseType {
     ACK,
     RESULT,
     FULL,
-    #[cfg_attr(feature = "serde", serde(other))]
-    Unknown,
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Display, Clone, Copy, Hash)]
 pub enum BinancePegPriceType {
     PRIMARY_PEG,
     MARKET_PEG,
-    #[cfg_attr(feature = "serde", serde(other))]
-    Unknown,
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Display, Clone, Copy, Hash)]
 pub enum BinancePegOffsetType {
     PRICE_LEVEL,
-    #[cfg_attr(feature = "serde", serde(other))]
-    Unknown,
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -105,7 +99,7 @@ pub enum BinanceTimeInForce {
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq)]
 pub enum BinanceOrderStatus {
     CANCELED,
@@ -121,7 +115,7 @@ pub enum BinanceOrderStatus {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[derive(Debug, Clone)]
 pub struct BinanceSpotOrderResult {
@@ -233,16 +227,5 @@ mod tests {
         assert!(matches!(side, BinanceSide::Unknown));
         let time_in_force: BinanceTimeInForce = serde_json::from_str(r#""FUTURE_TIF""#).unwrap();
         assert!(matches!(time_in_force, BinanceTimeInForce::Unknown));
-        let response_type: BinanceNewOrderResponseType =
-            serde_json::from_str(r#""FUTURE_RESP""#).unwrap();
-        assert!(matches!(
-            response_type,
-            BinanceNewOrderResponseType::Unknown
-        ));
-        let peg_price_type: BinancePegPriceType = serde_json::from_str(r#""FUTURE_PEG""#).unwrap();
-        assert!(matches!(peg_price_type, BinancePegPriceType::Unknown));
-        let peg_offset_type: BinancePegOffsetType =
-            serde_json::from_str(r#""FUTURE_OFFSET""#).unwrap();
-        assert!(matches!(peg_offset_type, BinancePegOffsetType::Unknown));
     }
 }

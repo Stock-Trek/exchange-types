@@ -4,25 +4,17 @@ use query_params::QueryParams;
 use serde::{Deserialize, Serialize};
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceLogonParams {
     pub timestamp: i64,
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceSessionAuthenticationResult {
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
     pub apiKey: Option<String>,
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
     pub authorizedSince: Option<i64>,
     pub connectedSince: i64,
     pub returnRateLimits: bool,

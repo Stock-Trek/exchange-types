@@ -26,7 +26,7 @@ use {
     serde_with::skip_serializing_none,
 };
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinanceWebsocketMethodName {
     #[cfg_attr(feature = "serde", serde(rename = "order.amend.keepPriority"))]
@@ -58,7 +58,7 @@ pub struct BinanceWebsocketRequest {
 }
 
 #[cfg_attr(feature = "serde", skip_serializing_none)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceWebsocketSignedParams {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -73,7 +73,7 @@ pub struct BinanceWebsocketUnsignedRequest {
     pub params: BinanceWebsocketUnsignedParams,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone, Hash)]
 pub enum BinanceWebsocketUnsignedParams {
@@ -126,7 +126,7 @@ pub struct BinanceWebsocketResponse {
     pub status: i32,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
 #[derive(Debug, Clone)]
 pub enum BinanceWebsocketResponseResult {
@@ -498,12 +498,5 @@ mod tests {
         let error = response.error.expect("expected an error");
         assert_eq!(error.code, -2014);
         assert_eq!(error.msg, "API-key format invalid.");
-    }
-
-    #[test]
-    fn unknown_method_name_deserializes_as_unknown() {
-        let method: BinanceWebsocketMethodName =
-            serde_json::from_str(r#""future.method""#).unwrap();
-        assert!(matches!(method, BinanceWebsocketMethodName::Unknown));
     }
 }

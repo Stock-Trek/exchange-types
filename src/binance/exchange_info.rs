@@ -9,13 +9,10 @@ use crate::{
 use strum::Display;
 
 #[cfg(feature = "serde")]
-use {
-    serde::{Deserialize, Serialize},
-    serde_with::skip_serializing_none,
-};
+use serde::{Deserialize, Serialize};
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash)]
 pub struct BinanceExchangeInfoParams {
     pub permissions: Vec<BinanceExchangeInfoPermission>,
@@ -33,19 +30,16 @@ pub enum BinanceExchangeInfoPermission {
     Unknown,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceExchangeInfoSymbolStatus {
     TRADING,
     HALT,
     BREAK,
-    #[cfg_attr(feature = "serde", serde(other))]
-    Unknown,
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", skip_serializing_none)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceExchangeInfoResult {
     pub exchangeFilters: Vec<BinanceExchangeFilter>,
@@ -57,7 +51,7 @@ pub struct BinanceExchangeInfoResult {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceExchangeInfoSors {
     pub baseAsset: Ticker,
@@ -65,7 +59,7 @@ pub struct BinanceExchangeInfoSors {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceExchangeInfoSymbol {
     pub allowTrailingStop: bool,
@@ -161,17 +155,6 @@ mod tests {
                 permission
             );
         }
-        for status in [
-            BinanceExchangeInfoSymbolStatus::TRADING,
-            BinanceExchangeInfoSymbolStatus::HALT,
-            BinanceExchangeInfoSymbolStatus::BREAK,
-        ] {
-            let json = serde_json::to_string(&status).unwrap();
-            assert_eq!(
-                serde_json::from_str::<BinanceExchangeInfoSymbolStatus>(&json).unwrap(),
-                status
-            );
-        }
     }
 
     #[test]
@@ -179,9 +162,6 @@ mod tests {
         let permission: BinanceExchangeInfoPermission =
             serde_json::from_str(r#""FUTURE_PERMISSION""#).unwrap();
         assert!(matches!(permission, BinanceExchangeInfoPermission::Unknown));
-        let status: BinanceExchangeInfoSymbolStatus =
-            serde_json::from_str(r#""PRE_TRADING""#).unwrap();
-        assert!(matches!(status, BinanceExchangeInfoSymbolStatus::Unknown));
         let order_type: BinanceOrderType = serde_json::from_str(r#""FUTURE_ORDER_TYPE""#).unwrap();
         assert!(matches!(order_type, BinanceOrderType::Unknown));
     }

@@ -14,7 +14,7 @@ use {
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceAmendOrderParams {
     pub newClientOrderId: Option<String>,
@@ -27,7 +27,7 @@ pub struct BinanceAmendOrderParams {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceAmendOrderResult {
     pub amendedOrder: BinanceAmendedOrder,
@@ -36,8 +36,7 @@ pub struct BinanceAmendOrderResult {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", skip_serializing_none)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceAmendedOrder {
     pub clientOrderId: String,

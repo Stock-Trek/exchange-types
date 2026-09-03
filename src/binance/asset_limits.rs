@@ -12,7 +12,7 @@ use {
 
 #[allow(non_snake_case)]
 #[cfg_attr(feature = "serde", skip_serializing_none)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceAssetLimitsParams {
     pub recvWindow: Option<BinanceRecvWindow>,
@@ -21,7 +21,7 @@ pub struct BinanceAssetLimitsParams {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
 #[derive(Debug, Clone)]
 pub struct BinanceAssetLimitsResult {
     pub assetFilters: Vec<BinanceAssetFilter>,
