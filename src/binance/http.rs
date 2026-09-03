@@ -172,7 +172,16 @@ impl RateLimited for BinanceHttpUnsignedRequest {
 impl IntoSigned for BinanceHttpUnsignedRequest {
     type Signed = BinanceHttpRequest;
 
-    fn into_signed(self, signer: &Signer) -> ETResult<BinanceHttpRequest> {
+    fn into_signed(mut self, signer: &Signer) -> ETResult<BinanceHttpRequest> {
+        match &mut self {
+            BinanceHttpUnsignedRequest::AmendOrderRequest(params) => params.apiKey = None,
+            BinanceHttpUnsignedRequest::AssetLimits(params) => params.apiKey = None,
+            BinanceHttpUnsignedRequest::CancelAllOrdersRequest(params) => params.apiKey = None,
+            BinanceHttpUnsignedRequest::CancelOrderRequest(params) => params.apiKey = None,
+            BinanceHttpUnsignedRequest::SpotOrderRequest(params) => params.apiKey = None,
+            BinanceHttpUnsignedRequest::ExchangeInfo(..) | BinanceHttpUnsignedRequest::Time(..) => {
+            }
+        }
         let query_string = self.query_params();
         let signature = signer.signature(&query_string.into_bytes())?;
         Ok(BinanceHttpRequest {
@@ -899,5 +908,83 @@ mod tests {
             response.payload,
             BinanceHttpResponsePayload::Failure(..)
         ));
+    }
+
+    #[test]
+    fn http_into_signed_signs_without_api_key_in_payload() {
+        use crate::{
+            binance::{cancel::BinanceCancelOrderParams, recv_window::BinanceRecvWindow},
+            encode::ByteEncoder,
+            encrypt::Encryptor,
+            signer::Signer,
+        };
+        use secrecy::SecretSlice;
+
+        let signer = Signer::new(
+            "api-key".into(),
+            Encryptor::HmacSha256(SecretSlice::from(b"secret".to_vec())),
+            ByteEncoder::HexLower,
+        );
+        let request = BinanceHttpUnsignedRequest::CancelOrderRequest(BinanceCancelOrderParams {
+            apiKey: None,
+            cancelRestrictions: None,
+            newClientOrderId: Some("client order/1".into()),
+            orderId: Some(123),
+            origClientOrderId: None,
+            recvWindow: BinanceRecvWindow::try_new(5000),
+            symbol: "BTCUSDT".into(),
+            timestamp: 1700000000000,
+        })
+        .into_signed(&signer)
+        .unwrap();
+        assert_eq!(
+            request.signature.unwrap().signature,
+            "28a956d64d671ba79627a129ff26ff157a0675054e2772a6228c1c9cc19fe0de"
+        );
+    }
+
+    #[test]
+    fn http_into_signed_overwrites_params_that_set_api_key() {
+        use crate::{
+            binance::cancel::BinanceCancelOrderParams, encode::ByteEncoder, encrypt::Encryptor,
+            signer::Signer,
+        };
+        use secrecy::SecretSlice;
+
+        let signer = Signer::new(
+            "api-key".into(),
+            Encryptor::HmacSha256(SecretSlice::from(b"secret".to_vec())),
+            ByteEncoder::HexLower,
+        );
+        let with_api_key =
+            BinanceHttpUnsignedRequest::CancelOrderRequest(BinanceCancelOrderParams {
+                apiKey: Some("sneaky-api-key".into()),
+                cancelRestrictions: None,
+                newClientOrderId: None,
+                orderId: Some(123),
+                origClientOrderId: None,
+                recvWindow: None,
+                symbol: "BTCUSDT".into(),
+                timestamp: 1700000000000,
+            })
+            .into_signed(&signer)
+            .unwrap();
+        let without_api_key =
+            BinanceHttpUnsignedRequest::CancelOrderRequest(BinanceCancelOrderParams {
+                apiKey: None,
+                cancelRestrictions: None,
+                newClientOrderId: None,
+                orderId: Some(123),
+                origClientOrderId: None,
+                recvWindow: None,
+                symbol: "BTCUSDT".into(),
+                timestamp: 1700000000000,
+            })
+            .into_signed(&signer)
+            .unwrap();
+        assert_eq!(
+            with_api_key.signature.unwrap().signature,
+            without_api_key.signature.unwrap().signature
+        );
     }
 }

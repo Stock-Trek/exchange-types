@@ -17,6 +17,7 @@ use {
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
 pub struct BinanceSpotOrderParams {
+    pub apiKey: Option<String>,
     pub icebergQty: Option<Decimal>,
     pub newClientOrderId: String,
     pub newOrderRespType: Option<BinanceNewOrderResponseType>,
@@ -164,6 +165,7 @@ mod tests {
 
     fn params(new_order_resp_type: Option<BinanceNewOrderResponseType>) -> BinanceSpotOrderParams {
         BinanceSpotOrderParams {
+            apiKey: None,
             icebergQty: None,
             newClientOrderId: "new-client-order-id".into(),
             newOrderRespType: new_order_resp_type,
