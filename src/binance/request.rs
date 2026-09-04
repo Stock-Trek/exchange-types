@@ -86,13 +86,13 @@ struct WebsocketParams {
 }
 
 impl RateLimited for BinanceRequest {
-    fn order_count(&self) -> u32 {
+    fn order_count(&self, protocol: Protocol) -> u32 {
         match self {
             BinanceRequest::SpotOrderRequest(..) => 1,
             _ => 0,
         }
     }
-    fn weight(&self) -> u32 {
+    fn weight(&self, protocol: Protocol) -> u32 {
         match self {
             BinanceRequest::Account(..) => 2,
             BinanceRequest::AmendOrderRequest(..) => 4,
