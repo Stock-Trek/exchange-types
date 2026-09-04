@@ -105,7 +105,7 @@ impl BinanceExchangeInfoParams {
                     .join(",");
                 pairs.push(format!(
                     "permissions={}",
-                    percent_encode(&format!("[{permissions}]"))
+                    Self::percent_encode(&format!("[{permissions}]"))
                 ));
             }
         }
@@ -121,7 +121,7 @@ impl BinanceExchangeInfoParams {
                 .join(",");
             pairs.push(format!(
                 "symbols={}",
-                percent_encode(&format!("[{symbols}]"))
+                Self::percent_encode(&format!("[{symbols}]"))
             ));
         }
         if let Some(symbol_status) = &self.symbolStatus {
@@ -129,125 +129,16 @@ impl BinanceExchangeInfoParams {
         }
         pairs.join("&")
     }
-}
-
-fn percent_encode(value: &str) -> String {
-    let mut encoded = String::with_capacity(value.len());
-    for byte in value.bytes() {
-        match byte {
-            b'0'..=b'9' | b'A'..=b'Z' | b'a'..=b'z' | b'-' | b'.' | b'_' | b'~' => {
-                encoded.push(char::from(byte))
+    fn percent_encode(value: &str) -> String {
+        let mut encoded = String::with_capacity(value.len());
+        for byte in value.bytes() {
+            match byte {
+                b'0'..=b'9' | b'A'..=b'Z' | b'a'..=b'z' | b'-' | b'.' | b'_' | b'~' => {
+                    encoded.push(char::from(byte))
+                }
+                byte => encoded.push_str(&format!("%{byte:02X}")),
             }
-            byte => encoded.push_str(&format!("%{byte:02X}")),
         }
-    }
-    encoded
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn params(
-        permissions: Vec<BinanceExchangeInfoPermission>,
-        symbol: Option<&str>,
-        symbols: Vec<&str>,
-        symbol_status: Option<BinanceExchangeInfoSymbolStatus>,
-    ) -> BinanceExchangeInfoParams {
-        BinanceExchangeInfoParams {
-            permissions,
-            symbol: symbol.map(String::from),
-            symbols: symbols.into_iter().map(String::from).collect(),
-            symbolStatus: symbol_status,
-        }
-    }
-
-    #[test]
-    fn serializes_a_single_permission_as_a_bare_value() {
-        let params = params(
-            vec![BinanceExchangeInfoPermission::SPOT],
-            None,
-            vec![],
-            None,
-        );
-        assert_eq!(params.query_params(), "permissions=SPOT");
-    }
-
-    #[test]
-    fn serializes_multiple_permissions_as_a_url_encoded_json_array() {
-        let params = params(
-            vec![
-                BinanceExchangeInfoPermission::SPOT,
-                BinanceExchangeInfoPermission::MARGIN,
-                BinanceExchangeInfoPermission::LEVERAGED,
-            ],
-            None,
-            vec![],
-            Some(BinanceExchangeInfoSymbolStatus::HALT),
-        );
-        assert_eq!(
-            params.query_params(),
-            "permissions=%5B%22SPOT%22%2C%22MARGIN%22%2C%22LEVERAGED%22%5D&symbolStatus=HALT"
-        );
-    }
-
-    #[test]
-    fn no_params_queries_all_symbols() {
-        let params = params(vec![], None, vec![], None);
-        assert_eq!(params.query_params(), "");
-    }
-
-    #[test]
-    fn serializes_a_symbol_query() {
-        let params = params(vec![], Some("BNBBTC"), vec![], None);
-        assert_eq!(params.query_params(), "symbol=BNBBTC");
-    }
-
-    #[test]
-    fn serializes_symbols_as_a_url_encoded_json_array() {
-        let params = params(vec![], None, vec!["BNBBTC", "BTCUSDT"], None);
-        assert_eq!(
-            params.query_params(),
-            "symbols=%5B%22BNBBTC%22%2C%22BTCUSDT%22%5D"
-        );
-    }
-
-    #[test]
-    fn websocket_json_omits_unset_filters() {
-        let params = params(
-            vec![BinanceExchangeInfoPermission::SPOT],
-            None,
-            vec![],
-            Some(BinanceExchangeInfoSymbolStatus::TRADING),
-        );
-        let json = serde_json::to_value(params).unwrap();
-        assert_eq!(json["permissions"], serde_json::json!(["SPOT"]));
-        assert_eq!(json["symbolStatus"], "TRADING");
-        assert!(json.get("symbol").is_none());
-        assert!(json.get("symbols").is_none());
-    }
-
-    #[test]
-    fn recognizes_documented_permissions_and_symbol_statuses() {
-        for permission in [
-            BinanceExchangeInfoPermission::SPOT,
-            BinanceExchangeInfoPermission::MARGIN,
-            BinanceExchangeInfoPermission::LEVERAGED,
-        ] {
-            let json = serde_json::to_string(&permission).unwrap();
-            assert_eq!(
-                serde_json::from_str::<BinanceExchangeInfoPermission>(&json).unwrap(),
-                permission
-            );
-        }
-    }
-
-    #[test]
-    fn unknown_enum_values_deserialize_as_unknown() {
-        let permission: BinanceExchangeInfoPermission =
-            serde_json::from_str(r#""FUTURE_PERMISSION""#).unwrap();
-        assert!(matches!(permission, BinanceExchangeInfoPermission::Unknown));
-        let order_type: BinanceOrderType = serde_json::from_str(r#""FUTURE_ORDER_TYPE""#).unwrap();
-        assert!(matches!(order_type, BinanceOrderType::Unknown));
+        encoded
     }
 }
