@@ -1,4 +1,7 @@
-use crate::rate_limited::{RateLimit, RateLimitRestriction, RateLimitType, RateLimits};
+use crate::{
+    error::{ETError, ETResult},
+    rate_limited::{RateLimit, RateLimitRestriction, RateLimitType, RateLimits},
+};
 use serde::Deserialize;
 use std::{collections::HashMap, time::Duration};
 use strum::Display;
@@ -39,16 +42,14 @@ pub enum BinanceRateLimitType {
 pub struct BinanceRateLimits;
 
 impl BinanceRateLimitInterval {
-    pub fn into_nanos(self) -> i64 {
+    pub fn try_into_nanos(self) -> ETResult<i64> {
         match self {
-            BinanceRateLimitInterval::DAY => 24 * 60 * 60 * 1_000_000_000,
-            BinanceRateLimitInterval::HOUR => 60 * 60 * 1_000_000_000,
-            BinanceRateLimitInterval::MINUTE => 60 * 1_000_000_000,
-            BinanceRateLimitInterval::SECONDS_TEN => 10 * 1_000_000_000,
-            BinanceRateLimitInterval::SECOND => 1_000_000_000,
-            BinanceRateLimitInterval::Unknown => {
-                panic!("unsupported Binance rate limit interval: {self}")
-            }
+            BinanceRateLimitInterval::DAY => Ok(24 * 60 * 60 * 1_000_000_000),
+            BinanceRateLimitInterval::HOUR => Ok(60 * 60 * 1_000_000_000),
+            BinanceRateLimitInterval::MINUTE => Ok(60 * 1_000_000_000),
+            BinanceRateLimitInterval::SECONDS_TEN => Ok(10 * 1_000_000_000),
+            BinanceRateLimitInterval::SECOND => Ok(1_000_000_000),
+            BinanceRateLimitInterval::Unknown => Err(ETError::UnknownValue),
         }
     }
 }
