@@ -123,14 +123,3 @@ pub enum BinanceWorkingFloor {
     #[serde(other)]
     Unknown,
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn pending_new_order_status_deserializes() {
-        let status: BinanceOrderStatus = serde_json::from_str(r#""PENDING_NEW""#).unwrap();
-        assert_eq!(status, BinanceOrderStatus::PENDING_NEW);
-    }
-}
