@@ -48,16 +48,20 @@ pub enum BinanceNewOrderResponseType {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Serialize, Debug, Display, Clone, Copy, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinancePegPriceType {
     PRIMARY_PEG,
     MARKET_PEG,
+    #[serde(other)]
+    Unknown,
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Serialize, Debug, Display, Clone, Copy, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinancePegOffsetType {
     PRICE_LEVEL,
+    #[serde(other)]
+    Unknown,
 }
 
 #[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
@@ -106,6 +110,31 @@ pub enum BinanceOrderStatus {
     Unknown,
 }
 
+#[allow(non_camel_case_types)]
+#[derive(Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq)]
+pub enum BinanceWorkingFloor {
+    EXCHANGE,
+    SOR,
+    #[serde(other)]
+    Unknown,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq)]
+pub enum BinanceExpiryReason {
+    EXCHANGE_CANCELED,
+    EXECUTION_RULE_PRICE_RANGE_EXCEEDED,
+    INSUFFICIENT_LIQUIDITY,
+    NONE,
+    OCO_TRIGGER,
+    OTO_PHASE_ONE_EXPIRED,
+    REJECTED,
+    UNFILLED_FOK_ORDER_EXPIRED,
+    UNFILLED_IOC_QUANTITY_EXPIRED,
+    #[serde(other)]
+    Unknown,
+}
+
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
 #[skip_serializing_none]
@@ -114,12 +143,17 @@ pub struct BinanceSpotOrderResult {
     pub clientOrderId: String,
     pub cummulativeQuoteQty: Option<Decimal>,
     pub executedQty: Option<Decimal>,
+    pub expiryReason: Option<BinanceExpiryReason>,
     pub fills: Option<Vec<BinanceFill>>,
     pub icebergQty: Option<Decimal>,
     pub orderId: i64,
     pub orderListId: i32,
     pub origQty: Option<Decimal>,
     pub origQuoteOrderQty: Option<Decimal>,
+    pub pegOffsetType: Option<BinancePegOffsetType>,
+    pub pegOffsetValue: Option<i32>,
+    pub pegPriceType: Option<BinancePegPriceType>,
+    pub peggedPrice: Option<Decimal>,
     pub preventedMatchId: Option<i64>,
     pub preventedQuantity: Option<Decimal>,
     pub price: Option<Decimal>,
@@ -136,14 +170,18 @@ pub struct BinanceSpotOrderResult {
     pub transactTime: i64,
     #[serde(rename = "type")]
     pub r#type: Option<BinanceOrderType>,
+    pub usedSor: Option<bool>,
+    pub workingFloor: Option<BinanceWorkingFloor>,
     pub workingTime: Option<i64>,
 }
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BinanceFill {
+    pub allocId: Option<i64>,
     pub commission: Decimal,
     pub commissionAsset: Ticker,
+    pub matchType: Option<String>,
     pub price: Decimal,
     pub qty: Decimal,
     pub tradeId: i64,
@@ -217,5 +255,65 @@ mod tests {
         assert!(matches!(side, BinanceSide::Unknown));
         let time_in_force: BinanceTimeInForce = serde_json::from_str(r#""FUTURE_TIF""#).unwrap();
         assert!(matches!(time_in_force, BinanceTimeInForce::Unknown));
+        let working_floor: BinanceWorkingFloor = serde_json::from_str(r#""FUTURE_FLOOR""#).unwrap();
+        assert!(matches!(working_floor, BinanceWorkingFloor::Unknown));
+        let expiry_reason: BinanceExpiryReason =
+            serde_json::from_str(r#""FUTURE_REASON""#).unwrap();
+        assert!(matches!(expiry_reason, BinanceExpiryReason::Unknown));
+        let peg_price_type: BinancePegPriceType = serde_json::from_str(r#""FUTURE_PEG""#).unwrap();
+        assert!(matches!(peg_price_type, BinancePegPriceType::Unknown));
+        let peg_offset_type: BinancePegOffsetType =
+            serde_json::from_str(r#""FUTURE_OFFSET""#).unwrap();
+        assert!(matches!(peg_offset_type, BinancePegOffsetType::Unknown));
+    }
+
+    #[test]
+    fn deserializes_conditional_order_response_fields() {
+        let result: BinanceSpotOrderResult = serde_json::from_str(
+            r#"{
+                "symbol": "BTCUSDT",
+                "orderId": 2,
+                "orderListId": -1,
+                "clientOrderId": "sBI1KM6nNtOfj5tccZSKly",
+                "transactTime": 1689149087774,
+                "usedSor": true,
+                "workingFloor": "SOR",
+                "workingTime": 1689149087774,
+                "expiryReason": "INSUFFICIENT_LIQUIDITY",
+                "pegPriceType": "PRIMARY_PEG",
+                "pegOffsetType": "PRICE_LEVEL",
+                "pegOffsetValue": 5,
+                "peggedPrice": "87523.83710000",
+                "selfTradePreventionMode": "NONE",
+                "fills": [
+                    {
+                        "matchType": "ONE_PARTY_TRADE_REPORT",
+                        "price": "28000.00000000",
+                        "qty": "0.50000000",
+                        "commission": "0.00000000",
+                        "commissionAsset": "BTC",
+                        "tradeId": -1,
+                        "allocId": 0
+                    }
+                ]
+            }"#,
+        )
+        .unwrap();
+        assert_eq!(result.usedSor, Some(true));
+        assert_eq!(result.workingFloor, Some(BinanceWorkingFloor::SOR));
+        assert_eq!(
+            result.expiryReason,
+            Some(BinanceExpiryReason::INSUFFICIENT_LIQUIDITY)
+        );
+        assert_eq!(result.pegPriceType, Some(BinancePegPriceType::PRIMARY_PEG));
+        assert_eq!(
+            result.pegOffsetType,
+            Some(BinancePegOffsetType::PRICE_LEVEL)
+        );
+        assert_eq!(result.pegOffsetValue, Some(5));
+        assert_eq!(result.peggedPrice, Some(Decimal::new(8_752_383_710_000, 8)));
+        let fill = result.fills.unwrap().pop().unwrap();
+        assert_eq!(fill.matchType.as_deref(), Some("ONE_PARTY_TRADE_REPORT"));
+        assert_eq!(fill.allocId, Some(0));
     }
 }

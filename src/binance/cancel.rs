@@ -1,7 +1,10 @@
 use crate::binance::{
     exchange_info::BinanceOrderType,
     recv_window::BinanceRecvWindow,
-    spot::{BinanceOrderStatus, BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce},
+    spot::{
+        BinanceExpiryReason, BinanceOrderStatus, BinancePegOffsetType, BinancePegPriceType,
+        BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce, BinanceWorkingFloor,
+    },
 };
 use query_params::QueryParams;
 use rust_decimal::Decimal;
@@ -49,12 +52,17 @@ pub struct BinanceCancelOrderResult {
     pub clientOrderId: String,
     pub cummulativeQuoteQty: Option<Decimal>,
     pub executedQty: Option<Decimal>,
+    pub expiryReason: Option<BinanceExpiryReason>,
     pub icebergQty: Option<Decimal>,
     pub orderId: i64,
     pub orderListId: i32,
     pub origClientOrderId: String,
     pub origQty: Option<Decimal>,
     pub origQuoteOrderQty: Option<Decimal>,
+    pub pegOffsetType: Option<BinancePegOffsetType>,
+    pub pegOffsetValue: Option<i32>,
+    pub pegPriceType: Option<BinancePegPriceType>,
+    pub peggedPrice: Option<Decimal>,
     pub preventedMatchId: Option<i64>,
     pub preventedQuantity: Option<Decimal>,
     pub price: Option<Decimal>,
@@ -71,6 +79,8 @@ pub struct BinanceCancelOrderResult {
     pub transactTime: Option<i64>,
     #[serde(rename = "type")]
     pub r#type: BinanceOrderType,
+    pub usedSor: Option<bool>,
+    pub workingFloor: Option<BinanceWorkingFloor>,
     pub workingTime: Option<i64>,
 }
 
@@ -98,9 +108,22 @@ pub struct BinanceOrderListOrder {
     pub symbol: String,
 }
 
+#[allow(non_snake_case)]
+#[derive(Deserialize, Debug, Clone)]
+pub struct BinanceOrderListStatus {
+    pub contingencyType: String,
+    pub listClientOrderId: String,
+    pub listOrderStatus: String,
+    pub orderListId: i32,
+    #[serde(default)]
+    pub orders: Vec<BinanceOrderListOrder>,
+    pub symbol: String,
+}
+
 #[derive(Deserialize)]
 #[serde(untagged)]
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum BinanceCancelReport {
     Order(BinanceCancelOrderResult),
     OrderList(BinanceCancelOrderListResult),
