@@ -5,13 +5,13 @@ pub trait Urls {
     fn url(&self, protocol: Protocol, trading_mode: TradingMode) -> &str;
 }
 
-#[derive(Debug, Display, Clone, Copy)]
+#[derive(Debug, Display, Clone, Copy, PartialEq, Eq)]
 pub enum Protocol {
     Http,
     Websocket,
 }
 
-#[derive(Debug, Display, Clone, Copy)]
+#[derive(Debug, Display, Clone, Copy, PartialEq, Eq)]
 pub enum TradingMode {
     Real,
     Paper,

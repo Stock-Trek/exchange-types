@@ -17,7 +17,7 @@ pub struct RateLimit {
     pub restriction: RateLimitRestriction,
 }
 
-#[derive(Debug, Display, Clone, Copy)]
+#[derive(Debug, Display, Clone, Copy, PartialEq, Eq)]
 pub enum RateLimitRestriction {
     IP,
     Account,

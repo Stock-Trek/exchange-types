@@ -37,7 +37,7 @@ pub struct BinanceCancelOrderParams {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Serialize, Debug, Clone, Copy, Hash, Display)]
+#[derive(Serialize, Debug, Clone, Copy, PartialEq, Eq, Hash, Display)]
 pub enum BinanceCancelRestrictions {
     ONLY_NEW,
     ONLY_PARTIALLY_FILLED,

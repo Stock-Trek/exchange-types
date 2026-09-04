@@ -14,7 +14,7 @@ pub struct BinanceRateLimit {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Deserialize, Debug, Clone, Copy, Display)]
+#[derive(Deserialize, Debug, Clone, Copy, Display, PartialEq, Eq)]
 pub enum BinanceRateLimitInterval {
     DAY,
     HOUR,

@@ -54,7 +54,7 @@ pub enum BinanceOrderStatus {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceOrderType {
     LIMIT,
     LIMIT_MAKER,
@@ -85,7 +85,7 @@ pub enum BinancePegPriceType {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceSelfTradeProtection {
     EXPIRE_BOTH,
     EXPIRE_MAKER,
@@ -97,7 +97,7 @@ pub enum BinanceSelfTradeProtection {
     Unknown,
 }
 
-#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceSide {
     BUY,
     SELL,
@@ -106,7 +106,7 @@ pub enum BinanceSide {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceTimeInForce {
     FOK,
     GTC,
