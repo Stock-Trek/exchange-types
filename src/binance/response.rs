@@ -131,7 +131,6 @@ impl ETHttpResponse for BinanceResponse {
                         metadata,
                         payload: BinanceResponsePayload::Failure(BinanceError {
                             code: i64::from(response.status),
-                            data: None,
                             msg: String::from_utf8_lossy(&response.body).into_owned(),
                             data: None,
                         }),
@@ -198,7 +197,6 @@ impl ETWebsocketResponse for BinanceResponse {
             // No error and no result – treat as a generic failure
             BinanceResponsePayload::Failure(BinanceError {
                 code: -1,
-                data: None,
                 msg: "Websocket response missing both error and result".to_string(),
                 data: None,
             })

@@ -3,7 +3,6 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceError {
     pub code: i64,
-    pub data: Option<serde_json::Value>,
     pub msg: String,
     pub data: Option<BinanceErrorData>,
 }

@@ -202,3 +202,73 @@ impl ETWebsocketRequest for BinanceRequest {
         Ok(message)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        api_key_credential::ApiKeyCredentials,
+        binance::exchange_info::{BinanceExchangeInfoParams, BinanceExchangeInfoPermission},
+        encode::ByteEncoder,
+        encrypt::EncryptionAlgorithm,
+    };
+    use secrecy::SecretString;
+
+    fn signer() -> Signer {
+        let credentials = ApiKeyCredentials {
+            api_key: "api-key".into(),
+            secret: SecretString::from("secret"),
+        };
+        let encryptor = EncryptionAlgorithm::HmacSha256
+            .encryptor(credentials)
+            .unwrap();
+        Signer::new("api-key".into(), encryptor, ByteEncoder::Base16)
+    }
+
+    fn exchange_info_params() -> BinanceExchangeInfoParams {
+        BinanceExchangeInfoParams {
+            permissions: vec![
+                BinanceExchangeInfoPermission::SPOT,
+                BinanceExchangeInfoPermission::MARGIN,
+            ],
+            symbol: None,
+            symbols: vec![],
+            symbolStatus: None,
+        }
+    }
+
+    #[test]
+    fn exchange_info_rest_encodes_permissions_as_a_url_encoded_json_array() {
+        let request = BinanceRequest::ExchangeInfo(exchange_info_params());
+        let http_request = request.try_into_http(&signer()).unwrap();
+        assert_eq!(
+            http_request.query.as_deref(),
+            Some("exchangeInfo?permissions=%5B%22SPOT%22%2C%22MARGIN%22%5D")
+        );
+    }
+
+    #[test]
+    fn exchange_info_websocket_encodes_permissions_as_a_json_array() {
+        let request = BinanceRequest::ExchangeInfo(exchange_info_params());
+        let message = request
+            .try_into_websocket(&signer(), ETWebsocketId::Int(1))
+            .unwrap();
+        assert!(message.contains("\"method\":\"exchangeInfo\""));
+        assert!(message.contains("\"permissions\":[\"SPOT\",\"MARGIN\"]"));
+        assert!(!message.contains("symbolStatus"));
+    }
+
+    #[test]
+    fn exchange_info_without_filters_queries_all_symbols() {
+        let request = BinanceRequest::ExchangeInfo(BinanceExchangeInfoParams {
+            permissions: vec![],
+            symbol: None,
+            symbols: vec![],
+            symbolStatus: None,
+        });
+        let http_request = request.clone().try_into_http(&signer()).unwrap();
+        assert_eq!(http_request.query.as_deref(), Some("exchangeInfo?"));
+        let websocket_request = request.try_into_websocket(&signer(), ETWebsocketId::Int(2));
+        assert!(websocket_request.is_ok());
+    }
+}
