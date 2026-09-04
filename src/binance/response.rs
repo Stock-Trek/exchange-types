@@ -8,8 +8,7 @@ use crate::{
     response::{ETHttpResponse, ETWebsocketResponse},
     websocket_id::ETWebsocketId,
 };
-use serde::Deserialize;
-use serde::de::DeserializeOwned;
+use serde::{Deserialize, de::DeserializeOwned};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -38,19 +37,39 @@ pub struct BinanceUsageInterval {
     pub interval_num: u32,
 }
 
-impl BinanceUsageInterval {
-    fn parse(suffix: &str) -> Option<Self> {
-        let letter = suffix.chars().next_back()?;
+impl TryFrom<&str> for BinanceUsageInterval {
+    type Error = ETError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let letter = match value.chars().next_back() {
+            Some(letter) => letter,
+            None => return Err(ETError::ParseError("Empty usage interval".into())),
+        };
         if !letter.is_ascii_alphabetic() {
-            return None;
+            return Err(ETError::ParseError(value.into()));
         }
-        let interval = BinanceRateLimitInterval::try_from(letter)?;
-        let interval_num = suffix[..suffix.len() - letter.len_utf8()].parse().ok()?;
-        (interval_num > 0).then_some(Self {
+        let interval = match BinanceRateLimitInterval::try_from(letter) {
+            Ok(interval) => interval,
+            Err(e) => return Err(e),
+        };
+        let interval_num = match value[..value.len() - letter.len_utf8()].parse() {
+            Ok(interval_num) => interval_num,
+            Err(_) => return Err(ETError::ParseError(value.into())),
+        };
+        if interval_num <= 0 {
+            return Err(ETError::ParseError(format!(
+                "interval number must be positive: {}",
+                interval_num
+            )));
+        }
+        Ok(Self {
             interval,
             interval_num,
         })
     }
+}
+
+impl BinanceUsageInterval {
     fn try_from_rate_limit(interval: BinanceRateLimitInterval, interval_num: u32) -> Option<Self> {
         (interval_num > 0).then_some(Self {
             interval_num,
@@ -74,7 +93,7 @@ impl BinanceUsage {
                 None => return,
             },
         };
-        let Some(interval) = BinanceUsageInterval::parse(suffix) else {
+        let Ok(interval) = BinanceUsageInterval::try_from(suffix) else {
             return;
         };
         let Ok(count) = value.parse::<u32>() else {

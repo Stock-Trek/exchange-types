@@ -1,6 +1,7 @@
 use crate::{
-    error::{ETError, ETResult},
+    error::ETError,
     rate_limited::{RateLimit, RateLimitRestriction, RateLimitType, RateLimits},
+    time::Nanoseconds,
 };
 use serde::Deserialize;
 use std::{collections::HashMap, time::Duration};
@@ -40,36 +41,47 @@ pub enum BinanceRateLimitType {
 
 pub struct BinanceRateLimits;
 
-impl BinanceRateLimitInterval {
-    pub fn try_from(letter: char) -> Option<Self> {
-        match letter.to_ascii_lowercase() {
-            's' => Some(Self::SECOND),
-            'm' => Some(Self::MINUTE),
-            'h' => Some(Self::HOUR),
-            'd' => Some(Self::DAY),
-            _ => None,
-        }
-    }
-    pub fn try_into_nanos(self) -> ETResult<i64> {
-        match self {
-            BinanceRateLimitInterval::DAY => Ok(24 * 60 * 60 * 1_000_000_000),
-            BinanceRateLimitInterval::HOUR => Ok(60 * 60 * 1_000_000_000),
-            BinanceRateLimitInterval::MINUTE => Ok(60 * 1_000_000_000),
-            BinanceRateLimitInterval::SECOND => Ok(1_000_000_000),
-            BinanceRateLimitInterval::Unknown => Err(ETError::UnknownValue),
+impl TryFrom<char> for BinanceRateLimitInterval {
+    type Error = ETError;
+
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        match value.to_ascii_lowercase() {
+            's' => Ok(Self::SECOND),
+            'm' => Ok(Self::MINUTE),
+            'h' => Ok(Self::HOUR),
+            'd' => Ok(Self::DAY),
+            other => Err(ETError::ParseError(other.into())),
         }
     }
 }
 
-impl From<BinanceRateLimitType> for RateLimitType {
-    fn from(value: BinanceRateLimitType) -> Self {
+impl TryFrom<BinanceRateLimitInterval> for Nanoseconds {
+    type Error = ETError;
+
+    fn try_from(value: BinanceRateLimitInterval) -> Result<Self, Self::Error> {
         match value {
-            BinanceRateLimitType::CONNECTIONS => RateLimitType::Connection,
-            BinanceRateLimitType::ORDERS => RateLimitType::OrderCount,
-            BinanceRateLimitType::RAW_REQUESTS => RateLimitType::RawRequests,
-            BinanceRateLimitType::REQUEST_WEIGHT => RateLimitType::Weight,
+            BinanceRateLimitInterval::DAY => Ok(Nanoseconds(24 * 60 * 60 * 1_000_000_000)),
+            BinanceRateLimitInterval::HOUR => Ok(Nanoseconds(60 * 60 * 1_000_000_000)),
+            BinanceRateLimitInterval::MINUTE => Ok(Nanoseconds(60 * 1_000_000_000)),
+            BinanceRateLimitInterval::SECOND => Ok(Nanoseconds(1_000_000_000)),
+            BinanceRateLimitInterval::Unknown => {
+                Err(ETError::UnknownValue("BinanceRateLimitInterval".into()))
+            }
+        }
+    }
+}
+
+impl TryFrom<BinanceRateLimitType> for RateLimitType {
+    type Error = ETError;
+
+    fn try_from(value: BinanceRateLimitType) -> Result<Self, Self::Error> {
+        match value {
+            BinanceRateLimitType::CONNECTIONS => Ok(RateLimitType::Connection),
+            BinanceRateLimitType::ORDERS => Ok(RateLimitType::OrderCount),
+            BinanceRateLimitType::RAW_REQUESTS => Ok(RateLimitType::RawRequests),
+            BinanceRateLimitType::REQUEST_WEIGHT => Ok(RateLimitType::Weight),
             BinanceRateLimitType::Unknown => {
-                panic!("unsupported Binance rate limit type: {value}")
+                Err(ETError::UnknownValue("BinanceRateLimitType".into()))
             }
         }
     }
