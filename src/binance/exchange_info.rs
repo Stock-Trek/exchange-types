@@ -7,19 +7,40 @@ use crate::{
     ticker::Ticker,
 };
 use serde::{Deserialize, Serialize};
-use serde_with::skip_serializing_none;
 use strum::Display;
 
 #[allow(non_snake_case)]
-#[skip_serializing_none]
 #[derive(Serialize, Debug, Clone, Hash)]
-pub struct BinanceExchangeInfoParams {
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub permissions: Vec<BinanceExchangeInfoPermission>,
-    pub symbol: Option<String>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub symbols: Vec<String>,
-    pub symbolStatus: Option<BinanceExchangeInfoSymbolStatus>,
+#[serde(untagged)]
+pub enum BinanceExchangeInfoParams {
+    All {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        symbolStatus: Option<BinanceExchangeInfoSymbolStatus>,
+    },
+    Symbol {
+        symbol: String,
+    },
+    Symbols {
+        symbols: Vec<String>,
+    },
+    Permissions {
+        permissions: BinanceExchangeInfoPermissions,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        symbolStatus: Option<BinanceExchangeInfoSymbolStatus>,
+    },
+}
+
+impl Default for BinanceExchangeInfoParams {
+    fn default() -> Self {
+        Self::All { symbolStatus: None }
+    }
+}
+
+#[derive(Serialize, Debug, Clone, Hash)]
+#[serde(untagged)]
+pub enum BinanceExchangeInfoPermissions {
+    Single(BinanceExchangeInfoPermission),
+    List(Vec<BinanceExchangeInfoPermission>),
 }
 
 #[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
@@ -91,40 +112,44 @@ pub struct BinanceExchangeInfoSymbol {
 impl BinanceExchangeInfoParams {
     pub fn query_params(&self) -> String {
         let mut pairs = Vec::new();
-        match self.permissions.as_slice() {
-            [] => {}
-            [permission] => pairs.push(format!("permissions={permission}")),
-            many => {
-                let permissions = many
-                    .iter()
-                    .map(|permission| format!("\"{permission}\""))
-                    .collect::<Vec<_>>()
-                    .join(",");
-                pairs.push(format!(
-                    "permissions={}",
-                    Self::percent_encode(&format!("[{permissions}]"))
-                ));
+        match self {
+            Self::All { symbolStatus } => {
+                if let Some(symbol_status) = symbolStatus {
+                    pairs.push(format!("symbolStatus={symbol_status}"));
+                }
+            }
+            Self::Symbol { symbol } => pairs.push(format!("symbol={symbol}")),
+            Self::Symbols { symbols } => pairs.push(format!(
+                "symbols={}",
+                Self::percent_encode(&Self::json_array(symbols))
+            )),
+            Self::Permissions {
+                permissions,
+                symbolStatus,
+            } => {
+                match permissions {
+                    BinanceExchangeInfoPermissions::Single(permission) => {
+                        pairs.push(format!("permissions={permission}"));
+                    }
+                    BinanceExchangeInfoPermissions::List(permissions) => pairs.push(format!(
+                        "permissions={}",
+                        Self::percent_encode(&Self::json_array(permissions))
+                    )),
+                }
+                if let Some(symbol_status) = symbolStatus {
+                    pairs.push(format!("symbolStatus={symbol_status}"));
+                }
             }
         }
-        if let Some(symbol) = &self.symbol {
-            pairs.push(format!("symbol={symbol}"));
-        }
-        if !self.symbols.is_empty() {
-            let symbols = self
-                .symbols
-                .iter()
-                .map(|symbol| format!("\"{symbol}\""))
-                .collect::<Vec<_>>()
-                .join(",");
-            pairs.push(format!(
-                "symbols={}",
-                Self::percent_encode(&format!("[{symbols}]"))
-            ));
-        }
-        if let Some(symbol_status) = &self.symbolStatus {
-            pairs.push(format!("symbolStatus={symbol_status}"));
-        }
         pairs.join("&")
+    }
+    fn json_array(values: &[impl std::fmt::Display]) -> String {
+        let values = values
+            .iter()
+            .map(|value| format!("\"{value}\""))
+            .collect::<Vec<_>>()
+            .join(",");
+        format!("[{values}]")
     }
     fn percent_encode(value: &str) -> String {
         let mut encoded = String::with_capacity(value.len());
