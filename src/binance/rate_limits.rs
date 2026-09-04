@@ -69,7 +69,7 @@ impl From<BinanceRateLimitType> for RateLimitType {
 }
 
 impl RateLimits for BinanceRateLimits {
-    fn rate_limits(&self) -> HashMap<RateLimitType, Vec<RateLimit>> {
+    fn default(&self) -> HashMap<RateLimitType, Vec<RateLimit>> {
         let mut map = HashMap::new();
         map.insert(
             RateLimitType::Weight,

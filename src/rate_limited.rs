@@ -7,7 +7,7 @@ pub trait RateLimited {
 }
 
 pub trait RateLimits {
-    fn rate_limits(&self) -> HashMap<RateLimitType, Vec<RateLimit>>;
+    fn default(&self) -> HashMap<RateLimitType, Vec<RateLimit>>;
 }
 
 #[derive(Debug, Clone)]
