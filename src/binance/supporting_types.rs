@@ -1,6 +1,5 @@
-use strum::Display;
-
 use serde::{Deserialize, Serialize};
+use strum::Display;
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq)]

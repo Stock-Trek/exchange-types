@@ -1,5 +1,4 @@
 use crate::websocket_id::ETWebsocketId;
-
 use crate::{error::ETResult, http::HttpRequest, signer::Signer};
 
 pub trait ETHttpRequest {

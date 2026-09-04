@@ -1,5 +1,4 @@
 use secrecy::SecretString;
-
 use serde::Deserialize;
 
 #[derive(Deserialize)]
