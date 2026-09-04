@@ -1,10 +1,12 @@
 use crate::{
     binance::{
+        account::BinanceAccountResult,
         amend::BinanceAmendOrderResult,
         asset_limits::BinanceAssetLimitsResult,
         cancel::{BinanceCancelOrderListResult, BinanceCancelOrderResult, BinanceCancelReport},
         error::BinanceError,
         exchange_info::BinanceExchangeInfoResult,
+        query_order::BinanceOrderResult,
         rate_limits::{BinanceRateLimit, BinanceRateLimitInterval, BinanceRateLimitType},
         session::BinanceSessionAuthenticationResult,
         spot::BinanceSpotOrderResult,
@@ -54,12 +56,15 @@ pub struct BinanceUsage {
 #[serde(untagged)]
 #[derive(Debug, Clone)]
 pub enum BinanceResult {
+    Account(BinanceAccountResult),
     AmendOrder(BinanceAmendOrderResult),
     AssetLimits(BinanceAssetLimitsResult),
     CancelAllOrders(Vec<BinanceCancelReport>),
     CancelOrder(BinanceCancelOrderResult),
     CancelOrderList(BinanceCancelOrderListResult),
     ExchangeInfo(BinanceExchangeInfoResult),
+    OpenOrders(Vec<BinanceOrderResult>),
+    QueryOrder(BinanceOrderResult),
     SpotOrder(BinanceSpotOrderResult),
     Time(BinanceTimeResult),
     WebsocketSessionAuthentication(BinanceSessionAuthenticationResult),
@@ -80,12 +85,15 @@ struct BinanceWebsocketResponse {
 #[serde(untagged)]
 #[derive(Debug, Clone)]
 pub enum BinanceWebsocketResponseResult {
+    Account(BinanceAccountResult),
     AmendOrder(BinanceAmendOrderResult),
     AssetLimits(BinanceAssetLimitsResult),
     CancelAllOrders(Vec<BinanceCancelReport>),
     CancelOrder(BinanceCancelOrderResult),
     CancelOrderList(BinanceCancelOrderListResult),
     ExchangeInfo(BinanceExchangeInfoResult),
+    OpenOrders(Vec<BinanceOrderResult>),
+    QueryOrder(BinanceOrderResult),
     SessionAuthentication(BinanceSessionAuthenticationResult),
     SpotOrder(BinanceSpotOrderResult),
     Time(BinanceTimeResult),
@@ -180,6 +188,7 @@ impl ETWebsocketResponse for BinanceResponse {
             BinanceResponsePayload::Failure(error)
         } else if let Some(result) = websocket_response.result {
             let binance_result = match result {
+                BinanceWebsocketResponseResult::Account(r) => BinanceResult::Account(r),
                 BinanceWebsocketResponseResult::AmendOrder(r) => BinanceResult::AmendOrder(r),
                 BinanceWebsocketResponseResult::AssetLimits(r) => BinanceResult::AssetLimits(r),
                 BinanceWebsocketResponseResult::CancelAllOrders(r) => {
@@ -190,6 +199,8 @@ impl ETWebsocketResponse for BinanceResponse {
                     BinanceResult::CancelOrderList(r)
                 }
                 BinanceWebsocketResponseResult::ExchangeInfo(r) => BinanceResult::ExchangeInfo(r),
+                BinanceWebsocketResponseResult::OpenOrders(r) => BinanceResult::OpenOrders(r),
+                BinanceWebsocketResponseResult::QueryOrder(r) => BinanceResult::QueryOrder(r),
                 BinanceWebsocketResponseResult::SessionAuthentication(r) => {
                     BinanceResult::WebsocketSessionAuthentication(r)
                 }

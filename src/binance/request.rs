@@ -1,9 +1,12 @@
 use crate::{
     binance::{
+        account::BinanceAccountParams,
         amend::BinanceAmendOrderParams,
         asset_limits::BinanceAssetLimitsParams,
         cancel::{BinanceCancelAllOrdersParams, BinanceCancelOrderParams},
         exchange_info::BinanceExchangeInfoParams,
+        open_orders::BinanceOpenOrdersParams,
+        query_order::BinanceQueryOrderParams,
         session::{BinanceSessionLogonParams, BinanceSessionLogoutParams},
         spot::BinanceSpotOrderParams,
         time::BinanceTimeParams,
@@ -23,11 +26,14 @@ use serde_with::skip_serializing_none;
 #[serde(untagged)]
 #[derive(Debug, Clone, Hash)]
 pub enum BinanceRequest {
+    Account(BinanceAccountParams),
     AmendOrderRequest(BinanceAmendOrderParams),
     AssetLimits(BinanceAssetLimitsParams),
     CancelAllOrdersRequest(BinanceCancelAllOrdersParams),
     CancelOrderRequest(BinanceCancelOrderParams),
     ExchangeInfo(BinanceExchangeInfoParams),
+    OpenOrders(BinanceOpenOrdersParams),
+    QueryOrder(BinanceQueryOrderParams),
     SpotOrderRequest(BinanceSpotOrderParams),
     Time(BinanceTimeParams),
     WebsocketSessionLogon(BinanceSessionLogonParams),
@@ -40,12 +46,18 @@ enum WebsocketMethod {
     AmendOrder,
     #[serde(rename = "myFilters")]
     AssetLimits,
+    #[serde(rename = "account.status")]
+    Account,
     #[serde(rename = "order.cancel")]
     CancelOrder,
     #[serde(rename = "openOrders.cancelAll")]
     CancelAllOrders,
     #[serde(rename = "exchangeInfo")]
     ExchangeInfo,
+    #[serde(rename = "openOrders.status")]
+    OpenOrders,
+    #[serde(rename = "order.status")]
+    QueryOrder,
     #[serde(rename = "session.logon")]
     Logon,
     #[serde(rename = "session.logout")]
@@ -81,11 +93,20 @@ impl RateLimited for BinanceRequest {
     }
     fn weight(&self) -> u32 {
         match self {
+            BinanceRequest::Account(..) => 20,
             BinanceRequest::AmendOrderRequest(..) => 4,
             BinanceRequest::AssetLimits(..) => 40,
             BinanceRequest::CancelAllOrdersRequest(..) => 1,
             BinanceRequest::CancelOrderRequest(..) => 1,
             BinanceRequest::ExchangeInfo(..) => 20,
+            BinanceRequest::OpenOrders(params) => {
+                if params.symbol.is_some() {
+                    6
+                } else {
+                    80
+                }
+            }
+            BinanceRequest::QueryOrder(..) => 4,
             BinanceRequest::SpotOrderRequest(..) => 1,
             BinanceRequest::Time(..) => 1,
             BinanceRequest::WebsocketSessionLogon(..) => 2,
@@ -97,10 +118,13 @@ impl RateLimited for BinanceRequest {
 impl BinanceRequest {
     fn set_api_key(&mut self, api_key: Option<String>) {
         match self {
+            BinanceRequest::Account(params) => params.apiKey = api_key,
             BinanceRequest::AmendOrderRequest(params) => params.apiKey = api_key,
             BinanceRequest::AssetLimits(params) => params.apiKey = api_key,
             BinanceRequest::CancelAllOrdersRequest(params) => params.apiKey = api_key,
             BinanceRequest::CancelOrderRequest(params) => params.apiKey = api_key,
+            BinanceRequest::OpenOrders(params) => params.apiKey = api_key,
+            BinanceRequest::QueryOrder(params) => params.apiKey = api_key,
             BinanceRequest::SpotOrderRequest(params) => params.apiKey = api_key,
             BinanceRequest::WebsocketSessionLogon(params) => params.apiKey = api_key,
             BinanceRequest::ExchangeInfo(..)
@@ -110,6 +134,7 @@ impl BinanceRequest {
     }
     fn query_params(&self, percent_encode: bool) -> String {
         match self {
+            BinanceRequest::Account(params) => params.query_params(true, percent_encode),
             BinanceRequest::AmendOrderRequest(params) => params.query_params(true, percent_encode),
             BinanceRequest::AssetLimits(params) => params.query_params(true, percent_encode),
             BinanceRequest::CancelAllOrdersRequest(params) => {
@@ -117,6 +142,8 @@ impl BinanceRequest {
             }
             BinanceRequest::CancelOrderRequest(params) => params.query_params(true, percent_encode),
             BinanceRequest::ExchangeInfo(params) => params.query_params(),
+            BinanceRequest::OpenOrders(params) => params.query_params(true, percent_encode),
+            BinanceRequest::QueryOrder(params) => params.query_params(true, percent_encode),
             BinanceRequest::SpotOrderRequest(params) => params.query_params(true, percent_encode),
             BinanceRequest::Time(params) => params.query_params(),
             BinanceRequest::WebsocketSessionLogon(params) => {
@@ -129,11 +156,14 @@ impl BinanceRequest {
     }
     fn websocket_method(&self) -> WebsocketMethod {
         match self {
+            BinanceRequest::Account(..) => WebsocketMethod::Account,
             BinanceRequest::AmendOrderRequest(..) => WebsocketMethod::AmendOrder,
             BinanceRequest::AssetLimits(..) => WebsocketMethod::AssetLimits,
             BinanceRequest::CancelAllOrdersRequest(..) => WebsocketMethod::CancelAllOrders,
             BinanceRequest::CancelOrderRequest(..) => WebsocketMethod::CancelOrder,
             BinanceRequest::ExchangeInfo(..) => WebsocketMethod::ExchangeInfo,
+            BinanceRequest::OpenOrders(..) => WebsocketMethod::OpenOrders,
+            BinanceRequest::QueryOrder(..) => WebsocketMethod::QueryOrder,
             BinanceRequest::SpotOrderRequest(..) => WebsocketMethod::PlaceOrder,
             BinanceRequest::Time(..) => WebsocketMethod::Time,
             BinanceRequest::WebsocketSessionLogon(..) => WebsocketMethod::Logon,
@@ -146,6 +176,7 @@ impl ETHttpRequest for BinanceRequest {
     fn try_into_http(mut self, signer: &Signer) -> ETResult<HttpRequest> {
         self.set_api_key(None);
         let (method, endpoint, is_signed) = match self {
+            BinanceRequest::Account(..) => (HttpMethod::GET, "account", true),
             BinanceRequest::AmendOrderRequest(..) => {
                 (HttpMethod::PUT, "order/amend/keepPriority", true)
             }
@@ -153,6 +184,8 @@ impl ETHttpRequest for BinanceRequest {
             BinanceRequest::CancelAllOrdersRequest(..) => (HttpMethod::DELETE, "openOrders", true),
             BinanceRequest::CancelOrderRequest(..) => (HttpMethod::DELETE, "order", true),
             BinanceRequest::ExchangeInfo(..) => (HttpMethod::GET, "exchangeInfo", false),
+            BinanceRequest::OpenOrders(..) => (HttpMethod::GET, "openOrders", true),
+            BinanceRequest::QueryOrder(..) => (HttpMethod::GET, "order", true),
             BinanceRequest::SpotOrderRequest(..) => (HttpMethod::POST, "order", true),
             BinanceRequest::Time(..) => (HttpMethod::GET, "time", false),
             BinanceRequest::WebsocketSessionLogon(..)
