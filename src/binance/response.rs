@@ -12,6 +12,7 @@ use crate::{
     },
     error::ETResult,
     http::HttpResponse,
+    request::ETWebsocketId,
     response::{ETHttpResponse, ETWebsocketResponse},
 };
 
@@ -36,7 +37,7 @@ pub enum BinanceResponsePayload {
 pub struct BinanceMetadata {
     pub usage: BinanceUsage,
     pub retry_after: Option<u64>,
-    pub websocket_id: Option<String>,
+    pub websocket_id: Option<ETWebsocketId>,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -67,7 +68,7 @@ pub enum BinanceResult {
 #[derive(Deserialize, Debug, Clone)]
 struct BinanceWebsocketResponse {
     pub error: Option<BinanceError>,
-    pub id: String,
+    pub id: Option<ETWebsocketId>,
     #[serde(default)]
     pub rateLimits: Vec<BinanceRateLimit>,
     pub result: Option<BinanceWebsocketResponseResult>,
@@ -135,7 +136,7 @@ impl ETWebsocketResponse for BinanceResponse {
         let websocket_response: BinanceWebsocketResponse =
             serde_json::from_str(&response).map_err(ETError::DeserializeResponse)?;
         let mut metadata = BinanceMetadata {
-            websocket_id: Some(websocket_response.id),
+            websocket_id: websocket_response.id,
             ..Default::default()
         };
         for rate_limit in websocket_response.rateLimits {
@@ -188,5 +189,58 @@ impl ETWebsocketResponse for BinanceResponse {
             })
         };
         Ok(BinanceResponse { metadata, payload })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn response(json: &str) -> BinanceResponse {
+        BinanceResponse::try_from_websocket(json.into()).unwrap()
+    }
+
+    #[test]
+    fn parses_string_id() {
+        let response = response(r#"{"id": "abc", "result": {"serverTime": 1499827319559}}"#);
+        assert_eq!(
+            response.metadata.websocket_id,
+            Some(ETWebsocketId::Str("abc".into()))
+        );
+        assert!(matches!(
+            response.payload,
+            BinanceResponsePayload::Success(BinanceResult::Time(_))
+        ));
+    }
+
+    #[test]
+    fn parses_integer_id() {
+        let response = response(r#"{"id": 1, "result": {"serverTime": 1499827319559}}"#);
+        assert_eq!(response.metadata.websocket_id, Some(ETWebsocketId::Int(1)));
+        assert!(matches!(
+            response.payload,
+            BinanceResponsePayload::Success(BinanceResult::Time(_))
+        ));
+    }
+
+    #[test]
+    fn parses_null_id_session_revocation_and_surfaces_error() {
+        let response =
+            response(r#"{"id": null, "error": {"code": -2015, "msg": "API key is not valid."}}"#);
+        assert_eq!(response.metadata.websocket_id, None);
+        match response.payload {
+            BinanceResponsePayload::Failure(error) => assert_eq!(error.code, -2015),
+            _ => panic!("expected a failure payload"),
+        }
+    }
+
+    #[test]
+    fn missing_error_and_result_is_generic_failure() {
+        let response = response(r#"{"id": 2}"#);
+        assert_eq!(response.metadata.websocket_id, Some(ETWebsocketId::Int(2)));
+        match response.payload {
+            BinanceResponsePayload::Failure(error) => assert_eq!(error.code, -1),
+            _ => panic!("expected a failure payload"),
+        }
     }
 }

@@ -11,7 +11,7 @@ use crate::{
     error::{ETError, ETResult},
     http::{HttpMethod, HttpRequest},
     rate_limited::RateLimited,
-    request::{ETHttpRequest, ETWebsocketRequest},
+    request::{ETHttpRequest, ETWebsocketId, ETWebsocketRequest},
     signer::Signer,
     urls::Protocol,
 };
@@ -57,7 +57,7 @@ enum WebsocketMethod {
 
 #[derive(Debug, Clone, Serialize)]
 struct WebsocketSignedRequest {
-    id: String,
+    id: ETWebsocketId,
     method: WebsocketMethod,
     params: SignedParams,
 }
@@ -180,7 +180,7 @@ impl ETHttpRequest for BinanceRequest {
 }
 
 impl ETWebsocketRequest for BinanceRequest {
-    fn try_into_websocket(mut self, signer: &Signer, id: String) -> ETResult<String> {
+    fn try_into_websocket(mut self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
         self.set_api_key(Some(signer.api_key()));
         let method = self.websocket_method();
         let is_signed = match self {
@@ -209,5 +209,52 @@ impl ETWebsocketRequest for BinanceRequest {
         };
         let message = serde_json::to_string(&signed_request).map_err(ETError::SerializeRequest)?;
         Ok(message)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        api_key_credential::ApiKeyCredentials, encode::ByteEncoder, encrypt::EncryptionAlgorithm,
+        signer::Signer,
+    };
+    use secrecy::SecretString;
+
+    fn signer() -> Signer {
+        Signer::new(
+            "api-key".into(),
+            EncryptionAlgorithm::HmacSha256
+                .encryptor(ApiKeyCredentials {
+                    api_key: "api-key".into(),
+                    secret: SecretString::from("secret".to_string()),
+                })
+                .unwrap(),
+            ByteEncoder::Base64,
+        )
+    }
+
+    fn envelope(id: ETWebsocketId) -> serde_json::Value {
+        let message = BinanceRequest::WebsocketSessionLogon(BinanceSessionLogonParams {
+            apiKey: None,
+            timestamp: 1_700_000_000_000,
+        })
+        .try_into_websocket(&signer(), id)
+        .unwrap();
+        serde_json::from_str(&message).unwrap()
+    }
+
+    #[test]
+    fn serializes_integer_id() {
+        let envelope = envelope(ETWebsocketId::Int(1));
+        assert_eq!(envelope["id"].as_i64(), Some(1));
+        assert_eq!(envelope["method"], "session.logon");
+    }
+
+    #[test]
+    fn serializes_string_id() {
+        let envelope = envelope(ETWebsocketId::Str("abc".into()));
+        assert_eq!(envelope["id"].as_str(), Some("abc"));
+        assert_eq!(envelope["method"], "session.logon");
     }
 }
