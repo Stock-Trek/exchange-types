@@ -86,7 +86,7 @@ struct WebsocketParams {
 }
 
 impl RateLimited for BinanceRequest {
-    fn order_count(&self, protocol: Protocol) -> u32 {
+    fn order_count(&self, _protocol: Protocol) -> u32 {
         match self {
             BinanceRequest::SpotOrderRequest(..) => 1,
             _ => 0,
@@ -94,14 +94,29 @@ impl RateLimited for BinanceRequest {
     }
     fn weight(&self, protocol: Protocol) -> u32 {
         match self {
-            BinanceRequest::Account(..) => 2,
+            BinanceRequest::Account(..) => match protocol {
+                Protocol::Http => 20,
+                Protocol::Websocket => 2,
+            },
             BinanceRequest::AmendOrderRequest(..) => 4,
             BinanceRequest::AssetLimits(..) => 40,
             BinanceRequest::CancelAllOrdersRequest(..) => 1,
             BinanceRequest::CancelOrderRequest(..) => 1,
             BinanceRequest::ExchangeInfo(..) => 20,
-            BinanceRequest::OpenOrders(..) => 1,
-            BinanceRequest::QueryOrder(..) => 2,
+            BinanceRequest::OpenOrders(params) => match protocol {
+                Protocol::Http => {
+                    if params.symbol.is_some() {
+                        6
+                    } else {
+                        80
+                    }
+                }
+                Protocol::Websocket => 1,
+            },
+            BinanceRequest::QueryOrder(..) => match protocol {
+                Protocol::Http => 4,
+                Protocol::Websocket => 2,
+            },
             BinanceRequest::SpotOrderRequest(..) => 1,
             BinanceRequest::Time(..) => 1,
             BinanceRequest::WebsocketSessionLogon(..) => 20,
@@ -240,3 +255,188 @@ impl ETWebsocketRequest for BinanceRequest {
         Ok(message)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::binance::supporting_types::{BinanceOrderType, BinanceSide};
+    use rust_decimal::Decimal;
+
+    fn spot_order() -> BinanceRequest {
+        BinanceRequest::SpotOrderRequest(BinanceSpotOrderRequest {
+            apiKey: None,
+            icebergQty: None,
+            newClientOrderId: None,
+            newOrderRespType: None,
+            pegPriceType: None,
+            pegOffsetValue: None,
+            pegOffsetType: None,
+            price: None,
+            quantity: None,
+            quoteOrderQty: None,
+            recvWindow: None,
+            selfTradePreventionMode: None,
+            side: BinanceSide::BUY,
+            stopPrice: None,
+            strategyId: None,
+            strategyType: None,
+            symbol: "BTCUSDT".into(),
+            timeInForce: None,
+            timestamp: 1,
+            trailingDelta: None,
+            r#type: BinanceOrderType::LIMIT,
+        })
+    }
+
+    fn open_orders(symbol: Option<String>) -> BinanceRequest {
+        BinanceRequest::OpenOrders(BinanceOpenOrdersRequest {
+            apiKey: None,
+            recvWindow: None,
+            symbol,
+            timestamp: 1,
+        })
+    }
+
+    #[test]
+    fn http_weights_match_rest_docs() {
+        let http = Protocol::Http;
+        assert_eq!(
+            BinanceRequest::Account(BinanceAccountRequest {
+                apiKey: None,
+                omitZeroBalances: None,
+                recvWindow: None,
+                timestamp: 1,
+            })
+            .weight(http),
+            20
+        );
+        assert_eq!(
+            BinanceRequest::QueryOrder(BinanceQueryOrderRequest {
+                apiKey: None,
+                orderId: None,
+                origClientOrderId: None,
+                recvWindow: None,
+                symbol: "BTCUSDT".into(),
+                timestamp: 1,
+            })
+            .weight(http),
+            4
+        );
+        assert_eq!(open_orders(Some("BTCUSDT".into())).weight(http), 6);
+        assert_eq!(open_orders(None).weight(http), 80);
+        assert_eq!(
+            BinanceRequest::AmendOrderRequest(BinanceAmendOrderRequest {
+                apiKey: None,
+                newClientOrderId: None,
+                newQty: Decimal::ZERO,
+                orderId: None,
+                origClientOrderId: None,
+                recvWindow: None,
+                symbol: "BTCUSDT".into(),
+                timestamp: 1,
+            })
+            .weight(http),
+            4
+        );
+        assert_eq!(
+            BinanceRequest::AssetLimits(BinanceAssetLimitsRequest {
+                apiKey: None,
+                recvWindow: None,
+                symbol: "BTCUSDT".into(),
+                timestamp: 1,
+            })
+            .weight(http),
+            40
+        );
+        assert_eq!(
+            BinanceRequest::CancelAllOrdersRequest(BinanceCancelAllOrdersRequest {
+                apiKey: None,
+                recvWindow: None,
+                symbol: "BTCUSDT".into(),
+                timestamp: 1,
+            })
+            .weight(http),
+            1
+        );
+        assert_eq!(
+            BinanceRequest::CancelOrderRequest(BinanceCancelOrderRequest {
+                apiKey: None,
+                cancelRestrictions: None,
+                newClientOrderId: None,
+                orderId: None,
+                origClientOrderId: None,
+                recvWindow: None,
+                symbol: "BTCUSDT".into(),
+                timestamp: 1,
+            })
+            .weight(http),
+            1
+        );
+        assert_eq!(BinanceRequest::ExchangeInfo(Default::default()).weight(http), 20);
+        assert_eq!(spot_order().weight(http), 1);
+        assert_eq!(BinanceRequest::Time(BinanceTimeRequest {}).weight(http), 1);
+    }
+
+    #[test]
+    fn websocket_weights_match_ws_docs() {
+        let ws = Protocol::Websocket;
+        assert_eq!(
+            BinanceRequest::Account(BinanceAccountRequest {
+                apiKey: None,
+                omitZeroBalances: None,
+                recvWindow: None,
+                timestamp: 1,
+            })
+            .weight(ws),
+            2
+        );
+        assert_eq!(
+            BinanceRequest::QueryOrder(BinanceQueryOrderRequest {
+                apiKey: None,
+                orderId: None,
+                origClientOrderId: None,
+                recvWindow: None,
+                symbol: "BTCUSDT".into(),
+                timestamp: 1,
+            })
+            .weight(ws),
+            2
+        );
+        assert_eq!(open_orders(Some("BTCUSDT".into())).weight(ws), 1);
+        assert_eq!(open_orders(None).weight(ws), 1);
+        assert_eq!(spot_order().weight(ws), 1);
+        assert_eq!(
+            BinanceRequest::WebsocketSessionLogon(BinanceSessionLogonRequest {
+                apiKey: None,
+                timestamp: 1,
+            })
+            .weight(ws),
+            20
+        );
+        assert_eq!(
+            BinanceRequest::WebsocketSessionLogout(BinanceSessionLogoutRequest {}).weight(ws),
+            4
+        );
+    }
+
+    #[test]
+    fn order_count_is_protocol_independent() {
+        assert_eq!(spot_order().order_count(Protocol::Http), 1);
+        assert_eq!(spot_order().order_count(Protocol::Websocket), 1);
+        assert_eq!(
+            BinanceRequest::CancelOrderRequest(BinanceCancelOrderRequest {
+                apiKey: None,
+                cancelRestrictions: None,
+                newClientOrderId: None,
+                orderId: None,
+                origClientOrderId: None,
+                recvWindow: None,
+                symbol: "BTCUSDT".into(),
+                timestamp: 1,
+            })
+            .order_count(Protocol::Websocket),
+            0
+        );
+    }
+}
+
