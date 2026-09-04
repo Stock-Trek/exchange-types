@@ -21,22 +21,22 @@ pub struct BinanceAccountRequest {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceAccountResponse {
-    pub accountType: String,
-    pub balances: Vec<BinanceAccountBalance>,
-    pub brokered: bool,
-    pub buyerCommission: i64,
-    pub canDeposit: bool,
-    pub canTrade: bool,
-    pub canWithdraw: bool,
-    pub commissionRates: BinanceAccountCommissionRates,
-    pub makerCommission: i64,
-    pub permissions: Vec<BinanceExchangeInfoPermission>,
-    pub preventSor: bool,
-    pub requireSelfTradePrevention: bool,
-    pub sellerCommission: i64,
-    pub takerCommission: i64,
-    pub uid: i64,
-    pub updateTime: i64,
+    pub accountType: Option<String>,
+    pub balances: Option<Vec<BinanceAccountBalance>>,
+    pub brokered: Option<bool>,
+    pub buyerCommission: Option<i64>,
+    pub canDeposit: Option<bool>,
+    pub canTrade: Option<bool>,
+    pub canWithdraw: Option<bool>,
+    pub commissionRates: Option<BinanceAccountCommissionRates>,
+    pub makerCommission: Option<i64>,
+    pub permissions: Option<Vec<BinanceExchangeInfoPermission>>,
+    pub preventSor: Option<bool>,
+    pub requireSelfTradePrevention: Option<bool>,
+    pub sellerCommission: Option<i64>,
+    pub takerCommission: Option<i64>,
+    pub uid: Option<i64>,
+    pub updateTime: Option<i64>,
 }
 
 impl ResponseFor for BinanceAccountRequest {
@@ -46,16 +46,16 @@ impl ResponseFor for BinanceAccountRequest {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceAccountBalance {
-    pub asset: String,
-    pub free: Decimal,
-    pub locked: Decimal,
+    pub asset: Option<String>,
+    pub free: Option<Decimal>,
+    pub locked: Option<Decimal>,
 }
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceAccountCommissionRates {
-    pub buyer: Decimal,
-    pub maker: Decimal,
-    pub seller: Decimal,
-    pub taker: Decimal,
+    pub buyer: Option<Decimal>,
+    pub maker: Option<Decimal>,
+    pub seller: Option<Decimal>,
+    pub taker: Option<Decimal>,
 }

@@ -46,6 +46,12 @@ pub enum BinanceCancelRestrictions {
     ONLY_PARTIALLY_FILLED,
 }
 
+/// A cancelled order report.
+///
+/// Only [`BinanceCancelOrderResult::clientOrderId`] is required: it is the
+/// discriminator that lets the untagged [`BinanceCancelResponse`] reject
+/// order-list bodies (which carry `listClientOrderId`, never `clientOrderId`)
+/// while staying tolerant of schema drift everywhere else.
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceCancelOrderResult {
@@ -54,9 +60,9 @@ pub struct BinanceCancelOrderResult {
     pub executedQty: Option<Decimal>,
     pub expiryReason: Option<BinanceExpiryReason>,
     pub icebergQty: Option<Decimal>,
-    pub orderId: i64,
-    pub orderListId: i64,
-    pub origClientOrderId: String,
+    pub orderId: Option<i64>,
+    pub orderListId: Option<i64>,
+    pub origClientOrderId: Option<String>,
     pub origQty: Option<Decimal>,
     pub origQuoteOrderQty: Option<Decimal>,
     pub pegOffsetType: Option<BinancePegOffsetType>,
@@ -67,37 +73,41 @@ pub struct BinanceCancelOrderResult {
     pub preventedQuantity: Option<Decimal>,
     pub price: Option<Decimal>,
     pub selfTradePreventionMode: Option<BinanceSelfTradeProtection>,
-    pub side: BinanceSide,
-    pub status: BinanceOrderStatus,
+    pub side: Option<BinanceSide>,
+    pub status: Option<BinanceOrderStatus>,
     pub stopPrice: Option<Decimal>,
     pub strategyId: Option<i64>,
     pub strategyType: Option<i32>,
-    pub symbol: String,
+    pub symbol: Option<String>,
     pub timeInForce: Option<BinanceTimeInForce>,
     pub trailingDelta: Option<i64>,
     pub trailingTime: Option<i64>,
     pub transactTime: Option<i64>,
     #[serde(rename = "type")]
-    pub r#type: BinanceOrderType,
+    pub r#type: Option<BinanceOrderType>,
     pub usedSor: Option<bool>,
     pub workingFloor: Option<BinanceWorkingFloor>,
     pub workingTime: Option<i64>,
 }
 
+/// A cancelled order-list (e.g. OCO) response.
+///
+/// Only [`BinanceCancelOrderListResponse::contingencyType`] is required: it is
+/// the discriminator that lets the untagged [`BinanceCancelResponse`] reject
+/// single-order bodies (which never carry `contingencyType`) while staying
+/// tolerant of schema drift everywhere else.
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceCancelOrderListResponse {
     pub contingencyType: String,
-    pub listClientOrderId: String,
-    pub listOrderStatus: String,
-    pub listStatusType: String,
-    pub orderListId: i64,
-    #[serde(default)]
-    pub orderReports: Vec<BinanceCancelOrderResult>,
-    #[serde(default)]
-    pub orders: Vec<BinanceOrderListOrder>,
-    pub symbol: String,
-    pub transactionTime: i64,
+    pub listClientOrderId: Option<String>,
+    pub listOrderStatus: Option<String>,
+    pub listStatusType: Option<String>,
+    pub orderListId: Option<i64>,
+    pub orderReports: Option<Vec<BinanceCancelOrderResult>>,
+    pub orders: Option<Vec<BinanceOrderListOrder>>,
+    pub symbol: Option<String>,
+    pub transactionTime: Option<i64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

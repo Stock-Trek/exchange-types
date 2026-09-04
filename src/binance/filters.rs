@@ -8,16 +8,16 @@ use serde::Deserialize;
 #[non_exhaustive]
 pub enum BinanceExchangeFilter {
     EXCHANGE_MAX_NUM_ORDERS {
-        maxNumOrders: i64,
+        maxNumOrders: Option<i64>,
     },
     EXCHANGE_MAX_NUM_ALGO_ORDERS {
-        maxNumAlgoOrders: i64,
+        maxNumAlgoOrders: Option<i64>,
     },
     EXCHANGE_MAX_NUM_ICEBERG_ORDERS {
-        maxNumIcebergOrders: i64,
+        maxNumIcebergOrders: Option<i64>,
     },
     EXCHANGE_MAX_NUM_ORDER_LISTS {
-        maxNumOrderLists: i64,
+        maxNumOrderLists: Option<i64>,
     },
     #[serde(other)]
     Unknown,
@@ -29,70 +29,70 @@ pub enum BinanceExchangeFilter {
 #[non_exhaustive]
 pub enum BinanceSymbolFilter {
     PRICE_FILTER {
-        minPrice: Decimal,
-        maxPrice: Decimal,
-        tickSize: Decimal,
+        minPrice: Option<Decimal>,
+        maxPrice: Option<Decimal>,
+        tickSize: Option<Decimal>,
     },
     PERCENT_PRICE {
-        multiplierUp: Decimal,
-        multiplierDown: Decimal,
-        avgPriceMins: i64,
+        multiplierUp: Option<Decimal>,
+        multiplierDown: Option<Decimal>,
+        avgPriceMins: Option<i64>,
     },
     PERCENT_PRICE_BY_SIDE {
-        bidMultiplierUp: Decimal,
-        bidMultiplierDown: Decimal,
-        askMultiplierUp: Decimal,
-        askMultiplierDown: Decimal,
-        avgPriceMins: i64,
+        bidMultiplierUp: Option<Decimal>,
+        bidMultiplierDown: Option<Decimal>,
+        askMultiplierUp: Option<Decimal>,
+        askMultiplierDown: Option<Decimal>,
+        avgPriceMins: Option<i64>,
     },
     LOT_SIZE {
-        minQty: Decimal,
-        maxQty: Decimal,
-        stepSize: Decimal,
+        minQty: Option<Decimal>,
+        maxQty: Option<Decimal>,
+        stepSize: Option<Decimal>,
     },
     MIN_NOTIONAL {
-        minNotional: Decimal,
-        applyToMarket: bool,
-        avgPriceMins: i64,
+        minNotional: Option<Decimal>,
+        applyToMarket: Option<bool>,
+        avgPriceMins: Option<i64>,
     },
     NOTIONAL {
-        minNotional: Decimal,
-        applyMinToMarket: bool,
-        maxNotional: Decimal,
-        applyMaxToMarket: bool,
-        avgPriceMins: i64,
+        minNotional: Option<Decimal>,
+        applyMinToMarket: Option<bool>,
+        maxNotional: Option<Decimal>,
+        applyMaxToMarket: Option<bool>,
+        avgPriceMins: Option<i64>,
     },
     ICEBERG_PARTS {
-        limit: i64,
+        limit: Option<i64>,
     },
     MARKET_LOT_SIZE {
-        minQty: Decimal,
-        maxQty: Decimal,
-        stepSize: Decimal,
+        minQty: Option<Decimal>,
+        maxQty: Option<Decimal>,
+        stepSize: Option<Decimal>,
     },
     MAX_NUM_ORDERS {
-        maxNumOrders: i64,
+        maxNumOrders: Option<i64>,
     },
     MAX_NUM_ALGO_ORDERS {
-        maxNumAlgoOrders: i64,
+        maxNumAlgoOrders: Option<i64>,
     },
     MAX_NUM_ICEBERG_ORDERS {
-        maxNumIcebergOrders: i64,
+        maxNumIcebergOrders: Option<i64>,
     },
     MAX_POSITION {
-        maxPosition: Decimal,
+        maxPosition: Option<Decimal>,
     },
     TRAILING_DELTA {
-        minTrailingAboveDelta: i64,
-        maxTrailingAboveDelta: i64,
-        minTrailingBelowDelta: i64,
-        maxTrailingBelowDelta: i64,
+        minTrailingAboveDelta: Option<i64>,
+        maxTrailingAboveDelta: Option<i64>,
+        minTrailingBelowDelta: Option<i64>,
+        maxTrailingBelowDelta: Option<i64>,
     },
     MAX_NUM_ORDER_AMENDS {
-        maxNumOrderAmends: i64,
+        maxNumOrderAmends: Option<i64>,
     },
     MAX_NUM_ORDER_LISTS {
-        maxNumOrderLists: i64,
+        maxNumOrderLists: Option<i64>,
     },
     #[serde(other)]
     Unknown,
@@ -104,8 +104,8 @@ pub enum BinanceSymbolFilter {
 #[non_exhaustive]
 pub enum BinanceAssetFilter {
     MAX_ASSET {
-        asset: Ticker,
-        limit: Decimal,
+        asset: Option<Ticker>,
+        limit: Option<Decimal>,
     },
     #[serde(other)]
     Unknown,

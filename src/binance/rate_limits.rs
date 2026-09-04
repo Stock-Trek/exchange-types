@@ -11,10 +11,10 @@ use strum::Display;
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceRateLimit {
     pub count: Option<i64>,
-    pub interval: BinanceRateLimitInterval,
-    pub intervalNum: u32,
-    pub limit: i64,
-    pub rateLimitType: BinanceRateLimitType,
+    pub interval: Option<BinanceRateLimitInterval>,
+    pub intervalNum: Option<u32>,
+    pub limit: Option<i64>,
+    pub rateLimitType: Option<BinanceRateLimitType>,
 }
 
 #[allow(non_camel_case_types)]

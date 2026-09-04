@@ -56,14 +56,14 @@ pub enum BinanceNewOrderResponseType {
 #[derive(Debug, Clone, Deserialize)]
 #[skip_serializing_none]
 pub struct BinanceSpotOrderResponse {
-    pub clientOrderId: String,
+    pub clientOrderId: Option<String>,
     pub cummulativeQuoteQty: Option<Decimal>,
     pub executedQty: Option<Decimal>,
     pub expiryReason: Option<BinanceExpiryReason>,
     pub fills: Option<Vec<BinanceFill>>,
     pub icebergQty: Option<Decimal>,
-    pub orderId: i64,
-    pub orderListId: i64,
+    pub orderId: Option<i64>,
+    pub orderListId: Option<i64>,
     pub origQty: Option<Decimal>,
     pub origQuoteOrderQty: Option<Decimal>,
     pub pegOffsetType: Option<BinancePegOffsetType>,
@@ -79,11 +79,11 @@ pub struct BinanceSpotOrderResponse {
     pub stopPrice: Option<Decimal>,
     pub strategyId: Option<i64>,
     pub strategyType: Option<i32>,
-    pub symbol: String,
+    pub symbol: Option<String>,
     pub timeInForce: Option<BinanceTimeInForce>,
     pub trailingDelta: Option<i64>,
     pub trailingTime: Option<i64>,
-    pub transactTime: i64,
+    pub transactTime: Option<i64>,
     #[serde(rename = "type")]
     pub r#type: Option<BinanceOrderType>,
     pub usedSor: Option<bool>,
@@ -99,10 +99,10 @@ impl ResponseFor for BinanceSpotOrderRequest {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BinanceFill {
     pub allocId: Option<i64>,
-    pub commission: Decimal,
-    pub commissionAsset: Ticker,
+    pub commission: Option<Decimal>,
+    pub commissionAsset: Option<Ticker>,
     pub matchType: Option<String>,
-    pub price: Decimal,
-    pub qty: Decimal,
-    pub tradeId: i64,
+    pub price: Option<Decimal>,
+    pub qty: Option<Decimal>,
+    pub tradeId: Option<i64>,
 }

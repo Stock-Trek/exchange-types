@@ -22,9 +22,9 @@ pub struct BinanceAssetLimitsRequest {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceAssetLimitsResponse {
-    pub assetFilters: Vec<BinanceAssetFilter>,
-    pub exchangeFilters: Vec<BinanceExchangeFilter>,
-    pub symbolFilters: Vec<BinanceSymbolFilter>,
+    pub assetFilters: Option<Vec<BinanceAssetFilter>>,
+    pub exchangeFilters: Option<Vec<BinanceExchangeFilter>>,
+    pub symbolFilters: Option<Vec<BinanceSymbolFilter>>,
 }
 
 impl ResponseFor for BinanceAssetLimitsRequest {

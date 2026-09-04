@@ -17,10 +17,10 @@ pub struct BinanceSessionLogonRequest {
 pub struct BinanceSessionAuthenticationResponse {
     pub apiKey: Option<String>,
     pub authorizedSince: Option<i64>,
-    pub connectedSince: i64,
-    pub returnRateLimits: bool,
-    pub serverTime: i64,
-    pub userDataStream: bool,
+    pub connectedSince: Option<i64>,
+    pub returnRateLimits: Option<bool>,
+    pub serverTime: Option<i64>,
+    pub userDataStream: Option<bool>,
 }
 
 impl ResponseFor for BinanceSessionLogonRequest {

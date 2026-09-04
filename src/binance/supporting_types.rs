@@ -22,14 +22,14 @@ pub enum BinanceExpiryReason {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceOrderResponse {
-    pub clientOrderId: String,
+    pub clientOrderId: Option<String>,
     pub cummulativeQuoteQty: Option<Decimal>,
     pub executedQty: Option<Decimal>,
     pub expiryReason: Option<BinanceExpiryReason>,
     pub icebergQty: Option<Decimal>,
     pub isWorking: Option<bool>,
-    pub orderId: i64,
-    pub orderListId: i64,
+    pub orderId: Option<i64>,
+    pub orderListId: Option<i64>,
     pub origQty: Option<Decimal>,
     pub origQuoteOrderQty: Option<Decimal>,
     pub pegOffsetType: Option<BinancePegOffsetType>,
@@ -40,18 +40,18 @@ pub struct BinanceOrderResponse {
     pub preventedQuantity: Option<Decimal>,
     pub price: Option<Decimal>,
     pub selfTradePreventionMode: Option<BinanceSelfTradeProtection>,
-    pub side: BinanceSide,
-    pub status: BinanceOrderStatus,
+    pub side: Option<BinanceSide>,
+    pub status: Option<BinanceOrderStatus>,
     pub stopPrice: Option<Decimal>,
     pub strategyId: Option<i64>,
     pub strategyType: Option<i32>,
-    pub symbol: String,
+    pub symbol: Option<String>,
     pub time: Option<i64>,
     pub timeInForce: Option<BinanceTimeInForce>,
     pub trailingDelta: Option<i64>,
     pub trailingTime: Option<i64>,
     #[serde(rename = "type")]
-    pub r#type: BinanceOrderType,
+    pub r#type: Option<BinanceOrderType>,
     pub updateTime: Option<i64>,
     pub usedSor: Option<bool>,
     pub workingFloor: Option<BinanceWorkingFloor>,
@@ -61,21 +61,20 @@ pub struct BinanceOrderResponse {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceOrderListOrder {
-    pub clientOrderId: String,
-    pub orderId: i64,
-    pub symbol: String,
+    pub clientOrderId: Option<String>,
+    pub orderId: Option<i64>,
+    pub symbol: Option<String>,
 }
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceOrderListStatus {
-    pub contingencyType: String,
-    pub listClientOrderId: String,
-    pub listOrderStatus: String,
-    pub orderListId: i64,
-    #[serde(default)]
-    pub orders: Vec<BinanceOrderListOrder>,
-    pub symbol: String,
+    pub contingencyType: Option<String>,
+    pub listClientOrderId: Option<String>,
+    pub listOrderStatus: Option<String>,
+    pub orderListId: Option<i64>,
+    pub orders: Option<Vec<BinanceOrderListOrder>>,
+    pub symbol: Option<String>,
 }
 
 #[allow(non_camel_case_types)]

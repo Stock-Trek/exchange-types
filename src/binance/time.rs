@@ -7,7 +7,7 @@ pub struct BinanceTimeRequest {}
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceTimeResponse {
-    pub serverTime: i64,
+    pub serverTime: Option<i64>,
 }
 
 impl ResponseFor for BinanceTimeRequest {

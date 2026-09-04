@@ -66,12 +66,12 @@ pub enum BinanceExchangeInfoSymbolStatus {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceExchangeInfoResponse {
-    pub exchangeFilters: Vec<BinanceExchangeFilter>,
-    pub rateLimits: Vec<BinanceRateLimit>,
-    pub serverTime: i64,
+    pub exchangeFilters: Option<Vec<BinanceExchangeFilter>>,
+    pub rateLimits: Option<Vec<BinanceRateLimit>>,
+    pub serverTime: Option<i64>,
     pub sors: Option<Vec<BinanceExchangeInfoSors>>,
-    pub symbols: Vec<BinanceExchangeInfoSymbol>,
-    pub timezone: String,
+    pub symbols: Option<Vec<BinanceExchangeInfoSymbol>>,
+    pub timezone: Option<String>,
 }
 
 impl ResponseFor for BinanceExchangeInfoRequest {
@@ -81,39 +81,39 @@ impl ResponseFor for BinanceExchangeInfoRequest {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceExchangeInfoSors {
-    pub baseAsset: Ticker,
-    pub symbols: Vec<Ticker>,
+    pub baseAsset: Option<Ticker>,
+    pub symbols: Option<Vec<Ticker>>,
 }
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceExchangeInfoSymbol {
-    pub allowTrailingStop: bool,
-    pub allowedSelfTradePreventionModes: Vec<BinanceSelfTradeProtection>,
-    pub amendAllowed: bool,
-    pub baseAsset: Ticker,
-    pub baseAssetPrecision: u8,
-    pub baseCommissionPrecision: u8,
-    pub cancelReplaceAllowed: bool,
-    pub defaultSelfTradePreventionMode: BinanceSelfTradeProtection,
-    pub filters: Vec<BinanceSymbolFilter>,
-    pub icebergAllowed: bool,
-    pub isMarginTradingAllowed: bool,
-    pub isSpotTradingAllowed: bool,
-    pub ocoAllowed: bool,
-    pub opoAllowed: bool,
-    pub orderTypes: Vec<BinanceOrderType>,
-    pub otoAllowed: bool,
-    pub pegInstructionsAllowed: bool,
-    pub permissionSets: Vec<Vec<BinanceExchangeInfoPermission>>,
-    pub permissions: Vec<BinanceExchangeInfoPermission>,
-    pub quoteAsset: Ticker,
-    pub quoteAssetPrecision: u8,
-    pub quoteCommissionPrecision: u8,
-    pub quoteOrderQtyMarketAllowed: bool,
-    pub quotePrecision: u8,
-    pub status: String,
-    pub symbol: String,
+    pub allowTrailingStop: Option<bool>,
+    pub allowedSelfTradePreventionModes: Option<Vec<BinanceSelfTradeProtection>>,
+    pub amendAllowed: Option<bool>,
+    pub baseAsset: Option<Ticker>,
+    pub baseAssetPrecision: Option<u8>,
+    pub baseCommissionPrecision: Option<u8>,
+    pub cancelReplaceAllowed: Option<bool>,
+    pub defaultSelfTradePreventionMode: Option<BinanceSelfTradeProtection>,
+    pub filters: Option<Vec<BinanceSymbolFilter>>,
+    pub icebergAllowed: Option<bool>,
+    pub isMarginTradingAllowed: Option<bool>,
+    pub isSpotTradingAllowed: Option<bool>,
+    pub ocoAllowed: Option<bool>,
+    pub opoAllowed: Option<bool>,
+    pub orderTypes: Option<Vec<BinanceOrderType>>,
+    pub otoAllowed: Option<bool>,
+    pub pegInstructionsAllowed: Option<bool>,
+    pub permissionSets: Option<Vec<Vec<BinanceExchangeInfoPermission>>>,
+    pub permissions: Option<Vec<BinanceExchangeInfoPermission>>,
+    pub quoteAsset: Option<Ticker>,
+    pub quoteAssetPrecision: Option<u8>,
+    pub quoteCommissionPrecision: Option<u8>,
+    pub quoteOrderQtyMarketAllowed: Option<bool>,
+    pub quotePrecision: Option<u8>,
+    pub status: Option<String>,
+    pub symbol: Option<String>,
 }
 
 impl BinanceExchangeInfoRequest {
