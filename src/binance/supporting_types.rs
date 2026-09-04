@@ -47,6 +47,7 @@ pub enum BinanceOrderStatus {
     NEW,
     PARTIALLY_FILLED,
     PENDING_CANCEL,
+    PENDING_NEW,
     REJECTED,
     #[serde(other)]
     Unknown,
