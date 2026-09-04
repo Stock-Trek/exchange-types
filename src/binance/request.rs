@@ -208,3 +208,71 @@ impl ETWebsocketRequest for BinanceRequest {
         Ok(message)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        api_key_credential::ApiKeyCredentials,
+        binance::exchange_info::{
+            BinanceExchangeInfoParams, BinanceExchangeInfoPermission,
+            BinanceExchangeInfoPermissions, BinanceExchangeInfoSymbolStatus,
+        },
+        encode::ByteEncoder,
+        encrypt::EncryptionAlgorithm,
+    };
+    use secrecy::SecretString;
+
+    fn signer() -> Signer {
+        let credentials = ApiKeyCredentials {
+            api_key: "api-key".into(),
+            secret: SecretString::from("secret"),
+        };
+        let encryptor = EncryptionAlgorithm::HmacSha256
+            .encryptor(credentials)
+            .unwrap();
+        Signer::new("api-key".into(), encryptor, ByteEncoder::Base16)
+    }
+
+    #[test]
+    fn exchange_info_http_query_params_match_the_docs() {
+        let request = BinanceRequest::ExchangeInfo(BinanceExchangeInfoParams::Permissions {
+            permissions: BinanceExchangeInfoPermissions::List(vec![
+                BinanceExchangeInfoPermission::SPOT,
+                BinanceExchangeInfoPermission::MARGIN,
+            ]),
+            symbolStatus: Some(BinanceExchangeInfoSymbolStatus::HALT),
+        })
+        .try_into_http(&signer())
+        .unwrap();
+        assert_eq!(
+            request.query.as_deref(),
+            Some("exchangeInfo?permissions=%5B%22SPOT%22%2C%22MARGIN%22%5D&symbolStatus=HALT")
+        );
+    }
+
+    #[test]
+    fn exchange_info_websocket_params_match_the_docs() {
+        let all = BinanceRequest::ExchangeInfo(BinanceExchangeInfoParams::default())
+            .try_into_websocket(&signer(), 1.into())
+            .unwrap();
+        assert_eq!(
+            all,
+            r#"{"id":1,"method":"exchangeInfo","params":{}}"#
+        );
+        let single_permission = BinanceRequest::ExchangeInfo(
+            BinanceExchangeInfoParams::Permissions {
+                permissions: BinanceExchangeInfoPermissions::Single(
+                    BinanceExchangeInfoPermission::SPOT,
+                ),
+                symbolStatus: Some(BinanceExchangeInfoSymbolStatus::TRADING),
+            },
+        )
+        .try_into_websocket(&signer(), 1.into())
+        .unwrap();
+        assert_eq!(
+            single_permission,
+            r#"{"id":1,"method":"exchangeInfo","params":{"permissions":"SPOT","symbolStatus":"TRADING"}}"#
+        );
+    }
+}
