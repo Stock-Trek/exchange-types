@@ -2,10 +2,10 @@ use crate::ticker::Ticker;
 use rust_decimal::Decimal;
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "filterType")]
-#[derive(Debug, Clone)]
 #[allow(non_snake_case, non_camel_case_types)]
+#[non_exhaustive]
 pub enum BinanceExchangeFilter {
     EXCHANGE_MAX_NUM_ORDERS {
         maxNumOrders: i64,
@@ -23,10 +23,10 @@ pub enum BinanceExchangeFilter {
     Unknown,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "filterType")]
-#[derive(Debug, Clone)]
 #[allow(non_snake_case, non_camel_case_types)]
+#[non_exhaustive]
 pub enum BinanceSymbolFilter {
     PRICE_FILTER {
         minPrice: Decimal,
@@ -98,10 +98,10 @@ pub enum BinanceSymbolFilter {
     Unknown,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "filterType")]
-#[derive(Debug, Clone)]
 #[allow(non_snake_case, non_camel_case_types)]
+#[non_exhaustive]
 pub enum BinanceAssetFilter {
     MAX_ASSET {
         asset: Ticker,

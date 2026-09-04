@@ -4,6 +4,7 @@ use strum::Display;
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum BinanceExpiryReason {
     EXCHANGE_CANCELED,
     EXECUTION_RULE_PRICE_RANGE_EXCEEDED,
@@ -79,6 +80,7 @@ pub struct BinanceOrderListStatus {
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum BinanceOrderStatus {
     CANCELED,
     EXPIRED,
@@ -95,6 +97,7 @@ pub enum BinanceOrderStatus {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum BinanceOrderType {
     LIMIT,
     LIMIT_MAKER,
@@ -110,6 +113,7 @@ pub enum BinanceOrderType {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum BinancePegOffsetType {
     PRICE_LEVEL,
     #[serde(other)]
@@ -118,6 +122,7 @@ pub enum BinancePegOffsetType {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum BinancePegPriceType {
     PRIMARY_PEG,
     MARKET_PEG,
@@ -127,6 +132,7 @@ pub enum BinancePegPriceType {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum BinanceSelfTradeProtection {
     EXPIRE_BOTH,
     EXPIRE_MAKER,
@@ -139,6 +145,7 @@ pub enum BinanceSelfTradeProtection {
 }
 
 #[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum BinanceSide {
     BUY,
     SELL,
@@ -149,6 +156,7 @@ pub enum BinanceSide {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum BinanceTimeInForce {
     FOK,
     GTC,
@@ -159,6 +167,7 @@ pub enum BinanceTimeInForce {
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum BinanceWorkingFloor {
     EXCHANGE,
     SOR,

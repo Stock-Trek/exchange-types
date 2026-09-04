@@ -23,9 +23,8 @@ use crate::{
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 
-#[derive(Serialize)]
+#[derive(Debug, Clone, Hash, Serialize)]
 #[serde(untagged)]
-#[derive(Debug, Clone, Hash)]
 pub enum BinanceRequest {
     Account(BinanceAccountRequest),
     AmendOrderRequest(BinanceAmendOrderRequest),
