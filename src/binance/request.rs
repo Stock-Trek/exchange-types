@@ -214,7 +214,11 @@ impl ETHttpRequest for BinanceRequest {
         } else {
             (query_params, vec![])
         };
-        let query = Some(format!("{}?{}", endpoint, query_params));
+        let query = if query_params.is_empty() {
+            Some(endpoint.to_string())
+        } else {
+            Some(format!("{}?{}", endpoint, query_params))
+        };
         let body = None;
         Ok(HttpRequest {
             method,
