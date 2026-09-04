@@ -11,18 +11,17 @@ use strum::Display;
 pub struct BinanceRateLimit {
     pub count: Option<i64>,
     pub interval: BinanceRateLimitInterval,
-    pub intervalNum: i32,
+    pub intervalNum: u32,
     pub limit: i64,
     pub rateLimitType: BinanceRateLimitType,
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Deserialize, Debug, Clone, Copy, Display, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, Copy, Display, PartialEq, Eq, Hash)]
 pub enum BinanceRateLimitInterval {
     DAY,
     HOUR,
     MINUTE,
-    SECONDS_TEN,
     SECOND,
     #[serde(other)]
     Unknown,
@@ -42,12 +41,20 @@ pub enum BinanceRateLimitType {
 pub struct BinanceRateLimits;
 
 impl BinanceRateLimitInterval {
+    pub fn try_from(letter: char) -> Option<Self> {
+        match letter.to_ascii_lowercase() {
+            's' => Some(Self::SECOND),
+            'm' => Some(Self::MINUTE),
+            'h' => Some(Self::HOUR),
+            'd' => Some(Self::DAY),
+            _ => None,
+        }
+    }
     pub fn try_into_nanos(self) -> ETResult<i64> {
         match self {
             BinanceRateLimitInterval::DAY => Ok(24 * 60 * 60 * 1_000_000_000),
             BinanceRateLimitInterval::HOUR => Ok(60 * 60 * 1_000_000_000),
             BinanceRateLimitInterval::MINUTE => Ok(60 * 1_000_000_000),
-            BinanceRateLimitInterval::SECONDS_TEN => Ok(10 * 1_000_000_000),
             BinanceRateLimitInterval::SECOND => Ok(1_000_000_000),
             BinanceRateLimitInterval::Unknown => Err(ETError::UnknownValue),
         }
