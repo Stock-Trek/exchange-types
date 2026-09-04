@@ -1,6 +1,5 @@
 use crate::{encode::ByteEncoder, encrypt::Encryptor, error::ETResult};
 
-#[derive(Debug)]
 pub struct Signer {
     api_key: String,
     encryptor: Encryptor,
