@@ -1,10 +1,5 @@
 use crate::{encode::ByteEncoder, encrypt::Encryptor, error::ETResult};
 
-pub trait IntoSigned {
-    type Signed;
-    fn into_signed(self, signer: &Signer) -> ETResult<Self::Signed>;
-}
-
 #[derive(Debug)]
 pub struct Signer {
     api_key: String,

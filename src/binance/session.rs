@@ -1,5 +1,4 @@
 use query_params::QueryParams;
-
 #[cfg(feature = "serde")]
 use {
     serde::{Deserialize, Serialize},
@@ -10,7 +9,7 @@ use {
 #[cfg_attr(feature = "serde", skip_serializing_none)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Debug, Clone, Hash, QueryParams)]
-pub struct BinanceLogonParams {
+pub struct BinanceSessionLogonParams {
     pub apiKey: Option<String>,
     pub timestamp: i64,
 }
@@ -26,3 +25,7 @@ pub struct BinanceSessionAuthenticationResult {
     pub serverTime: i64,
     pub userDataStream: bool,
 }
+
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[derive(Debug, Clone, Hash, QueryParams)]
+pub struct BinanceSessionLogoutParams {}
