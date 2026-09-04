@@ -5,6 +5,8 @@ pub mod encrypt;
 pub mod error;
 pub mod http;
 pub mod rate_limited;
+pub mod request;
+pub mod response;
 pub mod signer;
 pub mod ticker;
 pub mod urls;

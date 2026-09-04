@@ -23,6 +23,7 @@ pub enum BinanceRateLimitInterval {
     DAY,
     HOUR,
     MINUTE,
+    SECONDS_TEN,
     SECOND,
     #[cfg_attr(feature = "serde", serde(other))]
     Unknown,
@@ -48,6 +49,7 @@ impl BinanceRateLimitInterval {
             BinanceRateLimitInterval::DAY => 24 * 60 * 60 * 1_000_000_000,
             BinanceRateLimitInterval::HOUR => 60 * 60 * 1_000_000_000,
             BinanceRateLimitInterval::MINUTE => 60 * 1_000_000_000,
+            BinanceRateLimitInterval::SECONDS_TEN => 10 * 1_000_000_000,
             BinanceRateLimitInterval::SECOND => 1_000_000_000,
             BinanceRateLimitInterval::Unknown => {
                 panic!("unsupported Binance rate limit interval: {self}")

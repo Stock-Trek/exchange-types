@@ -106,10 +106,6 @@ impl Encryptor {
     }
 }
 
-/// Build an `RSASSA-PKCS1-v1_5` SHA-256 signing key from a PEM or DER encoded
-/// RSA private key. Both PKCS#1 (`BEGIN RSA PRIVATE KEY`) and PKCS#8
-/// (`BEGIN PRIVATE KEY`) encodings are accepted, matching the key formats
-/// issued for RSA API keys by exchanges such as Binance.
 fn rsa_signing_key(secret: &str) -> Result<RsaPkcs1v15SigningKey<Sha256>, String> {
     let secret = secret.trim();
     let private_key = if secret.starts_with("-----BEGIN") {
@@ -130,6 +126,8 @@ fn rsa_signing_key(secret: &str) -> Result<RsaPkcs1v15SigningKey<Sha256>, String
 #[cfg(test)]
 mod tests {
     use super::*;
+    use p256::ecdsa::signature::Verifier;
+    use rsa::pkcs8::DecodePublicKey;
     use secrecy::SecretString;
 
     const RSA_PRIVATE_KEY_PKCS1_PEM: &str = r#"-----BEGIN RSA PRIVATE KEY-----
@@ -215,14 +213,9 @@ ewIDAQAB
             .expect("RSA private key should parse");
         let message = b"symbol=LTCBTC&side=BUY&type=LIMIT&timeInForce=GTC&quantity=1&price=0.1&recvWindow=5000&timestamp=1499827319559";
         let signature = encryptor.encrypt(message).expect("signing should succeed");
-        // A 2048-bit RSA key produces a 256-byte signature.
         assert_eq!(signature.len(), 256);
-        // RSASSA-PKCS1-v1_5 signatures are deterministic.
         assert_eq!(signature, encryptor.encrypt(message).unwrap());
 
-        // The signature verifies against the corresponding public key.
-        use p256::ecdsa::signature::Verifier;
-        use rsa::pkcs8::DecodePublicKey;
         let public_key = rsa::RsaPublicKey::from_public_key_pem(RSA_PUBLIC_KEY_PEM)
             .expect("RSA public key should parse");
         let verifying_key = rsa::pkcs1v15::VerifyingKey::<Sha256>::new(public_key);
