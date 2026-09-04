@@ -18,7 +18,7 @@ use strum::Display;
 #[allow(non_snake_case)]
 #[skip_serializing_none]
 #[derive(Serialize, Debug, Clone, Hash, QueryParams)]
-pub struct BinanceCancelAllOrdersParams {
+pub struct BinanceCancelAllOrdersRequest {
     pub apiKey: Option<String>,
     pub recvWindow: Option<BinanceRecvWindow>,
     pub symbol: String,
@@ -28,7 +28,7 @@ pub struct BinanceCancelAllOrdersParams {
 #[allow(non_snake_case)]
 #[skip_serializing_none]
 #[derive(Serialize, Debug, Clone, Hash, QueryParams)]
-pub struct BinanceCancelOrderParams {
+pub struct BinanceCancelOrderRequest {
     pub apiKey: Option<String>,
     pub cancelRestrictions: Option<BinanceCancelRestrictions>,
     pub newClientOrderId: Option<String>,
@@ -86,7 +86,7 @@ pub struct BinanceCancelOrderResult {
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
-pub struct BinanceCancelOrderListResult {
+pub struct BinanceCancelOrderListResponse {
     pub contingencyType: String,
     pub listClientOrderId: String,
     pub listOrderStatus: String,
@@ -104,15 +104,15 @@ pub struct BinanceCancelOrderListResult {
 #[serde(untagged)]
 #[derive(Debug, Clone)]
 #[allow(clippy::large_enum_variant)]
-pub enum BinanceCancelReport {
+pub enum BinanceCancelResponse {
     Order(BinanceCancelOrderResult),
-    OrderList(BinanceCancelOrderListResult),
+    OrderList(BinanceCancelOrderListResponse),
 }
 
-impl ResponseFor for BinanceCancelAllOrdersParams {
-    type Result = Vec<BinanceCancelReport>;
+impl ResponseFor for BinanceCancelAllOrdersRequest {
+    type Response = Vec<BinanceCancelResponse>;
 }
 
-impl ResponseFor for BinanceCancelOrderParams {
-    type Result = BinanceCancelReport;
+impl ResponseFor for BinanceCancelOrderRequest {
+    type Response = BinanceCancelResponse;
 }

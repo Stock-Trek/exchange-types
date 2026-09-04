@@ -6,14 +6,14 @@ use serde_with::skip_serializing_none;
 #[allow(non_snake_case)]
 #[skip_serializing_none]
 #[derive(Serialize, Debug, Clone, Hash, QueryParams)]
-pub struct BinanceSessionLogonParams {
+pub struct BinanceSessionLogonRequest {
     pub apiKey: Option<String>,
     pub timestamp: i64,
 }
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
-pub struct BinanceSessionAuthenticationResult {
+pub struct BinanceSessionAuthenticationResponse {
     pub apiKey: Option<String>,
     pub authorizedSince: Option<i64>,
     pub connectedSince: i64,
@@ -22,13 +22,13 @@ pub struct BinanceSessionAuthenticationResult {
     pub userDataStream: bool,
 }
 
-impl ResponseFor for BinanceSessionLogonParams {
-    type Result = BinanceSessionAuthenticationResult;
+impl ResponseFor for BinanceSessionLogonRequest {
+    type Response = BinanceSessionAuthenticationResponse;
 }
 
 #[derive(Serialize, Debug, Clone, Hash, QueryParams)]
-pub struct BinanceSessionLogoutParams {}
+pub struct BinanceSessionLogoutRequest {}
 
-impl ResponseFor for BinanceSessionLogoutParams {
-    type Result = BinanceSessionAuthenticationResult;
+impl ResponseFor for BinanceSessionLogoutRequest {
+    type Response = BinanceSessionAuthenticationResponse;
 }

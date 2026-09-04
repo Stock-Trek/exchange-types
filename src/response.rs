@@ -1,7 +1,7 @@
 use crate::{error::ETResult, http::HttpResponse};
 
 pub trait ResponseFor {
-    type Result;
+    type Response;
 }
 
 pub trait ETHttpResponse

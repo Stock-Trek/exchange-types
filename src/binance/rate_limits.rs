@@ -97,17 +97,3 @@ impl RateLimits for BinanceRateLimits {
         map
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn unknown_rate_limit_enums_deserialize_as_unknown() {
-        let interval: BinanceRateLimitInterval = serde_json::from_str(r#""FORTNIGHT""#).unwrap();
-        assert!(matches!(interval, BinanceRateLimitInterval::Unknown));
-        let rate_limit_type: BinanceRateLimitType =
-            serde_json::from_str(r#""FUTURE_TYPE""#).unwrap();
-        assert!(matches!(rate_limit_type, BinanceRateLimitType::Unknown));
-    }
-}

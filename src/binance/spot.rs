@@ -19,7 +19,7 @@ use strum::Display;
 #[allow(non_snake_case)]
 #[skip_serializing_none]
 #[derive(Serialize, Debug, Clone, Hash, QueryParams)]
-pub struct BinanceSpotOrderParams {
+pub struct BinanceSpotOrderRequest {
     pub apiKey: Option<String>,
     pub icebergQty: Option<Decimal>,
     pub newClientOrderId: Option<String>,
@@ -56,7 +56,7 @@ pub enum BinanceNewOrderResponseType {
 #[derive(Deserialize)]
 #[skip_serializing_none]
 #[derive(Debug, Clone)]
-pub struct BinanceSpotOrderResult {
+pub struct BinanceSpotOrderResponse {
     pub clientOrderId: String,
     pub cummulativeQuoteQty: Option<Decimal>,
     pub executedQty: Option<Decimal>,
@@ -92,8 +92,8 @@ pub struct BinanceSpotOrderResult {
     pub workingTime: Option<i64>,
 }
 
-impl ResponseFor for BinanceSpotOrderParams {
-    type Result = BinanceSpotOrderResult;
+impl ResponseFor for BinanceSpotOrderRequest {
+    type Response = BinanceSpotOrderResponse;
 }
 
 #[allow(non_snake_case)]
@@ -112,8 +112,8 @@ pub struct BinanceFill {
 mod tests {
     use super::*;
 
-    fn params(new_order_resp_type: Option<BinanceNewOrderResponseType>) -> BinanceSpotOrderParams {
-        BinanceSpotOrderParams {
+    fn params(new_order_resp_type: Option<BinanceNewOrderResponseType>) -> BinanceSpotOrderRequest {
+        BinanceSpotOrderRequest {
             apiKey: None,
             icebergQty: None,
             newClientOrderId: Some("new-client-order-id".into()),

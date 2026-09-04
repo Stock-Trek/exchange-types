@@ -17,7 +17,7 @@ use serde_with::skip_serializing_none;
 #[allow(non_snake_case)]
 #[skip_serializing_none]
 #[derive(Serialize, Debug, Clone, Hash, QueryParams)]
-pub struct BinanceAmendOrderParams {
+pub struct BinanceAmendOrderRequest {
     pub apiKey: Option<String>,
     pub newClientOrderId: Option<String>,
     pub newQty: Decimal,
@@ -30,15 +30,15 @@ pub struct BinanceAmendOrderParams {
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
-pub struct BinanceAmendOrderResult {
+pub struct BinanceAmendOrderResponse {
     pub amendedOrder: BinanceAmendedOrder,
     pub executionId: i64,
     pub listStatus: Option<BinanceOrderListStatus>,
     pub transactTime: i64,
 }
 
-impl ResponseFor for BinanceAmendOrderParams {
-    type Result = BinanceAmendOrderResult;
+impl ResponseFor for BinanceAmendOrderRequest {
+    type Response = BinanceAmendOrderResponse;
 }
 
 #[allow(non_snake_case)]

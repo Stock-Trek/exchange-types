@@ -2,19 +2,19 @@ use crate::response::ResponseFor;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Debug, Clone, Hash)]
-pub struct BinanceTimeParams {}
+pub struct BinanceTimeRequest {}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
-pub struct BinanceTimeResult {
+pub struct BinanceTimeResponse {
     pub serverTime: i64,
 }
 
-impl ResponseFor for BinanceTimeParams {
-    type Result = BinanceTimeResult;
+impl ResponseFor for BinanceTimeRequest {
+    type Response = BinanceTimeResponse;
 }
 
-impl BinanceTimeParams {
+impl BinanceTimeRequest {
     pub fn query_params(&self) -> String {
         "".into()
     }
