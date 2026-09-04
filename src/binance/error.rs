@@ -5,6 +5,14 @@ pub struct BinanceError {
     pub code: i64,
     pub data: Option<serde_json::Value>,
     pub msg: String,
+    pub data: Option<BinanceErrorData>,
+}
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Debug, Clone)]
+pub struct BinanceErrorData {
+    pub serverTime: Option<i64>,
+    pub retryAfter: Option<i64>,
 }
 
 impl std::fmt::Display for BinanceError {
