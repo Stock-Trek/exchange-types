@@ -13,7 +13,7 @@ pub struct HttpResponse {
     pub body: Vec<u8>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HttpMethod {
     GET,
     DELETE,
