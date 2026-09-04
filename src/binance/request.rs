@@ -1,9 +1,12 @@
 use crate::{
     binance::{
+        account::BinanceAccountParams,
         amend::BinanceAmendOrderParams,
         asset_limits::BinanceAssetLimitsParams,
         cancel::{BinanceCancelAllOrdersParams, BinanceCancelOrderParams},
         exchange_info::BinanceExchangeInfoParams,
+        open_orders::BinanceOpenOrdersParams,
+        query_order::BinanceQueryOrderParams,
         session::{BinanceSessionLogonParams, BinanceSessionLogoutParams},
         spot::BinanceSpotOrderParams,
         time::BinanceTimeParams,
@@ -23,11 +26,14 @@ use serde_with::skip_serializing_none;
 #[serde(untagged)]
 #[derive(Debug, Clone, Hash)]
 pub enum BinanceRequest {
+    Account(BinanceAccountParams),
     AmendOrderRequest(BinanceAmendOrderParams),
     AssetLimits(BinanceAssetLimitsParams),
     CancelAllOrdersRequest(BinanceCancelAllOrdersParams),
     CancelOrderRequest(BinanceCancelOrderParams),
     ExchangeInfo(BinanceExchangeInfoParams),
+    OpenOrders(BinanceOpenOrdersParams),
+    QueryOrder(BinanceQueryOrderParams),
     SpotOrderRequest(BinanceSpotOrderParams),
     Time(BinanceTimeParams),
     WebsocketSessionLogon(BinanceSessionLogonParams),
@@ -40,12 +46,18 @@ enum WebsocketMethod {
     AmendOrder,
     #[serde(rename = "myFilters")]
     AssetLimits,
+    #[serde(rename = "account.status")]
+    Account,
     #[serde(rename = "order.cancel")]
     CancelOrder,
     #[serde(rename = "openOrders.cancelAll")]
     CancelAllOrders,
     #[serde(rename = "exchangeInfo")]
     ExchangeInfo,
+    #[serde(rename = "openOrders.status")]
+    OpenOrders,
+    #[serde(rename = "order.status")]
+    QueryOrder,
     #[serde(rename = "session.logon")]
     Logon,
     #[serde(rename = "session.logout")]
@@ -81,11 +93,20 @@ impl RateLimited for BinanceRequest {
     }
     fn weight(&self) -> u32 {
         match self {
+            BinanceRequest::Account(..) => 20,
             BinanceRequest::AmendOrderRequest(..) => 4,
             BinanceRequest::AssetLimits(..) => 40,
             BinanceRequest::CancelAllOrdersRequest(..) => 1,
             BinanceRequest::CancelOrderRequest(..) => 1,
             BinanceRequest::ExchangeInfo(..) => 20,
+            BinanceRequest::OpenOrders(params) => {
+                if params.symbol.is_some() {
+                    6
+                } else {
+                    80
+                }
+            }
+            BinanceRequest::QueryOrder(..) => 4,
             BinanceRequest::SpotOrderRequest(..) => 1,
             BinanceRequest::Time(..) => 1,
             BinanceRequest::WebsocketSessionLogon(..) => 2,
@@ -97,10 +118,13 @@ impl RateLimited for BinanceRequest {
 impl BinanceRequest {
     fn set_api_key(&mut self, api_key: Option<String>) {
         match self {
+            BinanceRequest::Account(params) => params.apiKey = api_key,
             BinanceRequest::AmendOrderRequest(params) => params.apiKey = api_key,
             BinanceRequest::AssetLimits(params) => params.apiKey = api_key,
             BinanceRequest::CancelAllOrdersRequest(params) => params.apiKey = api_key,
             BinanceRequest::CancelOrderRequest(params) => params.apiKey = api_key,
+            BinanceRequest::OpenOrders(params) => params.apiKey = api_key,
+            BinanceRequest::QueryOrder(params) => params.apiKey = api_key,
             BinanceRequest::SpotOrderRequest(params) => params.apiKey = api_key,
             BinanceRequest::WebsocketSessionLogon(params) => params.apiKey = api_key,
             BinanceRequest::ExchangeInfo(..)
@@ -110,6 +134,7 @@ impl BinanceRequest {
     }
     fn query_params(&self, percent_encode: bool) -> String {
         match self {
+            BinanceRequest::Account(params) => params.query_params(true, percent_encode),
             BinanceRequest::AmendOrderRequest(params) => params.query_params(true, percent_encode),
             BinanceRequest::AssetLimits(params) => params.query_params(true, percent_encode),
             BinanceRequest::CancelAllOrdersRequest(params) => {
@@ -117,6 +142,8 @@ impl BinanceRequest {
             }
             BinanceRequest::CancelOrderRequest(params) => params.query_params(true, percent_encode),
             BinanceRequest::ExchangeInfo(params) => params.query_params(),
+            BinanceRequest::OpenOrders(params) => params.query_params(true, percent_encode),
+            BinanceRequest::QueryOrder(params) => params.query_params(true, percent_encode),
             BinanceRequest::SpotOrderRequest(params) => params.query_params(true, percent_encode),
             BinanceRequest::Time(params) => params.query_params(),
             BinanceRequest::WebsocketSessionLogon(params) => {
@@ -129,11 +156,14 @@ impl BinanceRequest {
     }
     fn websocket_method(&self) -> WebsocketMethod {
         match self {
+            BinanceRequest::Account(..) => WebsocketMethod::Account,
             BinanceRequest::AmendOrderRequest(..) => WebsocketMethod::AmendOrder,
             BinanceRequest::AssetLimits(..) => WebsocketMethod::AssetLimits,
             BinanceRequest::CancelAllOrdersRequest(..) => WebsocketMethod::CancelAllOrders,
             BinanceRequest::CancelOrderRequest(..) => WebsocketMethod::CancelOrder,
             BinanceRequest::ExchangeInfo(..) => WebsocketMethod::ExchangeInfo,
+            BinanceRequest::OpenOrders(..) => WebsocketMethod::OpenOrders,
+            BinanceRequest::QueryOrder(..) => WebsocketMethod::QueryOrder,
             BinanceRequest::SpotOrderRequest(..) => WebsocketMethod::PlaceOrder,
             BinanceRequest::Time(..) => WebsocketMethod::Time,
             BinanceRequest::WebsocketSessionLogon(..) => WebsocketMethod::Logon,
@@ -146,6 +176,7 @@ impl ETHttpRequest for BinanceRequest {
     fn try_into_http(mut self, signer: &Signer) -> ETResult<HttpRequest> {
         self.set_api_key(None);
         let (method, endpoint, is_signed) = match self {
+            BinanceRequest::Account(..) => (HttpMethod::GET, "account", true),
             BinanceRequest::AmendOrderRequest(..) => {
                 (HttpMethod::PUT, "order/amend/keepPriority", true)
             }
@@ -153,6 +184,8 @@ impl ETHttpRequest for BinanceRequest {
             BinanceRequest::CancelAllOrdersRequest(..) => (HttpMethod::DELETE, "openOrders", true),
             BinanceRequest::CancelOrderRequest(..) => (HttpMethod::DELETE, "order", true),
             BinanceRequest::ExchangeInfo(..) => (HttpMethod::GET, "exchangeInfo", false),
+            BinanceRequest::OpenOrders(..) => (HttpMethod::GET, "openOrders", true),
+            BinanceRequest::QueryOrder(..) => (HttpMethod::GET, "order", true),
             BinanceRequest::SpotOrderRequest(..) => (HttpMethod::POST, "order", true),
             BinanceRequest::Time(..) => (HttpMethod::GET, "time", false),
             BinanceRequest::WebsocketSessionLogon(..)
@@ -206,5 +239,176 @@ impl ETWebsocketRequest for BinanceRequest {
         let message =
             serde_json::to_string(&websocket_request).map_err(ETError::SerializeRequest)?;
         Ok(message)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        api_key_credential::ApiKeyCredentials,
+        encode::ByteEncoder,
+        encrypt::EncryptionAlgorithm,
+        request::{ETHttpRequest, ETWebsocketRequest},
+        signer::Signer,
+    };
+    use secrecy::SecretString;
+
+    fn signer() -> Signer {
+        let credentials = ApiKeyCredentials {
+            api_key: "api-key".into(),
+            secret: SecretString::from("secret".to_string()),
+        };
+        let encryptor = EncryptionAlgorithm::HmacSha256
+            .encryptor(credentials)
+            .expect("hmac encryptor");
+        Signer::new("api-key".into(), encryptor, ByteEncoder::Base16)
+    }
+
+    fn account(omit_zero_balances: bool) -> BinanceRequest {
+        BinanceRequest::Account(BinanceAccountParams {
+            apiKey: None,
+            omitZeroBalances: omit_zero_balances.then_some(true),
+            recvWindow: None,
+            timestamp: 1_660_801_720_951,
+        })
+    }
+
+    fn open_orders(symbol: Option<&str>) -> BinanceRequest {
+        BinanceRequest::OpenOrders(BinanceOpenOrdersParams {
+            apiKey: None,
+            recvWindow: None,
+            symbol: symbol.map(String::from),
+            timestamp: 1_660_801_720_951,
+        })
+    }
+
+    fn query_order() -> BinanceRequest {
+        BinanceRequest::QueryOrder(BinanceQueryOrderParams {
+            apiKey: None,
+            orderId: Some(1),
+            origClientOrderId: None,
+            recvWindow: None,
+            symbol: "BTCUSDT".into(),
+            timestamp: 1_660_801_720_951,
+        })
+    }
+
+    #[test]
+    fn http_account_serializes_signed_get_account() {
+        let http = account(true).try_into_http(&signer()).unwrap();
+        assert_eq!(http.method, HttpMethod::GET);
+        assert_eq!(
+            http.query.as_deref(),
+            Some(
+                "account?omitZeroBalances=true&timestamp=1660801720951&signature=EC27A58EE5A2CB9498773DB08DA9010B49991EE468B3C8F9772716D80B5FA198"
+            )
+        );
+        assert_eq!(
+            http.headers,
+            vec![("X-MBX-APIKEY".into(), "api-key".into())]
+        );
+        assert!(http.body.is_none());
+    }
+
+    #[test]
+    fn websocket_account_serializes_account_status() {
+        let websocket = account(false)
+            .try_into_websocket(&signer(), ETWebsocketId::Int(1))
+            .unwrap();
+        let json: serde_json::Value = serde_json::from_str(&websocket).unwrap();
+        assert_eq!(json["id"], 1);
+        assert_eq!(json["method"], "account.status");
+        assert_eq!(json["params"]["apiKey"], "api-key");
+        assert_eq!(json["params"]["timestamp"], 1_660_801_720_951_i64);
+        assert_eq!(
+            json["params"]["signature"],
+            "A9BA89C55B377EB0CCB2ED4115F7FFC6A006531A0B350BFDD4F6DCE0E8DD82AF"
+        );
+        assert!(json["params"].get("omitZeroBalances").is_none());
+        assert!(json["params"].get("recvWindow").is_none());
+    }
+
+    #[test]
+    fn http_open_orders_serializes_signed_get_open_orders() {
+        let http = open_orders(Some("BTCUSDT"))
+            .try_into_http(&signer())
+            .unwrap();
+        assert_eq!(http.method, HttpMethod::GET);
+        assert_eq!(
+            http.query.as_deref(),
+            Some(
+                "openOrders?symbol=BTCUSDT&timestamp=1660801720951&signature=9C8A4C7C79966AABF88CEFDEEE9E7F55299011E5804AC5819FC1BF0F6C11B9FF"
+            )
+        );
+        assert_eq!(
+            http.headers,
+            vec![("X-MBX-APIKEY".into(), "api-key".into())]
+        );
+    }
+
+    #[test]
+    fn websocket_open_orders_without_symbol_serializes_open_orders_status() {
+        let websocket = open_orders(None)
+            .try_into_websocket(&signer(), ETWebsocketId::Int(2))
+            .unwrap();
+        let json: serde_json::Value = serde_json::from_str(&websocket).unwrap();
+        assert_eq!(json["id"], 2);
+        assert_eq!(json["method"], "openOrders.status");
+        assert_eq!(json["params"]["apiKey"], "api-key");
+        assert_eq!(json["params"]["timestamp"], 1_660_801_720_951_i64);
+        assert_eq!(
+            json["params"]["signature"],
+            "A9BA89C55B377EB0CCB2ED4115F7FFC6A006531A0B350BFDD4F6DCE0E8DD82AF"
+        );
+        assert!(json["params"].get("symbol").is_none());
+    }
+
+    #[test]
+    fn http_query_order_serializes_signed_get_order() {
+        let http = query_order().try_into_http(&signer()).unwrap();
+        assert_eq!(http.method, HttpMethod::GET);
+        assert_eq!(
+            http.query.as_deref(),
+            Some(
+                "order?orderId=1&symbol=BTCUSDT&timestamp=1660801720951&signature=D4BC8844607409AA95EBD43A710DD3601C484C7555313BEE22FF9CE5EEC7D6CE"
+            )
+        );
+        assert_eq!(
+            http.headers,
+            vec![("X-MBX-APIKEY".into(), "api-key".into())]
+        );
+    }
+
+    #[test]
+    fn websocket_query_order_serializes_order_status() {
+        let websocket = query_order()
+            .try_into_websocket(&signer(), ETWebsocketId::Int(3))
+            .unwrap();
+        let json: serde_json::Value = serde_json::from_str(&websocket).unwrap();
+        assert_eq!(json["id"], 3);
+        assert_eq!(json["method"], "order.status");
+        assert_eq!(json["params"]["symbol"], "BTCUSDT");
+        assert_eq!(json["params"]["orderId"], 1);
+        assert_eq!(json["params"]["apiKey"], "api-key");
+        assert_eq!(json["params"]["timestamp"], 1_660_801_720_951_i64);
+        assert_eq!(
+            json["params"]["signature"],
+            "738B3C77F9E6135F4A17FE313306C6E9296EDF250E0D813F171E688508C4A2FD"
+        );
+        assert!(json["params"].get("recvWindow").is_none());
+        assert!(json["params"].get("origClientOrderId").is_none());
+    }
+
+    #[test]
+    fn open_orders_weight_depends_on_symbol() {
+        assert_eq!(open_orders(Some("BTCUSDT")).weight(), 6);
+        assert_eq!(open_orders(None).weight(), 80);
+    }
+
+    #[test]
+    fn account_and_query_order_weights() {
+        assert_eq!(account(false).weight(), 20);
+        assert_eq!(query_order().weight(), 4);
     }
 }

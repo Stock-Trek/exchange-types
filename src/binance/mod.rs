@@ -1,9 +1,12 @@
+pub mod account;
 pub mod amend;
 pub mod asset_limits;
 pub mod cancel;
 pub mod error;
 pub mod exchange_info;
 pub mod filters;
+pub mod open_orders;
+pub mod query_order;
 pub mod rate_limits;
 pub mod recv_window;
 pub mod request;
