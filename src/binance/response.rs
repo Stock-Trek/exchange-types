@@ -139,21 +139,31 @@ where
                 Ok(result) => BinanceResponsePayload::Success(result),
                 Err(error) => {
                     if (200..300).contains(&response.status) {
-                        // A 2xx body that is neither a Binance error payload nor a
-                        // result of the expected type is not a valid response to
-                        // the request this result type answers (e.g. an HTML page
-                        // served by an intermediary proxy, or schema drift).
-                        return Err(ETError::DeserializeResponse(error));
+                        // result of the expected type is usually schema drift
+                        // (Binance deprecates or renames response fields) or an
+                        // intermediary page. Degrade to a failure carrying the
+                        // deserialization error instead of failing the whole
+                        // response, so that the response metadata (usage,
+                        // status) survives. This mirrors the websocket path,
+                        // which already degrades unexpected success payloads.
+                        BinanceResponsePayload::Failure(BinanceError {
+                            code: -1,
+                            msg: format!(
+                                "Could not deserialize response body as the expected type: {error}"
+                            ),
+                            data: None,
+                        })
+                    } else {
+                        // Non-2xx responses can have an empty or non-JSON body
+                        // (e.g. HTTP 429/418 rate limiting, 5xx gateway pages).
+                        // Surface them as a failure carrying the HTTP status and
+                        // the raw body so nothing is lost.
+                        BinanceResponsePayload::Failure(BinanceError {
+                            code: i64::from(response.status),
+                            msg: String::from_utf8_lossy(&response.body).into_owned(),
+                            data: None,
+                        })
                     }
-                    // Non-2xx responses can have an empty or non-JSON body
-                    // (e.g. HTTP 429/418 rate limiting, 5xx gateway pages).
-                    // Surface them as a failure carrying the HTTP status and
-                    // the raw body so nothing is lost.
-                    BinanceResponsePayload::Failure(BinanceError {
-                        code: i64::from(response.status),
-                        msg: String::from_utf8_lossy(&response.body).into_owned(),
-                        data: None,
-                    })
                 }
             },
         };
