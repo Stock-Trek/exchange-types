@@ -8,30 +8,26 @@ use crate::{
 };
 use strum::Display;
 
-#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Clone, Hash)]
+#[derive(Serialize, Debug, Clone, Hash)]
 pub struct BinanceExchangeInfoParams {
     pub permissions: Vec<BinanceExchangeInfoPermission>,
     pub symbolStatus: BinanceExchangeInfoSymbolStatus,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 #[allow(non_camel_case_types)]
 pub enum BinanceExchangeInfoPermission {
     LEVERAGED,
     MARGIN,
     SPOT,
-    #[cfg_attr(feature = "serde", serde(other))]
+    #[serde(other)]
     Unknown,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Serialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceExchangeInfoSymbolStatus {
     TRADING,
     HALT,
@@ -39,8 +35,7 @@ pub enum BinanceExchangeInfoSymbolStatus {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BinanceExchangeInfoResult {
     pub exchangeFilters: Vec<BinanceExchangeFilter>,
     pub rateLimits: Vec<BinanceRateLimit>,
@@ -51,16 +46,14 @@ pub struct BinanceExchangeInfoResult {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BinanceExchangeInfoSors {
     pub baseAsset: Ticker,
     pub symbols: Vec<Ticker>,
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BinanceExchangeInfoSymbol {
     pub allowTrailingStop: bool,
     pub allowedSelfTradePreventionModes: Vec<BinanceSelfTradeProtection>,
@@ -91,8 +84,7 @@ pub struct BinanceExchangeInfoSymbol {
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Display, Clone, Copy, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
 pub enum BinanceOrderType {
     LIMIT,
     LIMIT_MAKER,
@@ -101,7 +93,7 @@ pub enum BinanceOrderType {
     STOP_LOSS_LIMIT,
     TAKE_PROFIT,
     TAKE_PROFIT_LIMIT,
-    #[cfg_attr(feature = "serde", serde(other))]
+    #[serde(other)]
     Unknown,
 }
 
@@ -122,7 +114,7 @@ impl BinanceExchangeInfoParams {
     }
 }
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(test)]
 mod tests {
     use super::*;
 

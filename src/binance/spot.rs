@@ -6,16 +6,14 @@ use query_params::QueryParams;
 use rust_decimal::Decimal;
 use strum::Display;
 
-#[cfg(feature = "serde")]
 use {
     serde::{Deserialize, Serialize},
     serde_with::skip_serializing_none,
 };
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", skip_serializing_none)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Clone, Hash, QueryParams)]
+#[skip_serializing_none]
+#[derive(Serialize, Debug, Clone, Hash, QueryParams)]
 pub struct BinanceSpotOrderParams {
     pub apiKey: Option<String>,
     pub icebergQty: Option<Decimal>,
@@ -37,13 +35,12 @@ pub struct BinanceSpotOrderParams {
     pub timeInForce: Option<BinanceTimeInForce>,
     pub timestamp: i64,
     pub trailingDelta: Option<u32>,
-    #[cfg_attr(feature = "serde", serde(rename = "type"))]
+    #[serde(rename = "type")]
     pub r#type: BinanceOrderType,
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Serialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinanceNewOrderResponseType {
     ACK,
     RESULT,
@@ -51,32 +48,28 @@ pub enum BinanceNewOrderResponseType {
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Display, Clone, Copy, Hash)]
+#[derive(Serialize, Debug, Display, Clone, Copy, Hash)]
 pub enum BinancePegPriceType {
     PRIMARY_PEG,
     MARKET_PEG,
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Display, Clone, Copy, Hash)]
+#[derive(Serialize, Debug, Display, Clone, Copy, Hash)]
 pub enum BinancePegOffsetType {
     PRICE_LEVEL,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Display, Clone, Copy, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
 pub enum BinanceSide {
     BUY,
     SELL,
-    #[cfg_attr(feature = "serde", serde(other))]
+    #[serde(other)]
     Unknown,
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Display, Clone, Copy, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
 pub enum BinanceSelfTradeProtection {
     EXPIRE_BOTH,
     EXPIRE_MAKER,
@@ -84,24 +77,22 @@ pub enum BinanceSelfTradeProtection {
     DECREMENT,
     NONE,
     TRANSFER,
-    #[cfg_attr(feature = "serde", serde(other))]
+    #[serde(other)]
     Unknown,
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Display, Clone, Copy, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
 pub enum BinanceTimeInForce {
     FOK,
     GTC,
     IOC,
-    #[cfg_attr(feature = "serde", serde(other))]
+    #[serde(other)]
     Unknown,
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Display, Clone, Copy, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq)]
 pub enum BinanceOrderStatus {
     CANCELED,
     EXPIRED,
@@ -111,13 +102,13 @@ pub enum BinanceOrderStatus {
     PARTIALLY_FILLED,
     PENDING_CANCEL,
     REJECTED,
-    #[cfg_attr(feature = "serde", serde(other))]
+    #[serde(other)]
     Unknown,
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[cfg_attr(feature = "serde", skip_serializing_none)]
+#[derive(Deserialize)]
+#[skip_serializing_none]
 #[derive(Debug, Clone)]
 pub struct BinanceSpotOrderResult {
     pub clientOrderId: String,
@@ -143,14 +134,13 @@ pub struct BinanceSpotOrderResult {
     pub trailingDelta: Option<i64>,
     pub trailingTime: Option<i64>,
     pub transactTime: i64,
-    #[cfg_attr(feature = "serde", serde(rename = "type"))]
+    #[serde(rename = "type")]
     pub r#type: Option<BinanceOrderType>,
     pub workingTime: Option<i64>,
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BinanceFill {
     pub commission: Decimal,
     pub commissionAsset: Ticker,
@@ -159,7 +149,7 @@ pub struct BinanceFill {
     pub tradeId: i64,
 }
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(test)]
 mod tests {
     use super::*;
 

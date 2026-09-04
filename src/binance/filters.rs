@@ -1,11 +1,10 @@
 use crate::ticker::Ticker;
 use rust_decimal::Decimal;
 
-#[cfg(feature = "serde")]
 use serde::Deserialize;
 
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[cfg_attr(feature = "serde", serde(tag = "filterType"))]
+#[derive(Deserialize)]
+#[serde(tag = "filterType")]
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, non_camel_case_types)]
 pub enum BinanceExchangeFilter {
@@ -21,12 +20,12 @@ pub enum BinanceExchangeFilter {
     EXCHANGE_MAX_NUM_ORDER_LISTS {
         maxNumOrderLists: i64,
     },
-    #[cfg_attr(feature = "serde", serde(other))]
+    #[serde(other)]
     Unknown,
 }
 
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[cfg_attr(feature = "serde", serde(tag = "filterType"))]
+#[derive(Deserialize)]
+#[serde(tag = "filterType")]
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, non_camel_case_types)]
 pub enum BinanceSymbolFilter {
@@ -96,12 +95,12 @@ pub enum BinanceSymbolFilter {
     MAX_NUM_ORDER_LISTS {
         maxNumOrderLists: i64,
     },
-    #[cfg_attr(feature = "serde", serde(other))]
+    #[serde(other)]
     Unknown,
 }
 
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[cfg_attr(feature = "serde", serde(tag = "filterType"))]
+#[derive(Deserialize)]
+#[serde(tag = "filterType")]
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, non_camel_case_types)]
 pub enum BinanceAssetFilter {
@@ -109,6 +108,6 @@ pub enum BinanceAssetFilter {
         asset: Ticker,
         limit: Decimal,
     },
-    #[cfg_attr(feature = "serde", serde(other))]
+    #[serde(other)]
     Unknown,
 }

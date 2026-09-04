@@ -15,7 +15,6 @@ use crate::{
     response::{ETHttpResponse, ETWebsocketResponse},
 };
 
-#[cfg(feature = "serde")]
 use {crate::error::ETError, serde::Deserialize, serde_json};
 
 #[derive(Debug, Clone)]
@@ -25,8 +24,8 @@ pub struct BinanceResponse {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
+#[derive(Deserialize)]
+#[serde(untagged)]
 #[derive(Debug, Clone)]
 pub enum BinanceResponsePayload {
     Success(BinanceResult),
@@ -49,8 +48,8 @@ pub struct BinanceUsage {
     pub order_count_1d: Option<u32>,
 }
 
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
+#[derive(Deserialize)]
+#[serde(untagged)]
 #[derive(Debug, Clone)]
 pub enum BinanceResult {
     AmendOrder(BinanceAmendOrderResult),
@@ -65,18 +64,17 @@ pub enum BinanceResult {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 struct BinanceWebsocketResponse {
     pub error: Option<BinanceError>,
     pub id: String,
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub rateLimits: Vec<BinanceRateLimit>,
     pub result: Option<BinanceWebsocketResponseResult>,
 }
 
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
+#[derive(Deserialize)]
+#[serde(untagged)]
 #[derive(Debug, Clone)]
 pub enum BinanceWebsocketResponseResult {
     AmendOrder(BinanceAmendOrderResult),
@@ -136,8 +134,10 @@ impl ETWebsocketResponse for BinanceResponse {
     fn try_from_websocket(response: String) -> ETResult<Self> {
         let websocket_response: BinanceWebsocketResponse =
             serde_json::from_str(&response).map_err(ETError::DeserializeResponse)?;
-        let mut metadata = BinanceMetadata::default();
-        metadata.websocket_id = Some(websocket_response.id);
+        let mut metadata = BinanceMetadata {
+            websocket_id: Some(websocket_response.id),
+            ..Default::default()
+        };
         for rate_limit in websocket_response.rateLimits {
             let count_u32 = rate_limit.count.map(|c| c as u32);
             match (rate_limit.rateLimitType, rate_limit.interval) {

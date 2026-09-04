@@ -16,11 +16,10 @@ use crate::{
     urls::Protocol,
 };
 
-#[cfg(feature = "serde")]
 use {serde::Serialize, serde_with::skip_serializing_none};
 
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
+#[derive(Serialize)]
+#[serde(untagged)]
 #[derive(Debug, Clone, Hash)]
 pub enum BinanceRequest {
     AmendOrderRequest(BinanceAmendOrderParams),
@@ -34,26 +33,25 @@ pub enum BinanceRequest {
     WebsocketSessionLogout(BinanceSessionLogoutParams),
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Debug, Clone, Copy, PartialEq, Eq)]
 enum WebsocketMethod {
-    #[cfg_attr(feature = "serde", serde(rename = "order.amend.keepPriority"))]
+    #[serde(rename = "order.amend.keepPriority")]
     AmendOrder,
-    #[cfg_attr(feature = "serde", serde(rename = "myFilters"))]
+    #[serde(rename = "myFilters")]
     AssetLimits,
-    #[cfg_attr(feature = "serde", serde(rename = "order.cancel"))]
+    #[serde(rename = "order.cancel")]
     CancelOrder,
-    #[cfg_attr(feature = "serde", serde(rename = "openOrders.cancelAll"))]
+    #[serde(rename = "openOrders.cancelAll")]
     CancelAllOrders,
-    #[cfg_attr(feature = "serde", serde(rename = "exchangeInfo"))]
+    #[serde(rename = "exchangeInfo")]
     ExchangeInfo,
-    #[cfg_attr(feature = "serde", serde(rename = "session.logon"))]
+    #[serde(rename = "session.logon")]
     Logon,
-    #[cfg_attr(feature = "serde", serde(rename = "session.logout"))]
+    #[serde(rename = "session.logout")]
     Logout,
-    #[cfg_attr(feature = "serde", serde(rename = "order.place"))]
+    #[serde(rename = "order.place")]
     PlaceOrder,
-    #[cfg_attr(feature = "serde", serde(rename = "time"))]
+    #[serde(rename = "time")]
     Time,
 }
 
@@ -65,9 +63,9 @@ struct WebsocketSignedRequest {
 }
 
 #[derive(Debug, Clone, Serialize)]
-#[cfg_attr(feature = "serde", skip_serializing_none)]
+#[skip_serializing_none]
 struct SignedParams {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     params: BinanceRequest,
     signature: Option<String>,
 }

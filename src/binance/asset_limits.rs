@@ -4,16 +4,14 @@ use crate::binance::{
 };
 use query_params::QueryParams;
 
-#[cfg(feature = "serde")]
 use {
     serde::{Deserialize, Serialize},
     serde_with::skip_serializing_none,
 };
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", skip_serializing_none)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Clone, Hash, QueryParams)]
+#[skip_serializing_none]
+#[derive(Serialize, Debug, Clone, Hash, QueryParams)]
 pub struct BinanceAssetLimitsParams {
     pub apiKey: Option<String>,
     pub recvWindow: Option<BinanceRecvWindow>,
@@ -22,8 +20,7 @@ pub struct BinanceAssetLimitsParams {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BinanceAssetLimitsResult {
     pub assetFilters: Vec<BinanceAssetFilter>,
     pub exchangeFilters: Vec<BinanceExchangeFilter>,

@@ -6,16 +6,14 @@ use crate::binance::{
 use query_params::QueryParams;
 use rust_decimal::Decimal;
 
-#[cfg(feature = "serde")]
 use {
     serde::{Deserialize, Serialize},
     serde_with::skip_serializing_none,
 };
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", skip_serializing_none)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Clone, Hash, QueryParams)]
+#[skip_serializing_none]
+#[derive(Serialize, Debug, Clone, Hash, QueryParams)]
 pub struct BinanceAmendOrderParams {
     pub apiKey: Option<String>,
     pub newClientOrderId: Option<String>,
@@ -28,8 +26,7 @@ pub struct BinanceAmendOrderParams {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BinanceAmendOrderResult {
     pub amendedOrder: BinanceAmendedOrder,
     pub executionId: i64,
@@ -37,8 +34,7 @@ pub struct BinanceAmendOrderResult {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BinanceAmendedOrder {
     pub clientOrderId: String,
     pub cumulativeQuoteQty: Decimal,
@@ -61,7 +57,7 @@ pub struct BinanceAmendedOrder {
     pub timeInForce: BinanceTimeInForce,
     pub trailingDelta: Option<i64>,
     pub trailingTime: Option<i64>,
-    #[cfg_attr(feature = "serde", serde(rename = "type"))]
+    #[serde(rename = "type")]
     pub r#type: BinanceOrderType,
     pub workingTime: Option<i64>,
 }
