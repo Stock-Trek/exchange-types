@@ -57,17 +57,18 @@ enum WebsocketMethod {
 }
 
 #[derive(Debug, Clone, Serialize)]
-struct WebsocketSignedRequest {
+struct WebsocketRequest {
     id: ETWebsocketId,
     method: WebsocketMethod,
-    params: SignedParams,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    params: Option<WebsocketParams>,
 }
 
-#[derive(Debug, Clone, Serialize)]
 #[skip_serializing_none]
-struct SignedParams {
+#[derive(Debug, Clone, Serialize)]
+struct WebsocketParams {
     #[serde(flatten)]
-    params: BinanceRequest,
+    request: BinanceRequest,
     signature: Option<String>,
 }
 
@@ -184,31 +185,20 @@ impl ETWebsocketRequest for BinanceRequest {
     fn try_into_websocket(mut self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
         self.set_api_key(Some(signer.api_key()));
         let method = self.websocket_method();
-        let is_signed = match self {
-            BinanceRequest::AmendOrderRequest(..)
-            | BinanceRequest::AssetLimits(..)
-            | BinanceRequest::CancelAllOrdersRequest(..)
-            | BinanceRequest::CancelOrderRequest(..)
-            | BinanceRequest::SpotOrderRequest(..)
-            | BinanceRequest::WebsocketSessionLogon(..) => true,
-            BinanceRequest::ExchangeInfo(..)
-            | BinanceRequest::Time(..)
-            | BinanceRequest::WebsocketSessionLogout(..) => false,
+        let params = match self {
+            BinanceRequest::Time(..) | BinanceRequest::WebsocketSessionLogout(..) => None,
+            BinanceRequest::ExchangeInfo(..) => Some(WebsocketParams {
+                request: self,
+                signature: None,
+            }),
+            request => {
+                let signature = Some(signer.signature(request.query_params().as_bytes())?);
+                Some(WebsocketParams { request, signature })
+            }
         };
-        let signature = if is_signed {
-            Some(signer.signature(self.query_params().as_bytes())?)
-        } else {
-            None
-        };
-        let signed_request = WebsocketSignedRequest {
-            id,
-            method,
-            params: SignedParams {
-                params: self,
-                signature,
-            },
-        };
-        let message = serde_json::to_string(&signed_request).map_err(ETError::SerializeRequest)?;
+        let websocket_request = WebsocketRequest { id, method, params };
+        let message =
+            serde_json::to_string(&websocket_request).map_err(ETError::SerializeRequest)?;
         Ok(message)
     }
 }
