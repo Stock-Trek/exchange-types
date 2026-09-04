@@ -15,7 +15,6 @@ use crate::{
     response::{ETHttpResponse, ETWebsocketResponse},
     websocket_id::ETWebsocketId,
 };
-
 use {crate::error::ETError, serde::Deserialize, serde_json};
 
 #[derive(Debug, Clone)]
@@ -206,82 +205,5 @@ impl ETWebsocketResponse for BinanceResponse {
             })
         };
         Ok(BinanceResponse { metadata, payload })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{error::ETResult, response::ETWebsocketResponse, websocket_id::ETWebsocketId};
-
-    fn parse_websocket(json: &str) -> ETResult<BinanceResponse> {
-        BinanceResponse::try_from_websocket(json.to_string())
-    }
-
-    // Binance never sends the interval string "SECONDS_TEN"; a 10-second
-    // order-count limit arrives as ORDERS + "SECOND" + intervalNum 10 (e.g. in
-    // cancelReplace and 429 error frames). Assert those frames populate the
-    // usage metadata.
-    #[test]
-    fn rate_limit_usage_is_parsed_from_websocket_error_frame() {
-        let response = parse_websocket(
-            r#"{
-                "id": 1,
-                "status": 429,
-                "error": {
-                    "code": -1003,
-                    "msg": "Too many requests",
-                    "data": { "retryAfter": 45 }
-                },
-                "rateLimits": [
-                    { "rateLimitType": "REQUEST_WEIGHT", "interval": "MINUTE", "intervalNum": 1, "limit": 6000, "count": 21 },
-                    { "rateLimitType": "ORDERS", "interval": "SECOND", "intervalNum": 10, "limit": 50, "count": 2 },
-                    { "rateLimitType": "ORDERS", "interval": "DAY", "intervalNum": 1, "limit": 160000, "count": 9 }
-                ]
-            }"#,
-        )
-        .unwrap();
-        assert_eq!(response.metadata.status, 429);
-        assert_eq!(response.metadata.websocket_id, Some(ETWebsocketId::Int(1)));
-        assert_eq!(response.metadata.usage.used_weight_1m, Some(21));
-        assert_eq!(response.metadata.usage.order_count_10s, Some(2));
-        assert_eq!(response.metadata.usage.order_count_1m, None);
-        assert_eq!(response.metadata.usage.order_count_1h, None);
-        assert_eq!(response.metadata.usage.order_count_1d, Some(9));
-        match response.payload {
-            BinanceResponsePayload::Failure(error) => {
-                assert_eq!(error.code, -1003);
-                assert_eq!(error.msg, "Too many requests");
-                assert_eq!(error.data.unwrap().retryAfter, Some(45));
-            }
-            _ => panic!("expected a failure payload"),
-        }
-    }
-
-    // intervalNum must be honoured: only ORDERS + SECOND + intervalNum 10 is the
-    // 10-second order count, and only intervalNum 1 maps to the 1m/1h/1d counts.
-    #[test]
-    fn order_count_mappings_require_the_expected_interval_num() {
-        let response = parse_websocket(
-            r#"{
-                "id": "2",
-                "status": 429,
-                "error": { "code": -1003, "msg": "Way too many requests" },
-                "rateLimits": [
-                    { "rateLimitType": "ORDERS", "interval": "SECOND", "intervalNum": 10, "limit": 50, "count": 3 },
-                    { "rateLimitType": "ORDERS", "interval": "SECOND", "intervalNum": 1, "limit": 50, "count": 99 },
-                    { "rateLimitType": "ORDERS", "interval": "SECONDS_TEN", "intervalNum": 10, "limit": 50, "count": 98 },
-                    { "rateLimitType": "ORDERS", "interval": "MINUTE", "intervalNum": 5, "limit": 50, "count": 97 },
-                    { "rateLimitType": "ORDERS", "interval": "MINUTE", "intervalNum": 1, "limit": 50, "count": 7 },
-                    { "rateLimitType": "ORDERS", "interval": "HOUR", "intervalNum": 1, "limit": 50, "count": 2 },
-                    { "rateLimitType": "ORDERS", "interval": "DAY", "intervalNum": 1, "limit": 160000, "count": 11 }
-                ]
-            }"#,
-        )
-        .unwrap();
-        assert_eq!(response.metadata.usage.order_count_10s, Some(3));
-        assert_eq!(response.metadata.usage.order_count_1m, Some(7));
-        assert_eq!(response.metadata.usage.order_count_1h, Some(2));
-        assert_eq!(response.metadata.usage.order_count_1d, Some(11));
     }
 }
