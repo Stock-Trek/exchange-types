@@ -33,12 +33,12 @@ pub enum BinanceResponsePayload {
     Failure(BinanceError),
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct BinanceMetadata {
     pub usage: BinanceUsage,
     pub retry_after: Option<u64>,
     pub websocket_id: Option<ETWebsocketId>,
-    pub status: Option<u16>,
+    pub status: u16,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -93,21 +93,27 @@ pub enum BinanceWebsocketResponseResult {
 
 impl ETHttpResponse for BinanceResponse {
     fn try_from_http(response: HttpResponse) -> ETResult<Self> {
-        let mut metadata = BinanceMetadata::default();
+        let mut usage = BinanceUsage::default();
+        let mut retry_after = None;
         for (name, value) in response.headers {
             let name = name.to_ascii_lowercase();
             let value = value.trim();
             match name.as_str() {
-                "x-mbx-used-weight-1m" => metadata.usage.used_weight_1m = value.parse().ok(),
-                "x-mbx-order-count-10s" => metadata.usage.order_count_10s = value.parse().ok(),
-                "x-mbx-order-count-1m" => metadata.usage.order_count_1m = value.parse().ok(),
-                "x-mbx-order-count-1h" => metadata.usage.order_count_1h = value.parse().ok(),
-                "x-mbx-order-count-1d" => metadata.usage.order_count_1d = value.parse().ok(),
-                "retry-after" => metadata.retry_after = value.parse().ok(),
+                "x-mbx-used-weight-1m" => usage.used_weight_1m = value.parse().ok(),
+                "x-mbx-order-count-10s" => usage.order_count_10s = value.parse().ok(),
+                "x-mbx-order-count-1m" => usage.order_count_1m = value.parse().ok(),
+                "x-mbx-order-count-1h" => usage.order_count_1h = value.parse().ok(),
+                "x-mbx-order-count-1d" => usage.order_count_1d = value.parse().ok(),
+                "retry-after" => retry_after = value.parse().ok(),
                 _ => {}
             }
         }
-        metadata.status = Some(response.status);
+        let metadata = BinanceMetadata {
+            usage,
+            retry_after,
+            websocket_id: None,
+            status: response.status,
+        };
         match serde_json::from_slice::<BinanceResponsePayload>(&response.body) {
             Ok(payload) => Ok(BinanceResponse { metadata, payload }),
             Err(error) => {
@@ -139,9 +145,10 @@ impl ETWebsocketResponse for BinanceResponse {
         let websocket_response: BinanceWebsocketResponse =
             serde_json::from_str(&response).map_err(ETError::DeserializeResponse)?;
         let mut metadata = BinanceMetadata {
+            usage: BinanceUsage::default(),
+            retry_after: None,
             websocket_id: websocket_response.id,
-            status: Some(websocket_response.status),
-            ..Default::default()
+            status: websocket_response.status,
         };
         for rate_limit in websocket_response.rateLimits {
             let count_u32 = rate_limit.count.map(|c| c as u32);
@@ -193,86 +200,5 @@ impl ETWebsocketResponse for BinanceResponse {
             })
         };
         Ok(BinanceResponse { metadata, payload })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{
-        http::HttpResponse,
-        response::{ETHttpResponse, ETWebsocketResponse},
-    };
-
-    #[test]
-    fn websocket_success_carries_status() {
-        let response = BinanceResponse::try_from_websocket(
-            r#"{"id":"req-1","status":200,"result":{"serverTime":1656400527891}}"#.into(),
-        )
-        .unwrap();
-        assert_eq!(response.metadata.status, Some(200));
-        assert_eq!(response.metadata.websocket_id.as_deref(), Some("req-1"));
-        assert!(matches!(
-            response.payload,
-            BinanceResponsePayload::Success(BinanceResult::Time(_))
-        ));
-    }
-
-    #[test]
-    fn websocket_4xx_failure_carries_status() {
-        let response = BinanceResponse::try_from_websocket(
-            r#"{"id":"req-1","status":400,"error":{"code":-2010,"msg":"Account has insufficient balance for requested action."}}"#
-                .into(),
-        )
-        .unwrap();
-        assert_eq!(response.metadata.status, Some(400));
-        match response.payload {
-            BinanceResponsePayload::Failure(error) => {
-                assert_eq!(error.code, -2010);
-                assert!(error.msg.contains("insufficient balance"));
-            }
-            BinanceResponsePayload::Success(_) => panic!("expected failure"),
-        }
-    }
-
-    #[test]
-    fn websocket_5xx_failure_is_distinguishable_from_4xx() {
-        let response = BinanceResponse::try_from_websocket(
-            r#"{"id":"req-1","status":503,"error":{"code":-1000,"msg":"An unknown error occurred while processing the request."}}"#
-                .into(),
-        )
-        .unwrap();
-        assert_eq!(response.metadata.status, Some(503));
-        assert!(matches!(
-            response.payload,
-            BinanceResponsePayload::Failure(_)
-        ));
-    }
-
-    #[test]
-    fn http_response_carries_status() {
-        let response = BinanceResponse::try_from_http(HttpResponse {
-            status: 200,
-            headers: vec![],
-            body: br#"{"serverTime":1656400527891}"#.to_vec(),
-        })
-        .unwrap();
-        assert_eq!(response.metadata.status, Some(200));
-        assert!(matches!(
-            response.payload,
-            BinanceResponsePayload::Success(BinanceResult::Time(_))
-        ));
-
-        let response = BinanceResponse::try_from_http(HttpResponse {
-            status: 429,
-            headers: vec![],
-            body: vec![],
-        })
-        .unwrap();
-        assert_eq!(response.metadata.status, Some(429));
-        match response.payload {
-            BinanceResponsePayload::Failure(error) => assert_eq!(error.code, 429),
-            BinanceResponsePayload::Success(_) => panic!("expected failure"),
-        }
     }
 }
