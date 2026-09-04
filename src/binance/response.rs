@@ -132,6 +132,7 @@ impl ETHttpResponse for BinanceResponse {
                         payload: BinanceResponsePayload::Failure(BinanceError {
                             code: i64::from(response.status),
                             msg: String::from_utf8_lossy(&response.body).into_owned(),
+                            data: None,
                         }),
                     })
                 }
@@ -197,8 +198,88 @@ impl ETWebsocketResponse for BinanceResponse {
             BinanceResponsePayload::Failure(BinanceError {
                 code: -1,
                 msg: "Websocket response missing both error and result".to_string(),
+                data: None,
             })
         };
         Ok(BinanceResponse { metadata, payload })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        http::HttpResponse,
+        response::{ETHttpResponse, ETWebsocketResponse},
+    };
+
+    #[test]
+    fn websocket_rate_limit_error_keeps_retry_after() {
+        let response = BinanceResponse::try_from_websocket(
+            r#"{"id":"req-1","status":418,"error":{"code":-1003,"msg":"Way too much request weight used; IP banned until 1659146400000.","data":{"serverTime":1659142907531,"retryAfter":1659146400000}}}"#
+                .into(),
+        )
+        .unwrap();
+        match response.payload {
+            BinanceResponsePayload::Failure(error) => {
+                assert_eq!(error.code, -1003);
+                let data = error.data.expect("retryAfter must not be dropped");
+                assert_eq!(data.retryAfter, Some(1659146400000));
+                assert_eq!(data.serverTime, Some(1659142907531));
+            }
+            BinanceResponsePayload::Success(_) => panic!("expected failure"),
+        }
+    }
+
+    #[test]
+    fn websocket_error_without_data_parses_with_none() {
+        let response = BinanceResponse::try_from_websocket(
+            r#"{"id":"req-1","status":400,"error":{"code":-2014,"msg":"API-key format invalid."}}"#
+                .into(),
+        )
+        .unwrap();
+        match response.payload {
+            BinanceResponsePayload::Failure(error) => {
+                assert_eq!(error.code, -2014);
+                assert!(error.data.is_none());
+            }
+            BinanceResponsePayload::Success(_) => panic!("expected failure"),
+        }
+    }
+
+    #[test]
+    fn http_error_body_keeps_retry_after_data() {
+        let response = BinanceResponse::try_from_http(HttpResponse {
+            status: 429,
+            headers: vec![],
+            body: br#"{"code":-1003,"msg":"Way too many requests.","data":{"serverTime":1659142907531,"retryAfter":1659146400000}}"#
+                .to_vec(),
+        })
+        .unwrap();
+        match response.payload {
+            BinanceResponsePayload::Failure(error) => {
+                assert_eq!(error.code, -1003);
+                let data = error.data.expect("retryAfter must not be dropped");
+                assert_eq!(data.retryAfter, Some(1659146400000));
+            }
+            BinanceResponsePayload::Success(_) => panic!("expected failure"),
+        }
+    }
+
+    #[test]
+    fn non_json_http_failure_has_no_data() {
+        let response = BinanceResponse::try_from_http(HttpResponse {
+            status: 418,
+            headers: vec![],
+            body: b"".to_vec(),
+        })
+        .unwrap();
+        match response.payload {
+            BinanceResponsePayload::Failure(error) => {
+                assert_eq!(error.code, 418);
+                assert!(error.data.is_none());
+            }
+            BinanceResponsePayload::Success(_) => panic!("expected failure"),
+        }
     }
 }
