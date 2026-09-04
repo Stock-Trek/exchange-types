@@ -10,12 +10,13 @@ use crate::{
         spot::BinanceSpotOrderResult,
         time::BinanceTimeResult,
     },
-    error::ETResult,
+    error::{ETError, ETResult},
     http::HttpResponse,
     response::{ETHttpResponse, ETWebsocketResponse},
     websocket_id::ETWebsocketId,
 };
-use {crate::error::ETError, serde::Deserialize, serde_json};
+use serde::Deserialize;
+use serde_json;
 
 #[derive(Debug, Clone)]
 pub struct BinanceResponse {
