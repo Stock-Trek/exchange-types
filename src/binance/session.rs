@@ -1,4 +1,4 @@
-use crate::response::ResponseFor;
+use crate::{binance::recv_window::BinanceRecvWindow, response::ResponseFor};
 use query_params::QueryParams;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -8,6 +8,7 @@ use serde_with::skip_serializing_none;
 #[derive(Serialize, Debug, Clone, Hash, QueryParams)]
 pub struct BinanceSessionLogonRequest {
     pub apiKey: Option<String>,
+    pub recvWindow: Option<BinanceRecvWindow>,
     pub timestamp: i64,
 }
 
