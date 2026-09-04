@@ -46,7 +46,7 @@ pub struct BinanceAmendedOrder {
     pub expiryReason: Option<BinanceExpiryReason>,
     pub icebergQty: Option<Decimal>,
     pub orderId: i64,
-    pub orderListId: i32,
+    pub orderListId: i64,
     pub origClientOrderId: String,
     pub pegOffsetType: Option<BinancePegOffsetType>,
     pub pegOffsetValue: Option<i32>,

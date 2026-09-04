@@ -66,7 +66,7 @@ pub struct BinanceSpotOrderResult {
     pub fills: Option<Vec<BinanceFill>>,
     pub icebergQty: Option<Decimal>,
     pub orderId: i64,
-    pub orderListId: i32,
+    pub orderListId: i64,
     pub origQty: Option<Decimal>,
     pub origQuoteOrderQty: Option<Decimal>,
     pub pegOffsetType: Option<BinancePegOffsetType>,
