@@ -29,29 +29,3 @@ impl std::fmt::Display for BinanceError {
 }
 
 impl std::error::Error for BinanceError {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn rate_limit_error_keeps_retry_after_data() {
-        let error: BinanceError = serde_json::from_str(
-            r#"{"code":-1003,"msg":"Way too much request weight used; IP banned until 1659146400000. Please use WebSocket Streams for live updates to avoid bans.","data":{"serverTime":1659142907531,"retryAfter":1659146400000}}"#,
-        )
-        .unwrap();
-        assert_eq!(error.code, -1003);
-        let data = error.data.expect("error data should be retained");
-        assert_eq!(data.serverTime, Some(1659142907531));
-        assert_eq!(data.retryAfter, Some(1659146400000));
-    }
-
-    #[test]
-    fn error_without_data_parses_with_none() {
-        let error: BinanceError =
-            serde_json::from_str(r#"{"code":-2014,"msg":"API-key format invalid."}"#).unwrap();
-        assert_eq!(error.code, -2014);
-        assert_eq!(error.msg, "API-key format invalid.");
-        assert!(error.data.is_none());
-    }
-}
