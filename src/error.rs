@@ -15,4 +15,6 @@ pub enum ETError {
     DeserializeResponse(serde_json::Error),
     #[error("Serialize request error: {0}")]
     SerializeRequest(serde_json::Error),
+    #[error("Value deserialized as Unknown")]
+    UnknownValue,
 }
