@@ -4,6 +4,7 @@ use crate::{
         rate_limits::BinanceRateLimit,
         supporting_types::{BinanceOrderType, BinanceSelfTradeProtection},
     },
+    encode::ByteEncoder,
     response::ResponseFor,
     ticker::Ticker,
 };
@@ -126,7 +127,7 @@ impl BinanceExchangeInfoRequest {
             Self::Symbol { symbol } => pairs.push(format!("symbol={symbol}")),
             Self::Symbols { symbols } => pairs.push(format!(
                 "symbols={}",
-                Self::percent_encode(&Self::json_array(symbols))
+                ByteEncoder::Percent.encode(Self::json_array(symbols).as_bytes())
             )),
             Self::Permissions {
                 permissions,
@@ -138,7 +139,7 @@ impl BinanceExchangeInfoRequest {
                     }
                     BinanceExchangeInfoPermissions::List(permissions) => pairs.push(format!(
                         "permissions={}",
-                        Self::percent_encode(&Self::json_array(permissions))
+                        ByteEncoder::Percent.encode(Self::json_array(permissions).as_bytes())
                     )),
                 }
                 if let Some(symbol_status) = symbolStatus {
@@ -155,17 +156,5 @@ impl BinanceExchangeInfoRequest {
             .collect::<Vec<_>>()
             .join(",");
         format!("[{values}]")
-    }
-    fn percent_encode(value: &str) -> String {
-        let mut encoded = String::with_capacity(value.len());
-        for byte in value.bytes() {
-            match byte {
-                b'0'..=b'9' | b'A'..=b'Z' | b'a'..=b'z' | b'-' | b'.' | b'_' | b'~' => {
-                    encoded.push(char::from(byte))
-                }
-                byte => encoded.push_str(&format!("%{byte:02X}")),
-            }
-        }
-        encoded
     }
 }
