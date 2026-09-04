@@ -1,10 +1,9 @@
 use crate::binance::{
-    cancel::BinanceOrderListStatus,
-    exchange_info::BinanceOrderType,
     recv_window::BinanceRecvWindow,
-    spot::{
-        BinanceExpiryReason, BinanceOrderStatus, BinancePegOffsetType, BinancePegPriceType,
-        BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce, BinanceWorkingFloor,
+    supporting_types::{
+        BinanceExpiryReason, BinanceOrderListStatus, BinanceOrderStatus, BinanceOrderType,
+        BinancePegOffsetType, BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide,
+        BinanceTimeInForce, BinanceWorkingFloor,
     },
 };
 use query_params::QueryParams;

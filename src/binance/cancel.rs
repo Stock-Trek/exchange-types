@@ -1,9 +1,9 @@
 use crate::binance::{
-    exchange_info::BinanceOrderType,
     recv_window::BinanceRecvWindow,
-    spot::{
-        BinanceExpiryReason, BinanceOrderStatus, BinancePegOffsetType, BinancePegPriceType,
-        BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce, BinanceWorkingFloor,
+    supporting_types::{
+        BinanceExpiryReason, BinanceOrderListOrder, BinanceOrderStatus, BinanceOrderType,
+        BinancePegOffsetType, BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide,
+        BinanceTimeInForce, BinanceWorkingFloor,
     },
 };
 use query_params::QueryParams;
@@ -98,26 +98,6 @@ pub struct BinanceCancelOrderListResult {
     pub orders: Vec<BinanceOrderListOrder>,
     pub symbol: String,
     pub transactionTime: i64,
-}
-
-#[allow(non_snake_case)]
-#[derive(Deserialize, Debug, Clone)]
-pub struct BinanceOrderListOrder {
-    pub clientOrderId: String,
-    pub orderId: i64,
-    pub symbol: String,
-}
-
-#[allow(non_snake_case)]
-#[derive(Deserialize, Debug, Clone)]
-pub struct BinanceOrderListStatus {
-    pub contingencyType: String,
-    pub listClientOrderId: String,
-    pub listOrderStatus: String,
-    pub orderListId: i32,
-    #[serde(default)]
-    pub orders: Vec<BinanceOrderListOrder>,
-    pub symbol: String,
 }
 
 #[derive(Deserialize)]

@@ -2,7 +2,7 @@ use crate::{
     binance::{
         filters::{BinanceExchangeFilter, BinanceSymbolFilter},
         rate_limits::BinanceRateLimit,
-        spot::BinanceSelfTradeProtection,
+        supporting_types::{BinanceOrderType, BinanceSelfTradeProtection},
     },
     ticker::Ticker,
 };
@@ -81,20 +81,6 @@ pub struct BinanceExchangeInfoSymbol {
     pub quotePrecision: u8,
     pub status: String,
     pub symbol: String,
-}
-
-#[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
-pub enum BinanceOrderType {
-    LIMIT,
-    LIMIT_MAKER,
-    MARKET,
-    STOP_LOSS,
-    STOP_LOSS_LIMIT,
-    TAKE_PROFIT,
-    TAKE_PROFIT_LIMIT,
-    #[serde(other)]
-    Unknown,
 }
 
 impl BinanceExchangeInfoParams {
