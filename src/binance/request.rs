@@ -108,17 +108,23 @@ impl BinanceRequest {
             | BinanceRequest::WebsocketSessionLogout(..) => {}
         }
     }
-    fn query_params(&self) -> String {
+    fn query_params(&self, percent_encode: bool) -> String {
         match self {
-            BinanceRequest::AmendOrderRequest(params) => params.query_params(true),
-            BinanceRequest::AssetLimits(params) => params.query_params(true),
-            BinanceRequest::CancelAllOrdersRequest(params) => params.query_params(true),
-            BinanceRequest::CancelOrderRequest(params) => params.query_params(true),
+            BinanceRequest::AmendOrderRequest(params) => params.query_params(true, percent_encode),
+            BinanceRequest::AssetLimits(params) => params.query_params(true, percent_encode),
+            BinanceRequest::CancelAllOrdersRequest(params) => {
+                params.query_params(true, percent_encode)
+            }
+            BinanceRequest::CancelOrderRequest(params) => params.query_params(true, percent_encode),
             BinanceRequest::ExchangeInfo(params) => params.query_params(),
-            BinanceRequest::SpotOrderRequest(params) => params.query_params(true),
+            BinanceRequest::SpotOrderRequest(params) => params.query_params(true, percent_encode),
             BinanceRequest::Time(params) => params.query_params(),
-            BinanceRequest::WebsocketSessionLogon(params) => params.query_params(true),
-            BinanceRequest::WebsocketSessionLogout(params) => params.query_params(true),
+            BinanceRequest::WebsocketSessionLogon(params) => {
+                params.query_params(true, percent_encode)
+            }
+            BinanceRequest::WebsocketSessionLogout(params) => {
+                params.query_params(true, percent_encode)
+            }
         }
     }
     fn websocket_method(&self) -> WebsocketMethod {
@@ -160,7 +166,7 @@ impl ETHttpRequest for BinanceRequest {
                 });
             }
         };
-        let query_params = self.query_params();
+        let query_params = self.query_params(true);
         let (query_params, headers) = if is_signed {
             let signature = signer.signature(query_params.as_bytes())?;
             (
@@ -192,7 +198,7 @@ impl ETWebsocketRequest for BinanceRequest {
                 signature: None,
             }),
             request => {
-                let signature = Some(signer.signature(request.query_params().as_bytes())?);
+                let signature = Some(signer.signature(request.query_params(false).as_bytes())?);
                 Some(WebsocketParams { request, signature })
             }
         };

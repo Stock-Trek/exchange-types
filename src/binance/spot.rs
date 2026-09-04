@@ -140,7 +140,7 @@ mod tests {
         assert!(json.get("recvWindow").is_none());
         assert!(
             !params(None)
-                .query_params(true)
+                .query_params(true, true)
                 .contains("newOrderRespType=")
         );
     }
@@ -151,7 +151,7 @@ mod tests {
         assert_eq!(json["newOrderRespType"], "FULL");
         assert!(
             params(Some(BinanceNewOrderResponseType::RESULT))
-                .query_params(true)
+                .query_params(true, true)
                 .contains("newOrderRespType=RESULT")
         );
     }
@@ -162,7 +162,7 @@ mod tests {
         params.recvWindow = BinanceRecvWindow::try_new(60_000);
         let json = serde_json::to_value(&params).unwrap();
         assert_eq!(json["recvWindow"], 60_000);
-        assert!(params.query_params(true).contains("recvWindow=60000"));
+        assert!(params.query_params(true, true).contains("recvWindow=60000"));
     }
 
     #[test]
