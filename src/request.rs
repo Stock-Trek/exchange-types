@@ -1,3 +1,5 @@
+use crate::websocket_id::ETWebsocketId;
+
 use crate::{error::ETResult, http::HttpRequest, signer::Signer};
 
 pub trait ETHttpRequest {
@@ -5,5 +7,5 @@ pub trait ETHttpRequest {
 }
 
 pub trait ETWebsocketRequest {
-    fn try_into_websocket(self, signer: &Signer, id: String) -> ETResult<String>;
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String>;
 }

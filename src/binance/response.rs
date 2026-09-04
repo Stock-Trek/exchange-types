@@ -13,6 +13,7 @@ use crate::{
     error::ETResult,
     http::HttpResponse,
     response::{ETHttpResponse, ETWebsocketResponse},
+    websocket_id::ETWebsocketId,
 };
 
 use {crate::error::ETError, serde::Deserialize, serde_json};
@@ -36,7 +37,7 @@ pub enum BinanceResponsePayload {
 pub struct BinanceMetadata {
     pub usage: BinanceUsage,
     pub retry_after: Option<u64>,
-    pub websocket_id: Option<String>,
+    pub websocket_id: Option<ETWebsocketId>,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -67,7 +68,7 @@ pub enum BinanceResult {
 #[derive(Deserialize, Debug, Clone)]
 struct BinanceWebsocketResponse {
     pub error: Option<BinanceError>,
-    pub id: String,
+    pub id: Option<ETWebsocketId>,
     #[serde(default)]
     pub rateLimits: Vec<BinanceRateLimit>,
     pub result: Option<BinanceWebsocketResponseResult>,
@@ -135,7 +136,7 @@ impl ETWebsocketResponse for BinanceResponse {
         let websocket_response: BinanceWebsocketResponse =
             serde_json::from_str(&response).map_err(ETError::DeserializeResponse)?;
         let mut metadata = BinanceMetadata {
-            websocket_id: Some(websocket_response.id),
+            websocket_id: websocket_response.id,
             ..Default::default()
         };
         for rate_limit in websocket_response.rateLimits {

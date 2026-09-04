@@ -14,6 +14,7 @@ use crate::{
     request::{ETHttpRequest, ETWebsocketRequest},
     signer::Signer,
     urls::Protocol,
+    websocket_id::ETWebsocketId,
 };
 
 use {serde::Serialize, serde_with::skip_serializing_none};
@@ -57,7 +58,7 @@ enum WebsocketMethod {
 
 #[derive(Debug, Clone, Serialize)]
 struct WebsocketSignedRequest {
-    id: String,
+    id: ETWebsocketId,
     method: WebsocketMethod,
     params: SignedParams,
 }
@@ -180,7 +181,7 @@ impl ETHttpRequest for BinanceRequest {
 }
 
 impl ETWebsocketRequest for BinanceRequest {
-    fn try_into_websocket(mut self, signer: &Signer, id: String) -> ETResult<String> {
+    fn try_into_websocket(mut self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
         self.set_api_key(Some(signer.api_key()));
         let method = self.websocket_method();
         let is_signed = match self {
