@@ -52,7 +52,7 @@ pub struct BinanceCancelOrderResult {
     pub expiryReason: Option<BinanceExpiryReason>,
     pub icebergQty: Option<Decimal>,
     pub orderId: i64,
-    pub orderListId: i32,
+    pub orderListId: i64,
     pub origClientOrderId: String,
     pub origQty: Option<Decimal>,
     pub origQuoteOrderQty: Option<Decimal>,
@@ -88,7 +88,7 @@ pub struct BinanceCancelOrderListResult {
     pub listClientOrderId: String,
     pub listOrderStatus: String,
     pub listStatusType: String,
-    pub orderListId: i32,
+    pub orderListId: i64,
     #[serde(default)]
     pub orderReports: Vec<BinanceCancelOrderResult>,
     #[serde(default)]

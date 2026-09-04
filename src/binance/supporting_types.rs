@@ -31,7 +31,7 @@ pub struct BinanceOrderListStatus {
     pub contingencyType: String,
     pub listClientOrderId: String,
     pub listOrderStatus: String,
-    pub orderListId: i32,
+    pub orderListId: i64,
     #[serde(default)]
     pub orders: Vec<BinanceOrderListOrder>,
     pub symbol: String,
