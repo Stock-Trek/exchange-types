@@ -39,7 +39,7 @@ pub struct BinanceSpotOrderRequest {
     pub symbol: String,
     pub timeInForce: Option<BinanceTimeInForce>,
     pub timestamp: i64,
-    pub trailingDelta: Option<u32>,
+    pub trailingDelta: Option<i64>,
     #[serde(rename = "type")]
     pub r#type: BinanceOrderType,
 }
