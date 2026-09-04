@@ -1,10 +1,13 @@
-use crate::binance::{
-    recv_window::BinanceRecvWindow,
-    supporting_types::{
-        BinanceExpiryReason, BinanceOrderStatus, BinanceOrderType, BinancePegOffsetType,
-        BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce,
-        BinanceWorkingFloor,
+use crate::{
+    binance::{
+        recv_window::BinanceRecvWindow,
+        supporting_types::{
+            BinanceExpiryReason, BinanceOrderStatus, BinanceOrderType, BinancePegOffsetType,
+            BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce,
+            BinanceWorkingFloor,
+        },
     },
+    response::ResponseFor,
 };
 use query_params::QueryParams;
 use rust_decimal::Decimal;
@@ -60,4 +63,8 @@ pub struct BinanceOrderResult {
     pub usedSor: Option<bool>,
     pub workingFloor: Option<BinanceWorkingFloor>,
     pub workingTime: Option<i64>,
+}
+
+impl ResponseFor for BinanceQueryOrderParams {
+    type Result = BinanceOrderResult;
 }

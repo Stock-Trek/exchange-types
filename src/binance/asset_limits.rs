@@ -1,6 +1,9 @@
-use crate::binance::{
-    filters::{BinanceAssetFilter, BinanceExchangeFilter, BinanceSymbolFilter},
-    recv_window::BinanceRecvWindow,
+use crate::{
+    binance::{
+        filters::{BinanceAssetFilter, BinanceExchangeFilter, BinanceSymbolFilter},
+        recv_window::BinanceRecvWindow,
+    },
+    response::ResponseFor,
 };
 use query_params::QueryParams;
 use serde::{Deserialize, Serialize};
@@ -22,4 +25,8 @@ pub struct BinanceAssetLimitsResult {
     pub assetFilters: Vec<BinanceAssetFilter>,
     pub exchangeFilters: Vec<BinanceExchangeFilter>,
     pub symbolFilters: Vec<BinanceSymbolFilter>,
+}
+
+impl ResponseFor for BinanceAssetLimitsParams {
+    type Result = BinanceAssetLimitsResult;
 }

@@ -1,3 +1,4 @@
+use crate::response::ResponseFor;
 use query_params::QueryParams;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -21,5 +22,13 @@ pub struct BinanceSessionAuthenticationResult {
     pub userDataStream: bool,
 }
 
+impl ResponseFor for BinanceSessionLogonParams {
+    type Result = BinanceSessionAuthenticationResult;
+}
+
 #[derive(Serialize, Debug, Clone, Hash, QueryParams)]
 pub struct BinanceSessionLogoutParams {}
+
+impl ResponseFor for BinanceSessionLogoutParams {
+    type Result = BinanceSessionAuthenticationResult;
+}

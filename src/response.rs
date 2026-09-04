@@ -1,5 +1,9 @@
 use crate::{error::ETResult, http::HttpResponse};
 
+pub trait ResponseFor {
+    type Result;
+}
+
 pub trait ETHttpResponse
 where
     Self: Sized,

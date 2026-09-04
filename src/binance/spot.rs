@@ -7,6 +7,7 @@ use crate::{
             BinanceWorkingFloor,
         },
     },
+    response::ResponseFor,
     ticker::Ticker,
 };
 use query_params::QueryParams;
@@ -89,6 +90,10 @@ pub struct BinanceSpotOrderResult {
     pub usedSor: Option<bool>,
     pub workingFloor: Option<BinanceWorkingFloor>,
     pub workingTime: Option<i64>,
+}
+
+impl ResponseFor for BinanceSpotOrderParams {
+    type Result = BinanceSpotOrderResult;
 }
 
 #[allow(non_snake_case)]

@@ -1,16 +1,7 @@
 use crate::{
     binance::{
-        account::BinanceAccountResult,
-        amend::BinanceAmendOrderResult,
-        asset_limits::BinanceAssetLimitsResult,
-        cancel::{BinanceCancelOrderListResult, BinanceCancelOrderResult, BinanceCancelReport},
         error::BinanceError,
-        exchange_info::BinanceExchangeInfoResult,
-        query_order::BinanceOrderResult,
         rate_limits::{BinanceRateLimit, BinanceRateLimitInterval, BinanceRateLimitType},
-        session::BinanceSessionAuthenticationResult,
-        spot::BinanceSpotOrderResult,
-        time::BinanceTimeResult,
     },
     error::{ETError, ETResult},
     http::HttpResponse,
@@ -18,20 +9,17 @@ use crate::{
     websocket_id::ETWebsocketId,
 };
 use serde::Deserialize;
-use serde_json;
+use serde::de::DeserializeOwned;
 
 #[derive(Debug, Clone)]
-pub struct BinanceResponse {
+pub struct BinanceResponse<R> {
     pub metadata: BinanceMetadata,
-    pub payload: BinanceResponsePayload,
+    pub payload: BinanceResponsePayload<R>,
 }
 
-#[allow(clippy::large_enum_variant)]
-#[derive(Deserialize)]
-#[serde(untagged)]
 #[derive(Debug, Clone)]
-pub enum BinanceResponsePayload {
-    Success(BinanceResult),
+pub enum BinanceResponsePayload<R> {
+    Success(R),
     Failure(BinanceError),
 }
 
@@ -52,24 +40,6 @@ pub struct BinanceUsage {
     pub order_count_1d: Option<u32>,
 }
 
-#[derive(Deserialize)]
-#[serde(untagged)]
-#[derive(Debug, Clone)]
-pub enum BinanceResult {
-    Account(BinanceAccountResult),
-    AmendOrder(BinanceAmendOrderResult),
-    AssetLimits(BinanceAssetLimitsResult),
-    CancelAllOrders(Vec<BinanceCancelReport>),
-    CancelOrder(BinanceCancelOrderResult),
-    CancelOrderList(BinanceCancelOrderListResult),
-    ExchangeInfo(BinanceExchangeInfoResult),
-    OpenOrders(Vec<BinanceOrderResult>),
-    QueryOrder(BinanceOrderResult),
-    SpotOrder(BinanceSpotOrderResult),
-    Time(BinanceTimeResult),
-    WebsocketSessionAuthentication(BinanceSessionAuthenticationResult),
-}
-
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 struct BinanceWebsocketResponse {
@@ -77,29 +47,14 @@ struct BinanceWebsocketResponse {
     pub id: Option<ETWebsocketId>,
     #[serde(default)]
     pub rateLimits: Vec<BinanceRateLimit>,
-    pub result: Option<BinanceWebsocketResponseResult>,
+    pub result: Option<serde_json::Value>,
     pub status: u16,
 }
 
-#[derive(Deserialize)]
-#[serde(untagged)]
-#[derive(Debug, Clone)]
-pub enum BinanceWebsocketResponseResult {
-    Account(BinanceAccountResult),
-    AmendOrder(BinanceAmendOrderResult),
-    AssetLimits(BinanceAssetLimitsResult),
-    CancelAllOrders(Vec<BinanceCancelReport>),
-    CancelOrder(BinanceCancelOrderResult),
-    CancelOrderList(BinanceCancelOrderListResult),
-    ExchangeInfo(BinanceExchangeInfoResult),
-    OpenOrders(Vec<BinanceOrderResult>),
-    QueryOrder(BinanceOrderResult),
-    SessionAuthentication(BinanceSessionAuthenticationResult),
-    SpotOrder(BinanceSpotOrderResult),
-    Time(BinanceTimeResult),
-}
-
-impl ETHttpResponse for BinanceResponse {
+impl<R> ETHttpResponse for BinanceResponse<R>
+where
+    R: DeserializeOwned,
+{
     fn try_from_http(response: HttpResponse) -> ETResult<Self> {
         let mut usage = BinanceUsage::default();
         let mut retry_after = None;
@@ -122,34 +77,38 @@ impl ETHttpResponse for BinanceResponse {
             websocket_id: None,
             status: response.status,
         };
-        match serde_json::from_slice::<BinanceResponsePayload>(&response.body) {
-            Ok(payload) => Ok(BinanceResponse { metadata, payload }),
-            Err(error) => {
-                if (200..300).contains(&response.status) {
-                    // A 2xx body that is neither a Binance result nor a
-                    // Binance error payload is not a Binance response (e.g.
-                    // an HTML page served by an intermediary proxy).
-                    Err(ETError::DeserializeResponse(error))
-                } else {
+        let payload = match serde_json::from_slice::<BinanceError>(&response.body) {
+            Ok(error) => BinanceResponsePayload::Failure(error),
+            Err(_) => match serde_json::from_slice::<R>(&response.body) {
+                Ok(result) => BinanceResponsePayload::Success(result),
+                Err(error) => {
+                    if (200..300).contains(&response.status) {
+                        // A 2xx body that is neither a Binance error payload nor a
+                        // result of the expected type is not a valid response to
+                        // the request this result type answers (e.g. an HTML page
+                        // served by an intermediary proxy, or schema drift).
+                        return Err(ETError::DeserializeResponse(error));
+                    }
                     // Non-2xx responses can have an empty or non-JSON body
                     // (e.g. HTTP 429/418 rate limiting, 5xx gateway pages).
                     // Surface them as a failure carrying the HTTP status and
                     // the raw body so nothing is lost.
-                    Ok(BinanceResponse {
-                        metadata,
-                        payload: BinanceResponsePayload::Failure(BinanceError {
-                            code: i64::from(response.status),
-                            msg: String::from_utf8_lossy(&response.body).into_owned(),
-                            data: None,
-                        }),
+                    BinanceResponsePayload::Failure(BinanceError {
+                        code: i64::from(response.status),
+                        msg: String::from_utf8_lossy(&response.body).into_owned(),
+                        data: None,
                     })
                 }
-            }
-        }
+            },
+        };
+        Ok(BinanceResponse { metadata, payload })
     }
 }
 
-impl ETWebsocketResponse for BinanceResponse {
+impl<R> ETWebsocketResponse for BinanceResponse<R>
+where
+    R: DeserializeOwned,
+{
     fn try_from_websocket(response: String) -> ETResult<Self> {
         let websocket_response: BinanceWebsocketResponse =
             serde_json::from_str(&response).map_err(ETError::DeserializeResponse)?;
@@ -187,27 +146,17 @@ impl ETWebsocketResponse for BinanceResponse {
         let payload = if let Some(error) = websocket_response.error {
             BinanceResponsePayload::Failure(error)
         } else if let Some(result) = websocket_response.result {
-            let binance_result = match result {
-                BinanceWebsocketResponseResult::Account(r) => BinanceResult::Account(r),
-                BinanceWebsocketResponseResult::AmendOrder(r) => BinanceResult::AmendOrder(r),
-                BinanceWebsocketResponseResult::AssetLimits(r) => BinanceResult::AssetLimits(r),
-                BinanceWebsocketResponseResult::CancelAllOrders(r) => {
-                    BinanceResult::CancelAllOrders(r)
-                }
-                BinanceWebsocketResponseResult::CancelOrder(r) => BinanceResult::CancelOrder(r),
-                BinanceWebsocketResponseResult::CancelOrderList(r) => {
-                    BinanceResult::CancelOrderList(r)
-                }
-                BinanceWebsocketResponseResult::ExchangeInfo(r) => BinanceResult::ExchangeInfo(r),
-                BinanceWebsocketResponseResult::OpenOrders(r) => BinanceResult::OpenOrders(r),
-                BinanceWebsocketResponseResult::QueryOrder(r) => BinanceResult::QueryOrder(r),
-                BinanceWebsocketResponseResult::SessionAuthentication(r) => {
-                    BinanceResult::WebsocketSessionAuthentication(r)
-                }
-                BinanceWebsocketResponseResult::SpotOrder(r) => BinanceResult::SpotOrder(r),
-                BinanceWebsocketResponseResult::Time(r) => BinanceResult::Time(r),
-            };
-            BinanceResponsePayload::Success(binance_result)
+            match serde_json::from_value::<R>(result) {
+                Ok(result) => BinanceResponsePayload::Success(result),
+                // The frame parsed but its success payload is not of the
+                // expected result type. Degrade to a failure instead of
+                // failing the entire frame parse.
+                Err(error) => BinanceResponsePayload::Failure(BinanceError {
+                    code: -1,
+                    msg: format!("Could not deserialize websocket result: {error}"),
+                    data: None,
+                }),
+            }
         } else {
             // No error and no result – treat as a generic failure
             BinanceResponsePayload::Failure(BinanceError {
@@ -217,5 +166,152 @@ impl ETWebsocketResponse for BinanceResponse {
             })
         };
         Ok(BinanceResponse { metadata, payload })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        binance::{
+            account::BinanceAccountResult,
+            amend::BinanceAmendOrderResult,
+            asset_limits::BinanceAssetLimitsResult,
+            cancel::BinanceCancelReport,
+            exchange_info::BinanceExchangeInfoResult,
+            query_order::BinanceOrderResult,
+            session::BinanceSessionAuthenticationResult,
+            spot::BinanceSpotOrderResult,
+            time::{BinanceTimeParams, BinanceTimeResult},
+        },
+        response::ResponseFor,
+    };
+
+    fn assert_response_for<P: ResponseFor<Result = R>, R>() {}
+
+    fn http_response(status: u16, body: &[u8]) -> HttpResponse {
+        HttpResponse {
+            status,
+            headers: Vec::new(),
+            body: body.to_vec(),
+        }
+    }
+
+    #[test]
+    fn pairs_each_request_params_struct_with_its_result_type() {
+        assert_response_for::<BinanceTimeParams, BinanceTimeResult>();
+        assert_response_for::<crate::binance::account::BinanceAccountParams, BinanceAccountResult>(
+        );
+        assert_response_for::<
+            crate::binance::amend::BinanceAmendOrderParams,
+            BinanceAmendOrderResult,
+        >();
+        assert_response_for::<
+            crate::binance::asset_limits::BinanceAssetLimitsParams,
+            BinanceAssetLimitsResult,
+        >();
+        assert_response_for::<
+            crate::binance::cancel::BinanceCancelAllOrdersParams,
+            Vec<BinanceCancelReport>,
+        >();
+        assert_response_for::<crate::binance::cancel::BinanceCancelOrderParams, BinanceCancelReport>(
+        );
+        assert_response_for::<
+            crate::binance::exchange_info::BinanceExchangeInfoParams,
+            BinanceExchangeInfoResult,
+        >();
+        assert_response_for::<
+            crate::binance::open_orders::BinanceOpenOrdersParams,
+            Vec<BinanceOrderResult>,
+        >();
+        assert_response_for::<
+            crate::binance::query_order::BinanceQueryOrderParams,
+            BinanceOrderResult,
+        >();
+        assert_response_for::<
+            crate::binance::session::BinanceSessionLogonParams,
+            BinanceSessionAuthenticationResult,
+        >();
+        assert_response_for::<
+            crate::binance::session::BinanceSessionLogoutParams,
+            BinanceSessionAuthenticationResult,
+        >();
+        assert_response_for::<crate::binance::spot::BinanceSpotOrderParams, BinanceSpotOrderResult>(
+        );
+    }
+
+    #[test]
+    fn http_success_parses_into_the_requested_result_type() {
+        let response = http_response(200, br#"{"serverTime": 123}"#);
+        let response = BinanceResponse::<BinanceTimeResult>::try_from_http(response).unwrap();
+        match response.payload {
+            BinanceResponsePayload::Success(result) => assert_eq!(result.serverTime, 123),
+            BinanceResponsePayload::Failure(_) => panic!("expected a success payload"),
+        }
+    }
+
+    #[test]
+    fn http_error_payload_parses_as_failure() {
+        let response = http_response(400, br#"{"code": -1121, "msg": "Invalid symbol."}"#);
+        let response = BinanceResponse::<BinanceTimeResult>::try_from_http(response).unwrap();
+        match response.payload {
+            BinanceResponsePayload::Success(_) => panic!("expected a failure payload"),
+            BinanceResponsePayload::Failure(error) => {
+                assert_eq!(error.code, -1121);
+                assert_eq!(error.msg, "Invalid symbol.");
+            }
+        }
+    }
+
+    #[test]
+    fn http_schema_drift_errors_instead_of_silently_matching() {
+        // An exchangeInfo-style payload with only serverTime (the fields an
+        // untagged classifier could drop) must not parse as BinanceTimeResult
+        // when it answers an exchange info request: the pairing is
+        // BinanceExchangeInfoParams -> BinanceExchangeInfoResult, so this
+        // payload is a deserialization error rather than a success.
+        let response = http_response(
+            200,
+            br#"{"timezone": "UTC", "serverTime": 1, "symbols": [{"symbol": "BTCUSDT"}]}"#,
+        );
+        let result = BinanceResponse::<BinanceExchangeInfoResult>::try_from_http(response);
+        assert!(matches!(result, Err(ETError::DeserializeResponse(_))));
+    }
+
+    #[test]
+    fn http_non_2xx_without_json_body_becomes_failure() {
+        let response = http_response(429, b"");
+        let response = BinanceResponse::<BinanceTimeResult>::try_from_http(response).unwrap();
+        match response.payload {
+            BinanceResponsePayload::Success(_) => panic!("expected a failure payload"),
+            BinanceResponsePayload::Failure(error) => {
+                assert_eq!(error.code, 429);
+                assert_eq!(error.msg, "");
+            }
+        }
+    }
+
+    #[test]
+    fn websocket_success_parses_into_the_requested_result_type() {
+        let response = r#"{"id": "1", "status": 200, "result": {"serverTime": 123}}"#.to_string();
+        let response = BinanceResponse::<BinanceTimeResult>::try_from_websocket(response).unwrap();
+        assert_eq!(
+            response.metadata.websocket_id,
+            Some(ETWebsocketId::Str("1".into()))
+        );
+        match response.payload {
+            BinanceResponsePayload::Success(result) => assert_eq!(result.serverTime, 123),
+            BinanceResponsePayload::Failure(_) => panic!("expected a success payload"),
+        }
+    }
+
+    #[test]
+    fn websocket_unrecognized_result_degrades_instead_of_failing_the_frame() {
+        let response = r#"{"id": "1", "status": 200, "result": {}}"#.to_string();
+        let response = BinanceResponse::<BinanceTimeResult>::try_from_websocket(response).unwrap();
+        assert!(matches!(
+            response.payload,
+            BinanceResponsePayload::Failure(BinanceError { code: -1, .. })
+        ));
     }
 }

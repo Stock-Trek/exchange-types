@@ -1,10 +1,13 @@
-use crate::binance::{
-    recv_window::BinanceRecvWindow,
-    supporting_types::{
-        BinanceExpiryReason, BinanceOrderListStatus, BinanceOrderStatus, BinanceOrderType,
-        BinancePegOffsetType, BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide,
-        BinanceTimeInForce, BinanceWorkingFloor,
+use crate::{
+    binance::{
+        recv_window::BinanceRecvWindow,
+        supporting_types::{
+            BinanceExpiryReason, BinanceOrderListStatus, BinanceOrderStatus, BinanceOrderType,
+            BinancePegOffsetType, BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide,
+            BinanceTimeInForce, BinanceWorkingFloor,
+        },
     },
+    response::ResponseFor,
 };
 use query_params::QueryParams;
 use rust_decimal::Decimal;
@@ -32,6 +35,10 @@ pub struct BinanceAmendOrderResult {
     pub executionId: i64,
     pub listStatus: Option<BinanceOrderListStatus>,
     pub transactTime: i64,
+}
+
+impl ResponseFor for BinanceAmendOrderParams {
+    type Result = BinanceAmendOrderResult;
 }
 
 #[allow(non_snake_case)]

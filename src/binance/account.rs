@@ -1,6 +1,8 @@
-use crate::binance::{
-    exchange_info::BinanceExchangeInfoPermission, recv_window::BinanceRecvWindow,
+use crate::{
+    binance::{exchange_info::BinanceExchangeInfoPermission, recv_window::BinanceRecvWindow},
+    response::ResponseFor,
 };
+
 use query_params::QueryParams;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -35,6 +37,10 @@ pub struct BinanceAccountResult {
     pub takerCommission: i64,
     pub uid: i64,
     pub updateTime: i64,
+}
+
+impl ResponseFor for BinanceAccountParams {
+    type Result = BinanceAccountResult;
 }
 
 #[allow(non_snake_case)]

@@ -1,10 +1,13 @@
-use crate::binance::{
-    recv_window::BinanceRecvWindow,
-    supporting_types::{
-        BinanceExpiryReason, BinanceOrderListOrder, BinanceOrderStatus, BinanceOrderType,
-        BinancePegOffsetType, BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide,
-        BinanceTimeInForce, BinanceWorkingFloor,
+use crate::{
+    binance::{
+        recv_window::BinanceRecvWindow,
+        supporting_types::{
+            BinanceExpiryReason, BinanceOrderListOrder, BinanceOrderStatus, BinanceOrderType,
+            BinancePegOffsetType, BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide,
+            BinanceTimeInForce, BinanceWorkingFloor,
+        },
     },
+    response::ResponseFor,
 };
 use query_params::QueryParams;
 use rust_decimal::Decimal;
@@ -104,4 +107,12 @@ pub struct BinanceCancelOrderListResult {
 pub enum BinanceCancelReport {
     Order(BinanceCancelOrderResult),
     OrderList(BinanceCancelOrderListResult),
+}
+
+impl ResponseFor for BinanceCancelAllOrdersParams {
+    type Result = Vec<BinanceCancelReport>;
+}
+
+impl ResponseFor for BinanceCancelOrderParams {
+    type Result = BinanceCancelReport;
 }

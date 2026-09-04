@@ -4,6 +4,7 @@ use crate::{
         rate_limits::BinanceRateLimit,
         supporting_types::{BinanceOrderType, BinanceSelfTradeProtection},
     },
+    response::ResponseFor,
     ticker::Ticker,
 };
 use serde::{Deserialize, Serialize};
@@ -69,6 +70,10 @@ pub struct BinanceExchangeInfoResult {
     pub sors: Option<Vec<BinanceExchangeInfoSors>>,
     pub symbols: Vec<BinanceExchangeInfoSymbol>,
     pub timezone: String,
+}
+
+impl ResponseFor for BinanceExchangeInfoParams {
+    type Result = BinanceExchangeInfoResult;
 }
 
 #[allow(non_snake_case)]
