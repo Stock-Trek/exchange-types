@@ -12,8 +12,8 @@ use crate::{
     },
     error::ETResult,
     http::HttpResponse,
-    request::ETWebsocketId,
     response::{ETHttpResponse, ETWebsocketResponse},
+    websocket_id::ETWebsocketId,
 };
 
 use {crate::error::ETError, serde::Deserialize, serde_json};

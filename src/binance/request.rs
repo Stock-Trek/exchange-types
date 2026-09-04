@@ -11,9 +11,10 @@ use crate::{
     error::{ETError, ETResult},
     http::{HttpMethod, HttpRequest},
     rate_limited::RateLimited,
-    request::{ETHttpRequest, ETWebsocketId, ETWebsocketRequest},
+    request::{ETHttpRequest, ETWebsocketRequest},
     signer::Signer,
     urls::Protocol,
+    websocket_id::ETWebsocketId,
 };
 
 use {serde::Serialize, serde_with::skip_serializing_none};

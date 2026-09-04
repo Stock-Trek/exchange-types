@@ -10,3 +10,4 @@ pub mod response;
 pub mod signer;
 pub mod ticker;
 pub mod urls;
+pub mod websocket_id;
