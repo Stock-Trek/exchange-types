@@ -191,8 +191,6 @@ mod tests {
 
     #[test]
     fn omits_optional_new_order_resp_type_when_unset() {
-        // newOrderRespType is optional and Binance applies its default (FULL)
-        // when it is omitted.
         let json = serde_json::to_value(params(None)).unwrap();
         assert!(json.get("newOrderRespType").is_none());
         assert!(json.get("recvWindow").is_none());
