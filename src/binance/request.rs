@@ -243,18 +243,14 @@ impl ETWebsocketRequest for BinanceRequest {
 mod tests {
     use super::*;
     use crate::{
-        api_key_credential::ApiKeyCredentials,
-        encode::ByteEncoder,
-        encrypt::EncryptionAlgorithm,
+        api_key_credential::ApiKeyCredentials, encode::ByteEncoder, encrypt::EncryptionAlgorithm,
     };
     use rust_decimal::Decimal;
     use secrecy::SecretString;
 
     // API key and secret from Binance's documented `session.logon` example.
-    const API_KEY: &str =
-        "vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A";
-    const SECRET_KEY: &str =
-        "NhqPtmdSJYdKjVHjA7PZj4Mge3R5YNiP1e3UZjInClVN65XAbvqqM6A7H5fATj0j";
+    const API_KEY: &str = "vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A";
+    const SECRET_KEY: &str = "NhqPtmdSJYdKjVHjA7PZj4Mge3R5YNiP1e3UZjInClVN65XAbvqqM6A7H5fATj0j";
     const TIMESTAMP: i64 = 1_649_729_878_532;
 
     fn signer(api_key: &str) -> Signer {
@@ -308,9 +304,7 @@ mod tests {
             .try_into_websocket(&signer, ETWebsocketId::Int(2))
             .expect("websocket message should build");
         let raw_payload = format!("apiKey={api_key}&timestamp={TIMESTAMP}");
-        let encoded_payload = format!(
-            "apiKey=abc%2Bdef%2Fghi%3Djkl%3D&timestamp={TIMESTAMP}"
-        );
+        let encoded_payload = format!("apiKey=abc%2Bdef%2Fghi%3Djkl%3D&timestamp={TIMESTAMP}");
         assert_eq!(
             signature_from(&message),
             signer
