@@ -104,6 +104,7 @@ pub struct BinanceCancelOrderListResponse {
 #[serde(untagged)]
 #[derive(Debug, Clone)]
 #[allow(clippy::large_enum_variant)]
+#[non_exhaustive]
 pub enum BinanceCancelResponse {
     Order(BinanceCancelOrderResult),
     OrderList(BinanceCancelOrderListResponse),

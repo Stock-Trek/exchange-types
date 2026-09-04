@@ -47,6 +47,7 @@ pub enum BinanceExchangeInfoPermissions {
 
 #[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
 #[allow(non_camel_case_types)]
+#[non_exhaustive]
 pub enum BinanceExchangeInfoPermission {
     LEVERAGED,
     MARGIN,

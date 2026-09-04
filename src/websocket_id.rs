@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 #[serde(untagged)]
+#[non_exhaustive]
 pub enum ETWebsocketId {
     Int(i64),
     Str(String),
