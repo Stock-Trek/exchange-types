@@ -11,7 +11,7 @@ pub struct BinanceRecvWindow(u64);
 
 impl BinanceRecvWindow {
     pub fn try_new(millis: u64) -> Option<Self> {
-        (millis <= BINANCE_MAX_RECV_WINDOW_MILLIS).then_some(Self(millis))
+        (millis <= BINANCE_MAX_RECV_WINDOW_MILLIS && millis > 0).then_some(Self(millis))
     }
 }
 
