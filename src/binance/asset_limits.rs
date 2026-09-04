@@ -11,7 +11,7 @@ use serde_with::skip_serializing_none;
 
 #[allow(non_snake_case)]
 #[skip_serializing_none]
-#[derive(Serialize, Debug, Clone, Hash, QueryParams)]
+#[derive(Serialize, Debug, Clone, Default, Hash, QueryParams)]
 pub struct BinanceAssetLimitsRequest {
     pub apiKey: Option<String>,
     pub recvWindow: Option<BinanceRecvWindow>,

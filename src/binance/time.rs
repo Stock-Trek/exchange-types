@@ -1,7 +1,7 @@
 use crate::response::ResponseFor;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Debug, Clone, Hash)]
+#[derive(Serialize, Debug, Clone, Default, Hash)]
 pub struct BinanceTimeRequest {}
 
 #[allow(non_snake_case)]

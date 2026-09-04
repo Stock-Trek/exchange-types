@@ -22,7 +22,7 @@ pub enum EncryptionAlgorithm {
     RsaSha256,
 }
 
-#[derive(Debug, Display)]
+#[derive(Display)]
 pub enum Encryptor {
     EcdsaP256(p256::ecdsa::SigningKey),
     EcdsaP384(p384::ecdsa::SigningKey),
@@ -30,6 +30,19 @@ pub enum Encryptor {
     HmacSha256(secrecy::SecretSlice<u8>),
     HmacSha512(secrecy::SecretSlice<u8>),
     RsaSha256(Box<RsaPkcs1v15SigningKey<Sha256>>),
+}
+
+impl std::fmt::Debug for Encryptor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Encryptor::EcdsaP256(_) => write!(f, "EcdsaP256"),
+            Encryptor::EcdsaP384(_) => write!(f, "EcdsaP384"),
+            Encryptor::Ed25519(_) => write!(f, "Ed25519"),
+            Encryptor::HmacSha256(_) => write!(f, "HmacSha256"),
+            Encryptor::HmacSha512(_) => write!(f, "HmacSha512"),
+            Encryptor::RsaSha256(_) => write!(f, "RsaSha256"),
+        }
+    }
 }
 
 impl EncryptionAlgorithm {

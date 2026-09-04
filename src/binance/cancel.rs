@@ -17,7 +17,7 @@ use strum::Display;
 
 #[allow(non_snake_case)]
 #[skip_serializing_none]
-#[derive(Serialize, Debug, Clone, Hash, QueryParams)]
+#[derive(Serialize, Debug, Clone, Default, Hash, QueryParams)]
 pub struct BinanceCancelAllOrdersRequest {
     pub apiKey: Option<String>,
     pub recvWindow: Option<BinanceRecvWindow>,
@@ -27,7 +27,7 @@ pub struct BinanceCancelAllOrdersRequest {
 
 #[allow(non_snake_case)]
 #[skip_serializing_none]
-#[derive(Serialize, Debug, Clone, Hash, QueryParams)]
+#[derive(Serialize, Debug, Clone, Default, Hash, QueryParams)]
 pub struct BinanceCancelOrderRequest {
     pub apiKey: Option<String>,
     pub cancelRestrictions: Option<BinanceCancelRestrictions>,

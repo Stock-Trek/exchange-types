@@ -94,7 +94,7 @@ pub enum BinanceOrderStatus {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub enum BinanceOrderType {
     LIMIT,
     LIMIT_MAKER,
@@ -103,6 +103,7 @@ pub enum BinanceOrderType {
     STOP_LOSS_LIMIT,
     TAKE_PROFIT,
     TAKE_PROFIT_LIMIT,
+    #[default]
     #[serde(other)]
     Unknown,
 }
@@ -137,10 +138,11 @@ pub enum BinanceSelfTradeProtection {
     Unknown,
 }
 
-#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub enum BinanceSide {
     BUY,
     SELL,
+    #[default]
     #[serde(other)]
     Unknown,
 }
