@@ -11,6 +11,7 @@ use crate::{
         spot::BinanceSpotOrderRequest,
         time::BinanceTimeRequest,
     },
+    encode::ByteEncoder,
     error::{ETError, ETResult},
     http::{HttpMethod, HttpRequest},
     rate_limited::RateLimited,
@@ -203,7 +204,11 @@ impl ETHttpRequest for BinanceRequest {
         let (query_params, headers) = if is_signed {
             let signature = signer.signature(query_params.as_bytes())?;
             (
-                format!("{}&signature={}", query_params, signature),
+                format!(
+                    "{}&signature={}",
+                    query_params,
+                    ByteEncoder::Percent.encode(signature.as_bytes())
+                ),
                 vec![("X-MBX-APIKEY".into(), signer.api_key().clone())],
             )
         } else {
