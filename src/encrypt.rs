@@ -47,10 +47,15 @@ impl EncryptionAlgorithm {
                 Ok(Encryptor::EcdsaP384(signing_key))
             }
             Self::Ed25519 => {
-                let signing_key = ed25519_compact::SecretKey::from_slice(secret_key_bytes)
-                    .map_err(|_| {
-                        ETError::CryptoKey("Ed25519 key must be exactly 32 bytes".to_string())
-                    })?;
+                let seed = ed25519_compact::Seed::from_slice(secret_key_bytes).map_err(|_| {
+                    ETError::CryptoKey("Ed25519 key must be exactly 32 bytes".to_string())
+                })?;
+                if seed.iter().all(|byte| *byte == 0) {
+                    return Err(ETError::CryptoKey(
+                        "Ed25519 key must not be all zeros".to_string(),
+                    ));
+                }
+                let signing_key = ed25519_compact::KeyPair::from_seed(seed).sk;
                 Ok(Encryptor::Ed25519(signing_key))
             }
             Self::HmacSha256 => {
