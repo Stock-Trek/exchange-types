@@ -172,6 +172,24 @@ impl BinanceRequest {
     }
 }
 
+fn percent_encode(value: &str) -> String {
+    const HEX_DIGITS: &[u8; 16] = b"0123456789ABCDEF";
+    let mut encoded = String::with_capacity(value.len());
+    for byte in value.bytes() {
+        match byte {
+            b'0'..=b'9' | b'A'..=b'Z' | b'a'..=b'z' | b'-' | b'.' | b'_' | b'~' => {
+                encoded.push(char::from(byte))
+            }
+            byte => {
+                encoded.push('%');
+                encoded.push(char::from(HEX_DIGITS[(byte >> 4) as usize]));
+                encoded.push(char::from(HEX_DIGITS[(byte & 0x0f) as usize]));
+            }
+        }
+    }
+    encoded
+}
+
 impl ETHttpRequest for BinanceRequest {
     fn try_into_http(mut self, signer: &Signer) -> ETResult<HttpRequest> {
         self.set_api_key(None);
@@ -203,7 +221,7 @@ impl ETHttpRequest for BinanceRequest {
         let (query_params, headers) = if is_signed {
             let signature = signer.signature(query_params.as_bytes())?;
             (
-                format!("{}&signature={}", query_params, signature),
+                format!("{}&signature={}", query_params, percent_encode(&signature)),
                 vec![("X-MBX-APIKEY".into(), signer.api_key().clone())],
             )
         } else {
@@ -239,5 +257,100 @@ impl ETWebsocketRequest for BinanceRequest {
         let message =
             serde_json::to_string(&websocket_request).map_err(ETError::SerializeRequest)?;
         Ok(message)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        api_key_credential::ApiKeyCredentials, binance::account::BinanceAccountRequest,
+        encode::ByteEncoder, encrypt::EncryptionAlgorithm, request::ETHttpRequest,
+    };
+    use secrecy::SecretString;
+
+    fn hmac_signer(api_key: &str, secret: &str, encoder: ByteEncoder) -> Signer {
+        let encryptor = EncryptionAlgorithm::HmacSha256
+            .encryptor(ApiKeyCredentials {
+                api_key: api_key.to_string(),
+                secret: SecretString::from(secret.to_string()),
+            })
+            .expect("HMAC-SHA256 key should be accepted");
+        Signer::new(api_key.to_string(), encryptor, encoder)
+    }
+
+    fn account_request() -> BinanceRequest {
+        BinanceRequest::Account(BinanceAccountRequest {
+            apiKey: None,
+            omitZeroBalances: None,
+            recvWindow: None,
+            timestamp: 1_499_827_319_559,
+        })
+    }
+
+    fn signature_value(http_query: &str) -> &str {
+        http_query
+            .split("&signature=")
+            .nth(1)
+            .expect("query should contain a signature parameter")
+    }
+
+    fn percent_decode(encoded: &str) -> String {
+        let mut decoded = Vec::with_capacity(encoded.len());
+        let bytes = encoded.as_bytes();
+        let mut index = 0;
+        while index < bytes.len() {
+            match bytes[index] {
+                b'%' => {
+                    let hex = std::str::from_utf8(&bytes[index + 1..index + 3])
+                        .expect("valid percent escape");
+                    decoded.push(u8::from_str_radix(hex, 16).expect("valid hex digit"));
+                    index += 3;
+                }
+                byte => {
+                    decoded.push(byte);
+                    index += 1;
+                }
+            }
+        }
+        String::from_utf8(decoded).expect("valid UTF-8")
+    }
+
+    #[test]
+    fn http_signature_is_percent_encoded_when_base64() {
+        let signer = hmac_signer("api-key", "super-secret", ByteEncoder::Base64);
+        let request = account_request();
+        let query_params = request.query_params(true);
+        let raw_signature = signer
+            .signature(query_params.as_bytes())
+            .expect("signing should succeed");
+        // A 32-byte HMAC-SHA256 always base64-pads with '='.
+        assert!(raw_signature.contains('='), "raw base64: {raw_signature}");
+
+        let http = request.try_into_http(&signer).expect("http request");
+        let query = http.query.expect("query string");
+        let value = signature_value(&query);
+        assert_eq!(value, percent_encode(&raw_signature));
+        // No reserved characters may survive raw in the query string.
+        assert!(!value.contains('+') && !value.contains('/') && !value.contains('='));
+        // Percent-decoding must round-trip to the raw signature.
+        assert_eq!(percent_decode(value), raw_signature);
+    }
+
+    #[test]
+    fn http_signature_is_unchanged_when_hex() {
+        let signer = hmac_signer("api-key", "super-secret", ByteEncoder::HexLower);
+        let request = account_request();
+        let query_params = request.query_params(true);
+        let raw_signature = signer
+            .signature(query_params.as_bytes())
+            .expect("signing should succeed");
+        assert!(!raw_signature.contains('%'));
+
+        let http = request.try_into_http(&signer).expect("http request");
+        let query = http.query.expect("query string");
+        let value = signature_value(&query);
+        assert_eq!(value, raw_signature);
+        assert_eq!(value, percent_encode(&raw_signature));
     }
 }
