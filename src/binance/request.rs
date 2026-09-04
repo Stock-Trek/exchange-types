@@ -372,7 +372,10 @@ mod tests {
             .weight(http),
             1
         );
-        assert_eq!(BinanceRequest::ExchangeInfo(Default::default()).weight(http), 20);
+        assert_eq!(
+            BinanceRequest::ExchangeInfo(Default::default()).weight(http),
+            20
+        );
         assert_eq!(spot_order().weight(http), 1);
         assert_eq!(BinanceRequest::Time(BinanceTimeRequest {}).weight(http), 1);
     }
@@ -439,4 +442,3 @@ mod tests {
         );
     }
 }
-
