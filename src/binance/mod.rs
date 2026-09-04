@@ -10,5 +10,6 @@ pub mod request;
 pub mod response;
 pub mod session;
 pub mod spot;
+pub mod supporting_types;
 pub mod time;
 pub mod urls;

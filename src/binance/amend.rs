@@ -1,7 +1,10 @@
 use crate::binance::{
-    exchange_info::BinanceOrderType,
     recv_window::BinanceRecvWindow,
-    spot::{BinanceOrderStatus, BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce},
+    supporting_types::{
+        BinanceExpiryReason, BinanceOrderListStatus, BinanceOrderStatus, BinanceOrderType,
+        BinancePegOffsetType, BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide,
+        BinanceTimeInForce, BinanceWorkingFloor,
+    },
 };
 use query_params::QueryParams;
 use rust_decimal::Decimal;
@@ -30,6 +33,7 @@ pub struct BinanceAmendOrderParams {
 pub struct BinanceAmendOrderResult {
     pub amendedOrder: BinanceAmendedOrder,
     pub executionId: i64,
+    pub listStatus: Option<BinanceOrderListStatus>,
     pub transactTime: i64,
 }
 
@@ -39,10 +43,15 @@ pub struct BinanceAmendedOrder {
     pub clientOrderId: String,
     pub cumulativeQuoteQty: Decimal,
     pub executedQty: Decimal,
+    pub expiryReason: Option<BinanceExpiryReason>,
     pub icebergQty: Option<Decimal>,
     pub orderId: i64,
     pub orderListId: i32,
     pub origClientOrderId: String,
+    pub pegOffsetType: Option<BinancePegOffsetType>,
+    pub pegOffsetValue: Option<i32>,
+    pub pegPriceType: Option<BinancePegPriceType>,
+    pub peggedPrice: Option<Decimal>,
     pub preventedQty: Decimal,
     pub price: Decimal,
     pub qty: Decimal,
@@ -59,5 +68,7 @@ pub struct BinanceAmendedOrder {
     pub trailingTime: Option<i64>,
     #[serde(rename = "type")]
     pub r#type: BinanceOrderType,
+    pub usedSor: Option<bool>,
+    pub workingFloor: Option<BinanceWorkingFloor>,
     pub workingTime: Option<i64>,
 }

@@ -1,5 +1,12 @@
 use crate::{
-    binance::{exchange_info::BinanceOrderType, recv_window::BinanceRecvWindow},
+    binance::{
+        recv_window::BinanceRecvWindow,
+        supporting_types::{
+            BinanceExpiryReason, BinanceOrderStatus, BinanceOrderType, BinancePegOffsetType,
+            BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce,
+            BinanceWorkingFloor,
+        },
+    },
     ticker::Ticker,
 };
 use query_params::QueryParams;
@@ -47,65 +54,6 @@ pub enum BinanceNewOrderResponseType {
     FULL,
 }
 
-#[allow(non_camel_case_types)]
-#[derive(Serialize, Debug, Display, Clone, Copy, Hash)]
-pub enum BinancePegPriceType {
-    PRIMARY_PEG,
-    MARKET_PEG,
-}
-
-#[allow(non_camel_case_types)]
-#[derive(Serialize, Debug, Display, Clone, Copy, Hash)]
-pub enum BinancePegOffsetType {
-    PRICE_LEVEL,
-}
-
-#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
-pub enum BinanceSide {
-    BUY,
-    SELL,
-    #[serde(other)]
-    Unknown,
-}
-
-#[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
-pub enum BinanceSelfTradeProtection {
-    EXPIRE_BOTH,
-    EXPIRE_MAKER,
-    EXPIRE_TAKER,
-    DECREMENT,
-    NONE,
-    TRANSFER,
-    #[serde(other)]
-    Unknown,
-}
-
-#[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Debug, Display, Clone, Copy, Hash)]
-pub enum BinanceTimeInForce {
-    FOK,
-    GTC,
-    IOC,
-    #[serde(other)]
-    Unknown,
-}
-
-#[allow(non_camel_case_types)]
-#[derive(Deserialize, Debug, Display, Clone, Copy, PartialEq, Eq)]
-pub enum BinanceOrderStatus {
-    CANCELED,
-    EXPIRED,
-    EXPIRED_IN_MATCH,
-    FILLED,
-    NEW,
-    PARTIALLY_FILLED,
-    PENDING_CANCEL,
-    REJECTED,
-    #[serde(other)]
-    Unknown,
-}
-
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
 #[skip_serializing_none]
@@ -114,12 +62,17 @@ pub struct BinanceSpotOrderResult {
     pub clientOrderId: String,
     pub cummulativeQuoteQty: Option<Decimal>,
     pub executedQty: Option<Decimal>,
+    pub expiryReason: Option<BinanceExpiryReason>,
     pub fills: Option<Vec<BinanceFill>>,
     pub icebergQty: Option<Decimal>,
     pub orderId: i64,
     pub orderListId: i32,
     pub origQty: Option<Decimal>,
     pub origQuoteOrderQty: Option<Decimal>,
+    pub pegOffsetType: Option<BinancePegOffsetType>,
+    pub pegOffsetValue: Option<i32>,
+    pub pegPriceType: Option<BinancePegPriceType>,
+    pub peggedPrice: Option<Decimal>,
     pub preventedMatchId: Option<i64>,
     pub preventedQuantity: Option<Decimal>,
     pub price: Option<Decimal>,
@@ -136,14 +89,18 @@ pub struct BinanceSpotOrderResult {
     pub transactTime: i64,
     #[serde(rename = "type")]
     pub r#type: Option<BinanceOrderType>,
+    pub usedSor: Option<bool>,
+    pub workingFloor: Option<BinanceWorkingFloor>,
     pub workingTime: Option<i64>,
 }
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BinanceFill {
+    pub allocId: Option<i64>,
     pub commission: Decimal,
     pub commissionAsset: Ticker,
+    pub matchType: Option<String>,
     pub price: Decimal,
     pub qty: Decimal,
     pub tradeId: i64,
