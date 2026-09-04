@@ -10,7 +10,7 @@ ed25519-compact = "2.3.0"
 hmac = "0.12"
 p256 = "0.13"
 p384 = "0.13"
-query-params = { version = "1.0.2", registry = "shipyard" }
+query-params = { version = "2.0.0", registry = "shipyard" }
 rsa = { version = "0.9", features = ["sha2"] }
 rust_decimal = { version = "1.42.1", features = ["serde"] }
 secrecy = { version = "0.10.3", features = ["serde"] }
