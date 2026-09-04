@@ -1,22 +1,19 @@
 use query_params::QueryParams;
-#[cfg(feature = "serde")]
 use {
     serde::{Deserialize, Serialize},
     serde_with::skip_serializing_none,
 };
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", skip_serializing_none)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Clone, Hash, QueryParams)]
+#[skip_serializing_none]
+#[derive(Serialize, Debug, Clone, Hash, QueryParams)]
 pub struct BinanceSessionLogonParams {
     pub apiKey: Option<String>,
     pub timestamp: i64,
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BinanceSessionAuthenticationResult {
     pub apiKey: Option<String>,
     pub authorizedSince: Option<i64>,
@@ -26,6 +23,5 @@ pub struct BinanceSessionAuthenticationResult {
     pub userDataStream: bool,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Clone, Hash, QueryParams)]
+#[derive(Serialize, Debug, Clone, Hash, QueryParams)]
 pub struct BinanceSessionLogoutParams {}

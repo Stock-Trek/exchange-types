@@ -7,16 +7,14 @@ use query_params::QueryParams;
 use rust_decimal::Decimal;
 use strum::Display;
 
-#[cfg(feature = "serde")]
 use {
     serde::{Deserialize, Serialize},
     serde_with::skip_serializing_none,
 };
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", skip_serializing_none)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Clone, Hash, QueryParams)]
+#[skip_serializing_none]
+#[derive(Serialize, Debug, Clone, Hash, QueryParams)]
 pub struct BinanceCancelAllOrdersParams {
     pub apiKey: Option<String>,
     pub recvWindow: Option<BinanceRecvWindow>,
@@ -25,9 +23,8 @@ pub struct BinanceCancelAllOrdersParams {
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", skip_serializing_none)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Clone, Hash, QueryParams)]
+#[skip_serializing_none]
+#[derive(Serialize, Debug, Clone, Hash, QueryParams)]
 pub struct BinanceCancelOrderParams {
     pub apiKey: Option<String>,
     pub cancelRestrictions: Option<BinanceCancelRestrictions>,
@@ -40,16 +37,14 @@ pub struct BinanceCancelOrderParams {
 }
 
 #[allow(non_camel_case_types)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Debug, Clone, Copy, Hash, Display)]
+#[derive(Serialize, Debug, Clone, Copy, Hash, Display)]
 pub enum BinanceCancelRestrictions {
     ONLY_NEW,
     ONLY_PARTIALLY_FILLED,
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BinanceCancelOrderResult {
     pub clientOrderId: String,
     pub cummulativeQuoteQty: Option<Decimal>,
@@ -74,39 +69,37 @@ pub struct BinanceCancelOrderResult {
     pub trailingDelta: Option<i64>,
     pub trailingTime: Option<i64>,
     pub transactTime: Option<i64>,
-    #[cfg_attr(feature = "serde", serde(rename = "type"))]
+    #[serde(rename = "type")]
     pub r#type: BinanceOrderType,
     pub workingTime: Option<i64>,
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BinanceCancelOrderListResult {
     pub contingencyType: String,
     pub listClientOrderId: String,
     pub listOrderStatus: String,
     pub listStatusType: String,
     pub orderListId: i32,
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub orderReports: Vec<BinanceCancelOrderResult>,
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub orders: Vec<BinanceOrderListOrder>,
     pub symbol: String,
     pub transactionTime: i64,
 }
 
 #[allow(non_snake_case)]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BinanceOrderListOrder {
     pub clientOrderId: String,
     pub orderId: i64,
     pub symbol: String,
 }
 
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
+#[derive(Deserialize)]
+#[serde(untagged)]
 #[derive(Debug, Clone)]
 pub enum BinanceCancelReport {
     Order(BinanceCancelOrderResult),

@@ -1,13 +1,12 @@
 use std::fmt;
 
-#[cfg(feature = "serde")]
 use serde::Serialize;
 
 pub const BINANCE_DEFAULT_RECV_WINDOW_MILLIS: u64 = 5000;
 pub const BINANCE_MAX_RECV_WINDOW_MILLIS: u64 = 60_000;
 
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "serde", serde(transparent))]
+#[derive(Serialize)]
+#[serde(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BinanceRecvWindow(u64);
 

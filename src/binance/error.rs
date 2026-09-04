@@ -1,8 +1,6 @@
-#[cfg(feature = "serde")]
 use serde::Deserialize;
 
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BinanceError {
     pub code: i64,
     pub msg: String,
