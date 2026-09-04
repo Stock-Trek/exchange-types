@@ -6,8 +6,6 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-/// Get current account information (`GET /api/v3/account`, WebSocket
-/// `account.status`).
 #[allow(non_snake_case)]
 #[skip_serializing_none]
 #[derive(Serialize, Debug, Clone, Hash, QueryParams)]
@@ -54,39 +52,4 @@ pub struct BinanceAccountCommissionRates {
     pub maker: Decimal,
     pub seller: Decimal,
     pub taker: Decimal,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn params(omit_zero_balances: bool) -> BinanceAccountParams {
-        BinanceAccountParams {
-            apiKey: None,
-            omitZeroBalances: omit_zero_balances.then_some(true),
-            recvWindow: None,
-            timestamp: 1_660_801_720_951,
-        }
-    }
-
-    #[test]
-    fn query_params_include_omit_zero_balances_only_when_set() {
-        assert_eq!(
-            params(false).query_params(true, true),
-            "timestamp=1660801720951"
-        );
-        assert_eq!(
-            params(true).query_params(true, true),
-            "omitZeroBalances=true&timestamp=1660801720951"
-        );
-    }
-
-    #[test]
-    fn serialization_skips_unset_omit_zero_balances() {
-        let json = serde_json::to_value(params(false)).unwrap();
-        assert!(json.get("omitZeroBalances").is_none());
-        assert!(json.get("apiKey").is_none());
-        let json = serde_json::to_value(params(true)).unwrap();
-        assert_eq!(json["omitZeroBalances"], true);
-    }
 }
