@@ -2,9 +2,8 @@ use crate::ticker::Ticker;
 use rust_decimal::Decimal;
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "filterType")]
-#[derive(Debug, Clone)]
 #[allow(non_snake_case, non_camel_case_types)]
 #[non_exhaustive]
 pub enum BinanceExchangeFilter {
@@ -24,9 +23,8 @@ pub enum BinanceExchangeFilter {
     Unknown,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "filterType")]
-#[derive(Debug, Clone)]
 #[allow(non_snake_case, non_camel_case_types)]
 #[non_exhaustive]
 pub enum BinanceSymbolFilter {
@@ -100,9 +98,8 @@ pub enum BinanceSymbolFilter {
     Unknown,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "filterType")]
-#[derive(Debug, Clone)]
 #[allow(non_snake_case, non_camel_case_types)]
 #[non_exhaustive]
 pub enum BinanceAssetFilter {

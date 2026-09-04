@@ -100,9 +100,8 @@ pub struct BinanceCancelOrderListResponse {
     pub transactionTime: i64,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
-#[derive(Debug, Clone)]
 #[allow(clippy::large_enum_variant)]
 #[non_exhaustive]
 pub enum BinanceCancelResponse {

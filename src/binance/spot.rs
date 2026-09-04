@@ -53,9 +53,8 @@ pub enum BinanceNewOrderResponseType {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[skip_serializing_none]
-#[derive(Debug, Clone)]
 pub struct BinanceSpotOrderResponse {
     pub clientOrderId: String,
     pub cummulativeQuoteQty: Option<Decimal>,
