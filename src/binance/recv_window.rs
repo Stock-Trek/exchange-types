@@ -1,8 +1,8 @@
 use serde::Serialize;
 use std::fmt;
 
-pub const BINANCE_DEFAULT_RECV_WINDOW_MICROSECONDS: u64 = 5_000_000;
-pub const BINANCE_MAX_RECV_WINDOW_MICROSECONDS: u64 = 60_000_000;
+pub const BINANCE_DEFAULT_RECV_WINDOW_MILLIS: u64 = 5000;
+pub const BINANCE_MAX_RECV_WINDOW_MILLIS: u64 = 60_000;
 
 #[derive(Serialize)]
 #[serde(transparent)]
@@ -10,15 +10,14 @@ pub const BINANCE_MAX_RECV_WINDOW_MICROSECONDS: u64 = 60_000_000;
 pub struct BinanceRecvWindow(u64);
 
 impl BinanceRecvWindow {
-    pub fn try_new(microseconds: u64) -> Option<Self> {
-        ((microseconds <= BINANCE_MAX_RECV_WINDOW_MICROSECONDS) && (microseconds > 0))
-            .then_some(Self(microseconds))
+    pub fn try_new(millis: u64) -> Option<Self> {
+        (millis <= BINANCE_MAX_RECV_WINDOW_MILLIS && millis > 0).then_some(Self(millis))
     }
 }
 
 impl Default for BinanceRecvWindow {
     fn default() -> Self {
-        Self(BINANCE_DEFAULT_RECV_WINDOW_MICROSECONDS)
+        Self(BINANCE_DEFAULT_RECV_WINDOW_MILLIS)
     }
 }
 
