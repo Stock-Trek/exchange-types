@@ -92,35 +92,26 @@ impl RateLimited for BinanceRequest {
             _ => 0,
         }
     }
-    fn weight(&self, protocol: Protocol) -> u32 {
+    fn weight(&self, _protocol: Protocol) -> u32 {
         match self {
-            BinanceRequest::Account(..) => match protocol {
-                Protocol::Http => 20,
-                Protocol::Websocket => 2,
-            },
+            BinanceRequest::Account(..) => 20,
             BinanceRequest::AmendOrderRequest(..) => 4,
             BinanceRequest::AssetLimits(..) => 40,
             BinanceRequest::CancelAllOrdersRequest(..) => 1,
             BinanceRequest::CancelOrderRequest(..) => 1,
             BinanceRequest::ExchangeInfo(..) => 20,
-            BinanceRequest::OpenOrders(params) => match protocol {
-                Protocol::Http => {
-                    if params.symbol.is_some() {
-                        6
-                    } else {
-                        80
-                    }
+            BinanceRequest::OpenOrders(params) => {
+                if params.symbol.is_some() {
+                    6
+                } else {
+                    80
                 }
-                Protocol::Websocket => 1,
-            },
-            BinanceRequest::QueryOrder(..) => match protocol {
-                Protocol::Http => 4,
-                Protocol::Websocket => 2,
-            },
+            }
+            BinanceRequest::QueryOrder(..) => 4,
             BinanceRequest::SpotOrderRequest(..) => 1,
             BinanceRequest::Time(..) => 1,
-            BinanceRequest::WebsocketSessionLogon(..) => 20,
-            BinanceRequest::WebsocketSessionLogout(..) => 4,
+            BinanceRequest::WebsocketSessionLogon(..) => 2,
+            BinanceRequest::WebsocketSessionLogout(..) => 2,
         }
     }
 }
