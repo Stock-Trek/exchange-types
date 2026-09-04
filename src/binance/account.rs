@@ -1,6 +1,8 @@
-use crate::binance::{
-    exchange_info::BinanceExchangeInfoPermission, recv_window::BinanceRecvWindow,
+use crate::{
+    binance::{exchange_info::BinanceExchangeInfoPermission, recv_window::BinanceRecvWindow},
+    response::ResponseFor,
 };
+
 use query_params::QueryParams;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -9,7 +11,7 @@ use serde_with::skip_serializing_none;
 #[allow(non_snake_case)]
 #[skip_serializing_none]
 #[derive(Serialize, Debug, Clone, Hash, QueryParams)]
-pub struct BinanceAccountParams {
+pub struct BinanceAccountRequest {
     pub apiKey: Option<String>,
     pub omitZeroBalances: Option<bool>,
     pub recvWindow: Option<BinanceRecvWindow>,
@@ -18,7 +20,7 @@ pub struct BinanceAccountParams {
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
-pub struct BinanceAccountResult {
+pub struct BinanceAccountResponse {
     pub accountType: String,
     pub balances: Vec<BinanceAccountBalance>,
     pub brokered: bool,
@@ -35,6 +37,10 @@ pub struct BinanceAccountResult {
     pub takerCommission: i64,
     pub uid: i64,
     pub updateTime: i64,
+}
+
+impl ResponseFor for BinanceAccountRequest {
+    type Response = BinanceAccountResponse;
 }
 
 #[allow(non_snake_case)]

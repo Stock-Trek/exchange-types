@@ -1,4 +1,7 @@
-use crate::binance::recv_window::BinanceRecvWindow;
+use crate::{
+    binance::{recv_window::BinanceRecvWindow, supporting_types::BinanceOrderResponse},
+    response::ResponseFor,
+};
 use query_params::QueryParams;
 use serde::Serialize;
 use serde_with::skip_serializing_none;
@@ -6,9 +9,13 @@ use serde_with::skip_serializing_none;
 #[allow(non_snake_case)]
 #[skip_serializing_none]
 #[derive(Serialize, Debug, Clone, Hash, QueryParams)]
-pub struct BinanceOpenOrdersParams {
+pub struct BinanceOpenOrdersRequest {
     pub apiKey: Option<String>,
     pub recvWindow: Option<BinanceRecvWindow>,
     pub symbol: Option<String>,
     pub timestamp: i64,
+}
+
+impl ResponseFor for BinanceOpenOrdersRequest {
+    type Response = Vec<BinanceOrderResponse>;
 }

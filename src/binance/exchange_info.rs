@@ -4,6 +4,7 @@ use crate::{
         rate_limits::BinanceRateLimit,
         supporting_types::{BinanceOrderType, BinanceSelfTradeProtection},
     },
+    response::ResponseFor,
     ticker::Ticker,
 };
 use serde::{Deserialize, Serialize};
@@ -12,7 +13,7 @@ use strum::Display;
 #[allow(non_snake_case)]
 #[derive(Serialize, Debug, Clone, Hash)]
 #[serde(untagged)]
-pub enum BinanceExchangeInfoParams {
+pub enum BinanceExchangeInfoRequest {
     All {
         #[serde(skip_serializing_if = "Option::is_none")]
         symbolStatus: Option<BinanceExchangeInfoSymbolStatus>,
@@ -30,7 +31,7 @@ pub enum BinanceExchangeInfoParams {
     },
 }
 
-impl Default for BinanceExchangeInfoParams {
+impl Default for BinanceExchangeInfoRequest {
     fn default() -> Self {
         Self::All { symbolStatus: None }
     }
@@ -62,13 +63,17 @@ pub enum BinanceExchangeInfoSymbolStatus {
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
-pub struct BinanceExchangeInfoResult {
+pub struct BinanceExchangeInfoResponse {
     pub exchangeFilters: Vec<BinanceExchangeFilter>,
     pub rateLimits: Vec<BinanceRateLimit>,
     pub serverTime: i64,
     pub sors: Option<Vec<BinanceExchangeInfoSors>>,
     pub symbols: Vec<BinanceExchangeInfoSymbol>,
     pub timezone: String,
+}
+
+impl ResponseFor for BinanceExchangeInfoRequest {
+    type Response = BinanceExchangeInfoResponse;
 }
 
 #[allow(non_snake_case)]
@@ -109,7 +114,7 @@ pub struct BinanceExchangeInfoSymbol {
     pub symbol: String,
 }
 
-impl BinanceExchangeInfoParams {
+impl BinanceExchangeInfoRequest {
     pub fn query_params(&self) -> String {
         let mut pairs = Vec::new();
         match self {
