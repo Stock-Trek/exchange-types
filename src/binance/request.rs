@@ -86,32 +86,41 @@ struct WebsocketParams {
 }
 
 impl RateLimited for BinanceRequest {
-    fn order_count(&self) -> u32 {
+    fn order_count(&self, _protocol: Protocol) -> u32 {
         match self {
             BinanceRequest::SpotOrderRequest(..) => 1,
             _ => 0,
         }
     }
-    fn weight(&self) -> u32 {
+    fn weight(&self, protocol: Protocol) -> u32 {
         match self {
-            BinanceRequest::Account(..) => 20,
+            BinanceRequest::Account(..) => match protocol {
+                Protocol::Http => 20,
+                Protocol::Websocket => 2,
+            },
             BinanceRequest::AmendOrderRequest(..) => 4,
             BinanceRequest::AssetLimits(..) => 40,
             BinanceRequest::CancelAllOrdersRequest(..) => 1,
             BinanceRequest::CancelOrderRequest(..) => 1,
             BinanceRequest::ExchangeInfo(..) => 20,
-            BinanceRequest::OpenOrders(params) => {
-                if params.symbol.is_some() {
-                    6
-                } else {
-                    80
+            BinanceRequest::OpenOrders(params) => match protocol {
+                Protocol::Http => {
+                    if params.symbol.is_some() {
+                        6
+                    } else {
+                        80
+                    }
                 }
-            }
-            BinanceRequest::QueryOrder(..) => 4,
+                Protocol::Websocket => 1,
+            },
+            BinanceRequest::QueryOrder(..) => match protocol {
+                Protocol::Http => 4,
+                Protocol::Websocket => 2,
+            },
             BinanceRequest::SpotOrderRequest(..) => 1,
             BinanceRequest::Time(..) => 1,
-            BinanceRequest::WebsocketSessionLogon(..) => 2,
-            BinanceRequest::WebsocketSessionLogout(..) => 2,
+            BinanceRequest::WebsocketSessionLogon(..) => 20,
+            BinanceRequest::WebsocketSessionLogout(..) => 4,
         }
     }
 }

@@ -1,9 +1,10 @@
+use crate::urls::Protocol;
 use std::collections::HashMap;
 use strum::Display;
 
 pub trait RateLimited {
-    fn weight(&self) -> u32;
-    fn order_count(&self) -> u32;
+    fn weight(&self, protocol: Protocol) -> u32;
+    fn order_count(&self, protocol: Protocol) -> u32;
 }
 
 pub trait RateLimits {
