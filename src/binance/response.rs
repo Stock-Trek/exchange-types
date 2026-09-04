@@ -48,15 +48,12 @@ impl TryFrom<&str> for BinanceUsageInterval {
         if !letter.is_ascii_alphabetic() {
             return Err(ETError::ParseError(value.into()));
         }
-        let interval = match BinanceRateLimitInterval::try_from(letter) {
-            Ok(interval) => interval,
-            Err(e) => return Err(e),
-        };
+        let interval = BinanceRateLimitInterval::try_from(letter)?;
         let interval_num = match value[..value.len() - letter.len_utf8()].parse() {
             Ok(interval_num) => interval_num,
             Err(_) => return Err(ETError::ParseError(value.into())),
         };
-        if interval_num <= 0 {
+        if interval_num == 0 {
             return Err(ETError::ParseError(format!(
                 "interval number must be positive: {}",
                 interval_num
