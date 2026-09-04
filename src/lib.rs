@@ -9,5 +9,6 @@ pub mod request;
 pub mod response;
 pub mod signer;
 pub mod ticker;
+pub mod time;
 pub mod urls;
 pub mod websocket_id;

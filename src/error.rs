@@ -13,8 +13,10 @@ pub enum ETError {
     CryptoKey(String),
     #[error("Deserialize response error: {0}")]
     DeserializeResponse(serde_json::Error),
+    #[error("Parsing error: {0}")]
+    ParseError(String),
     #[error("Serialize request error: {0}")]
     SerializeRequest(serde_json::Error),
-    #[error("Value deserialized as Unknown")]
-    UnknownValue,
+    #[error("Value for {0} deserialized as Unknown")]
+    UnknownValue(String),
 }
