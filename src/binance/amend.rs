@@ -1,7 +1,10 @@
-use crate::binance::{
-    exchange_info::BinanceOrderType,
-    recv_window::BinanceRecvWindow,
-    spot::{BinanceOrderStatus, BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce},
+use crate::{
+    binance::{
+        exchange_info::BinanceOrderType,
+        recv_window::BinanceRecvWindow,
+        spot::{BinanceOrderStatus, BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce},
+    },
+    ticker::Ticker,
 };
 use query_params::QueryParams;
 use rust_decimal::Decimal;
@@ -21,7 +24,7 @@ pub struct BinanceAmendOrderParams {
     pub orderId: Option<i64>,
     pub origClientOrderId: Option<String>,
     pub recvWindow: Option<BinanceRecvWindow>,
-    pub symbol: String,
+    pub symbol: Ticker,
     pub timestamp: i64,
 }
 
@@ -53,7 +56,7 @@ pub struct BinanceAmendedOrder {
     pub stopPrice: Option<Decimal>,
     pub strategyId: Option<i64>,
     pub strategyType: Option<i32>,
-    pub symbol: String,
+    pub symbol: Ticker,
     pub timeInForce: BinanceTimeInForce,
     pub trailingDelta: Option<i64>,
     pub trailingTime: Option<i64>,

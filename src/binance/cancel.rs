@@ -1,7 +1,10 @@
-use crate::binance::{
-    exchange_info::BinanceOrderType,
-    recv_window::BinanceRecvWindow,
-    spot::{BinanceOrderStatus, BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce},
+use crate::{
+    binance::{
+        exchange_info::BinanceOrderType,
+        recv_window::BinanceRecvWindow,
+        spot::{BinanceOrderStatus, BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce},
+    },
+    ticker::Ticker,
 };
 use query_params::QueryParams;
 use rust_decimal::Decimal;
@@ -18,7 +21,7 @@ use {
 pub struct BinanceCancelAllOrdersParams {
     pub apiKey: Option<String>,
     pub recvWindow: Option<BinanceRecvWindow>,
-    pub symbol: String,
+    pub symbol: Ticker,
     pub timestamp: i64,
 }
 
@@ -32,7 +35,7 @@ pub struct BinanceCancelOrderParams {
     pub orderId: Option<i64>,
     pub origClientOrderId: Option<String>,
     pub recvWindow: Option<BinanceRecvWindow>,
-    pub symbol: String,
+    pub symbol: Ticker,
     pub timestamp: i64,
 }
 
@@ -64,7 +67,7 @@ pub struct BinanceCancelOrderResult {
     pub stopPrice: Option<Decimal>,
     pub strategyId: Option<i64>,
     pub strategyType: Option<i32>,
-    pub symbol: String,
+    pub symbol: Ticker,
     pub timeInForce: Option<BinanceTimeInForce>,
     pub trailingDelta: Option<i64>,
     pub trailingTime: Option<i64>,
@@ -86,7 +89,7 @@ pub struct BinanceCancelOrderListResult {
     pub orderReports: Vec<BinanceCancelOrderResult>,
     #[serde(default)]
     pub orders: Vec<BinanceOrderListOrder>,
-    pub symbol: String,
+    pub symbol: Ticker,
     pub transactionTime: i64,
 }
 
@@ -95,7 +98,7 @@ pub struct BinanceCancelOrderListResult {
 pub struct BinanceOrderListOrder {
     pub clientOrderId: String,
     pub orderId: i64,
-    pub symbol: String,
+    pub symbol: Ticker,
 }
 
 #[derive(Deserialize)]

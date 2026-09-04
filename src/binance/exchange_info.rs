@@ -80,7 +80,7 @@ pub struct BinanceExchangeInfoSymbol {
     pub quoteOrderQtyMarketAllowed: bool,
     pub quotePrecision: u8,
     pub status: String,
-    pub symbol: String,
+    pub symbol: Ticker,
 }
 
 #[allow(non_camel_case_types)]

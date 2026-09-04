@@ -1,6 +1,9 @@
-use crate::binance::{
-    filters::{BinanceAssetFilter, BinanceExchangeFilter, BinanceSymbolFilter},
-    recv_window::BinanceRecvWindow,
+use crate::{
+    binance::{
+        filters::{BinanceAssetFilter, BinanceExchangeFilter, BinanceSymbolFilter},
+        recv_window::BinanceRecvWindow,
+    },
+    ticker::Ticker,
 };
 use query_params::QueryParams;
 
@@ -15,7 +18,7 @@ use {
 pub struct BinanceAssetLimitsParams {
     pub apiKey: Option<String>,
     pub recvWindow: Option<BinanceRecvWindow>,
-    pub symbol: String,
+    pub symbol: Ticker,
     pub timestamp: i64,
 }
 
