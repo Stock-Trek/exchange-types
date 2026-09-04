@@ -10,6 +10,7 @@ use crate::{
 };
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct BinanceResponse<R> {
@@ -31,13 +32,56 @@ pub struct BinanceMetadata {
     pub status: u16,
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct BinanceUsageInterval {
+    pub interval: BinanceRateLimitInterval,
+    pub interval_num: u32,
+}
+
+impl BinanceUsageInterval {
+    fn parse(suffix: &str) -> Option<Self> {
+        let letter = suffix.chars().next_back()?;
+        if !letter.is_ascii_alphabetic() {
+            return None;
+        }
+        let interval = BinanceRateLimitInterval::try_from(letter)?;
+        let interval_num = suffix[..suffix.len() - letter.len_utf8()].parse().ok()?;
+        (interval_num > 0).then_some(Self {
+            interval,
+            interval_num,
+        })
+    }
+    fn try_from_rate_limit(interval: BinanceRateLimitInterval, interval_num: u32) -> Option<Self> {
+        (interval_num > 0).then_some(Self {
+            interval_num,
+            interval,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct BinanceUsage {
-    pub used_weight_1m: Option<u32>,
-    pub order_count_10s: Option<u32>,
-    pub order_count_1m: Option<u32>,
-    pub order_count_1h: Option<u32>,
-    pub order_count_1d: Option<u32>,
+    pub used_weight: HashMap<BinanceUsageInterval, u32>,
+    pub order_count: HashMap<BinanceUsageInterval, u32>,
+}
+
+impl BinanceUsage {
+    fn parse_header(&mut self, name: &str, value: &str) {
+        let (usage, suffix) = match name.strip_prefix("x-mbx-order-count-") {
+            Some(suffix) => (&mut self.order_count, suffix),
+            None => match name.strip_prefix("x-mbx-used-weight-") {
+                Some(suffix) => (&mut self.used_weight, suffix),
+                None => return,
+            },
+        };
+        let Some(interval) = BinanceUsageInterval::parse(suffix) else {
+            return;
+        };
+        let Ok(count) = value.parse::<u32>() else {
+            return;
+        };
+        usage.insert(interval, count);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -61,14 +105,10 @@ where
         for (name, value) in response.headers {
             let name = name.to_ascii_lowercase();
             let value = value.trim();
-            match name.as_str() {
-                "x-mbx-used-weight-1m" => usage.used_weight_1m = value.parse().ok(),
-                "x-mbx-order-count-10s" => usage.order_count_10s = value.parse().ok(),
-                "x-mbx-order-count-1m" => usage.order_count_1m = value.parse().ok(),
-                "x-mbx-order-count-1h" => usage.order_count_1h = value.parse().ok(),
-                "x-mbx-order-count-1d" => usage.order_count_1d = value.parse().ok(),
-                "retry-after" => retry_after = value.parse().ok(),
-                _ => {}
+            if name == "retry-after" {
+                retry_after = value.parse().ok();
+            } else {
+                usage.parse_header(&name, value);
             }
         }
         let metadata = BinanceMetadata {
@@ -119,26 +159,21 @@ where
             status: websocket_response.status,
         };
         for rate_limit in websocket_response.rateLimits {
-            let count_u32 = rate_limit.count.map(|c| c as u32);
-            match (
-                rate_limit.rateLimitType,
+            let Some(interval) = BinanceUsageInterval::try_from_rate_limit(
                 rate_limit.interval,
                 rate_limit.intervalNum,
-            ) {
-                (BinanceRateLimitType::REQUEST_WEIGHT, BinanceRateLimitInterval::MINUTE, 1) => {
-                    metadata.usage.used_weight_1m = count_u32;
+            ) else {
+                continue;
+            };
+            let Some(count) = rate_limit.count.map(|count| count as u32) else {
+                continue;
+            };
+            match rate_limit.rateLimitType {
+                BinanceRateLimitType::REQUEST_WEIGHT => {
+                    metadata.usage.used_weight.insert(interval, count);
                 }
-                (BinanceRateLimitType::ORDERS, BinanceRateLimitInterval::SECOND, 10) => {
-                    metadata.usage.order_count_10s = count_u32;
-                }
-                (BinanceRateLimitType::ORDERS, BinanceRateLimitInterval::MINUTE, 1) => {
-                    metadata.usage.order_count_1m = count_u32;
-                }
-                (BinanceRateLimitType::ORDERS, BinanceRateLimitInterval::HOUR, 1) => {
-                    metadata.usage.order_count_1h = count_u32;
-                }
-                (BinanceRateLimitType::ORDERS, BinanceRateLimitInterval::DAY, 1) => {
-                    metadata.usage.order_count_1d = count_u32;
+                BinanceRateLimitType::ORDERS => {
+                    metadata.usage.order_count.insert(interval, count);
                 }
                 _ => {}
             }
