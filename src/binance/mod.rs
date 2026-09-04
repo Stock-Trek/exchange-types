@@ -12,6 +12,7 @@ pub mod recv_window;
 pub mod request;
 pub mod response;
 pub mod session;
+pub mod signer;
 pub mod spot;
 pub mod supporting_types;
 pub mod time;
