@@ -38,6 +38,7 @@ pub struct BinanceMetadata {
     pub usage: BinanceUsage,
     pub retry_after: Option<u64>,
     pub websocket_id: Option<ETWebsocketId>,
+    pub status: Option<u16>,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -72,6 +73,7 @@ struct BinanceWebsocketResponse {
     #[serde(default)]
     pub rateLimits: Vec<BinanceRateLimit>,
     pub result: Option<BinanceWebsocketResponseResult>,
+    pub status: u16,
 }
 
 #[derive(Deserialize)]
@@ -105,6 +107,7 @@ impl ETHttpResponse for BinanceResponse {
                 _ => {}
             }
         }
+        metadata.status = Some(response.status);
         match serde_json::from_slice::<BinanceResponsePayload>(&response.body) {
             Ok(payload) => Ok(BinanceResponse { metadata, payload }),
             Err(error) => {
@@ -137,6 +140,7 @@ impl ETWebsocketResponse for BinanceResponse {
             serde_json::from_str(&response).map_err(ETError::DeserializeResponse)?;
         let mut metadata = BinanceMetadata {
             websocket_id: websocket_response.id,
+            status: Some(websocket_response.status),
             ..Default::default()
         };
         for rate_limit in websocket_response.rateLimits {
@@ -189,5 +193,86 @@ impl ETWebsocketResponse for BinanceResponse {
             })
         };
         Ok(BinanceResponse { metadata, payload })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        http::HttpResponse,
+        response::{ETHttpResponse, ETWebsocketResponse},
+    };
+
+    #[test]
+    fn websocket_success_carries_status() {
+        let response = BinanceResponse::try_from_websocket(
+            r#"{"id":"req-1","status":200,"result":{"serverTime":1656400527891}}"#.into(),
+        )
+        .unwrap();
+        assert_eq!(response.metadata.status, Some(200));
+        assert_eq!(response.metadata.websocket_id.as_deref(), Some("req-1"));
+        assert!(matches!(
+            response.payload,
+            BinanceResponsePayload::Success(BinanceResult::Time(_))
+        ));
+    }
+
+    #[test]
+    fn websocket_4xx_failure_carries_status() {
+        let response = BinanceResponse::try_from_websocket(
+            r#"{"id":"req-1","status":400,"error":{"code":-2010,"msg":"Account has insufficient balance for requested action."}}"#
+                .into(),
+        )
+        .unwrap();
+        assert_eq!(response.metadata.status, Some(400));
+        match response.payload {
+            BinanceResponsePayload::Failure(error) => {
+                assert_eq!(error.code, -2010);
+                assert!(error.msg.contains("insufficient balance"));
+            }
+            BinanceResponsePayload::Success(_) => panic!("expected failure"),
+        }
+    }
+
+    #[test]
+    fn websocket_5xx_failure_is_distinguishable_from_4xx() {
+        let response = BinanceResponse::try_from_websocket(
+            r#"{"id":"req-1","status":503,"error":{"code":-1000,"msg":"An unknown error occurred while processing the request."}}"#
+                .into(),
+        )
+        .unwrap();
+        assert_eq!(response.metadata.status, Some(503));
+        assert!(matches!(
+            response.payload,
+            BinanceResponsePayload::Failure(_)
+        ));
+    }
+
+    #[test]
+    fn http_response_carries_status() {
+        let response = BinanceResponse::try_from_http(HttpResponse {
+            status: 200,
+            headers: vec![],
+            body: br#"{"serverTime":1656400527891}"#.to_vec(),
+        })
+        .unwrap();
+        assert_eq!(response.metadata.status, Some(200));
+        assert!(matches!(
+            response.payload,
+            BinanceResponsePayload::Success(BinanceResult::Time(_))
+        ));
+
+        let response = BinanceResponse::try_from_http(HttpResponse {
+            status: 429,
+            headers: vec![],
+            body: vec![],
+        })
+        .unwrap();
+        assert_eq!(response.metadata.status, Some(429));
+        match response.payload {
+            BinanceResponsePayload::Failure(error) => assert_eq!(error.code, 429),
+            BinanceResponsePayload::Success(_) => panic!("expected failure"),
+        }
     }
 }
