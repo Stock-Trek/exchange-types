@@ -256,20 +256,16 @@ mod tests {
         let all = BinanceRequest::ExchangeInfo(BinanceExchangeInfoParams::default())
             .try_into_websocket(&signer(), 1.into())
             .unwrap();
-        assert_eq!(
-            all,
-            r#"{"id":1,"method":"exchangeInfo","params":{}}"#
-        );
-        let single_permission = BinanceRequest::ExchangeInfo(
-            BinanceExchangeInfoParams::Permissions {
+        assert_eq!(all, r#"{"id":1,"method":"exchangeInfo","params":{}}"#);
+        let single_permission =
+            BinanceRequest::ExchangeInfo(BinanceExchangeInfoParams::Permissions {
                 permissions: BinanceExchangeInfoPermissions::Single(
                     BinanceExchangeInfoPermission::SPOT,
                 ),
                 symbolStatus: Some(BinanceExchangeInfoSymbolStatus::TRADING),
-            },
-        )
-        .try_into_websocket(&signer(), 1.into())
-        .unwrap();
+            })
+            .try_into_websocket(&signer(), 1.into())
+            .unwrap();
         assert_eq!(
             single_permission,
             r#"{"id":1,"method":"exchangeInfo","params":{"permissions":"SPOT","symbolStatus":"TRADING"}}"#

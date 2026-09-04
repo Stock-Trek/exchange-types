@@ -31,13 +31,9 @@ pub enum BinanceExchangeInfoParams {
         symbolStatus: Option<BinanceExchangeInfoSymbolStatus>,
     },
     /// Information for a single `symbol`.
-    Symbol {
-        symbol: String,
-    },
+    Symbol { symbol: String },
     /// Information for the given `symbols`.
-    Symbols {
-        symbols: Vec<String>,
-    },
+    Symbols { symbols: Vec<String> },
     /// Symbols with the given `permissions`, optionally restricted to a
     /// `symbolStatus`.
     Permissions {
@@ -211,7 +207,10 @@ mod tests {
 
     #[test]
     fn symbol_query_uses_single_symbol() {
-        assert_eq!(symbol("BTCUSDT").query_params(), "symbol=BTCUSDT".to_string());
+        assert_eq!(
+            symbol("BTCUSDT").query_params(),
+            "symbol=BTCUSDT".to_string()
+        );
     }
 
     #[test]
@@ -275,7 +274,10 @@ mod tests {
             symbolStatus: None,
         })
         .unwrap();
-        assert_eq!(single_permission, serde_json::json!({ "permissions": "SPOT" }));
+        assert_eq!(
+            single_permission,
+            serde_json::json!({ "permissions": "SPOT" })
+        );
         let permissions = serde_json::to_value(BinanceExchangeInfoParams::Permissions {
             permissions: BinanceExchangeInfoPermissions::List(vec![
                 BinanceExchangeInfoPermission::SPOT,
