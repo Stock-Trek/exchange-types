@@ -1,6 +1,5 @@
 use crate::ticker::Ticker;
 use rust_decimal::Decimal;
-
 use serde::Deserialize;
 
 #[derive(Deserialize)]

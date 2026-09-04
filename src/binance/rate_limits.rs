@@ -1,8 +1,7 @@
 use crate::rate_limited::{RateLimit, RateLimitRestriction, RateLimitType, RateLimits};
+use serde::Deserialize;
 use std::{collections::HashMap, time::Duration};
 use strum::Display;
-
-use serde::Deserialize;
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]

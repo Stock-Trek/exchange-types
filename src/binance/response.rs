@@ -10,13 +10,13 @@ use crate::{
         spot::BinanceSpotOrderResult,
         time::BinanceTimeResult,
     },
-    error::ETResult,
+    error::{ETError, ETResult},
     http::HttpResponse,
     response::{ETHttpResponse, ETWebsocketResponse},
     websocket_id::ETWebsocketId,
 };
-
-use {crate::error::ETError, serde::Deserialize, serde_json};
+use serde::Deserialize;
+use serde_json;
 
 #[derive(Debug, Clone)]
 pub struct BinanceResponse {
@@ -131,7 +131,6 @@ impl ETHttpResponse for BinanceResponse {
                         metadata,
                         payload: BinanceResponsePayload::Failure(BinanceError {
                             code: i64::from(response.status),
-                            data: None,
                             msg: String::from_utf8_lossy(&response.body).into_owned(),
                         }),
                     })
@@ -153,20 +152,24 @@ impl ETWebsocketResponse for BinanceResponse {
         };
         for rate_limit in websocket_response.rateLimits {
             let count_u32 = rate_limit.count.map(|c| c as u32);
-            match (rate_limit.rateLimitType, rate_limit.interval) {
-                (BinanceRateLimitType::REQUEST_WEIGHT, BinanceRateLimitInterval::MINUTE) => {
+            match (
+                rate_limit.rateLimitType,
+                rate_limit.interval,
+                rate_limit.intervalNum,
+            ) {
+                (BinanceRateLimitType::REQUEST_WEIGHT, BinanceRateLimitInterval::MINUTE, 1) => {
                     metadata.usage.used_weight_1m = count_u32;
                 }
-                (BinanceRateLimitType::ORDERS, BinanceRateLimitInterval::SECONDS_TEN) => {
+                (BinanceRateLimitType::ORDERS, BinanceRateLimitInterval::SECOND, 10) => {
                     metadata.usage.order_count_10s = count_u32;
                 }
-                (BinanceRateLimitType::ORDERS, BinanceRateLimitInterval::MINUTE) => {
+                (BinanceRateLimitType::ORDERS, BinanceRateLimitInterval::MINUTE, 1) => {
                     metadata.usage.order_count_1m = count_u32;
                 }
-                (BinanceRateLimitType::ORDERS, BinanceRateLimitInterval::HOUR) => {
+                (BinanceRateLimitType::ORDERS, BinanceRateLimitInterval::HOUR, 1) => {
                     metadata.usage.order_count_1h = count_u32;
                 }
-                (BinanceRateLimitType::ORDERS, BinanceRateLimitInterval::DAY) => {
+                (BinanceRateLimitType::ORDERS, BinanceRateLimitInterval::DAY, 1) => {
                     metadata.usage.order_count_1d = count_u32;
                 }
                 _ => {}
@@ -197,7 +200,6 @@ impl ETWebsocketResponse for BinanceResponse {
             // No error and no result – treat as a generic failure
             BinanceResponsePayload::Failure(BinanceError {
                 code: -1,
-                data: None,
                 msg: "Websocket response missing both error and result".to_string(),
             })
         };

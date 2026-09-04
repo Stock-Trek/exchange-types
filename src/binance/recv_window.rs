@@ -1,6 +1,5 @@
-use std::fmt;
-
 use serde::Serialize;
+use std::fmt;
 
 pub const BINANCE_DEFAULT_RECV_WINDOW_MILLIS: u64 = 5000;
 pub const BINANCE_MAX_RECV_WINDOW_MILLIS: u64 = 60_000;

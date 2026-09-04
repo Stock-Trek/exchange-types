@@ -3,11 +3,8 @@ use crate::binance::{
     recv_window::BinanceRecvWindow,
 };
 use query_params::QueryParams;
-
-use {
-    serde::{Deserialize, Serialize},
-    serde_with::skip_serializing_none,
-};
+use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 #[allow(non_snake_case)]
 #[skip_serializing_none]

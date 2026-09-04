@@ -16,8 +16,8 @@ use crate::{
     urls::Protocol,
     websocket_id::ETWebsocketId,
 };
-
-use {serde::Serialize, serde_with::skip_serializing_none};
+use serde::Serialize;
+use serde_with::skip_serializing_none;
 
 #[derive(Serialize)]
 #[serde(untagged)]
