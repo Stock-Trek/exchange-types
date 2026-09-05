@@ -1,6 +1,6 @@
 use crate::{
     error::ETError,
-    rate_limited::{RateLimit, RateLimitRestriction, RateLimitType, RateLimits},
+    rate_limited::{RateLimit, RateLimitRestriction, RateLimits},
     time::Nanoseconds,
 };
 use serde::Deserialize;
@@ -73,15 +73,15 @@ impl TryFrom<BinanceRateLimitInterval> for Nanoseconds {
     }
 }
 
-impl TryFrom<BinanceRateLimitType> for RateLimitType {
+impl TryFrom<BinanceRateLimitType> for RateLimitRestriction {
     type Error = ETError;
 
     fn try_from(value: BinanceRateLimitType) -> Result<Self, Self::Error> {
         match value {
-            BinanceRateLimitType::CONNECTIONS => Ok(RateLimitType::Connection),
-            BinanceRateLimitType::ORDERS => Ok(RateLimitType::OrderCount),
-            BinanceRateLimitType::RAW_REQUESTS => Ok(RateLimitType::RawRequests),
-            BinanceRateLimitType::REQUEST_WEIGHT => Ok(RateLimitType::Weight),
+            BinanceRateLimitType::CONNECTIONS => Ok(RateLimitRestriction::Connection),
+            BinanceRateLimitType::ORDERS => Ok(RateLimitRestriction::OrderCount),
+            BinanceRateLimitType::RAW_REQUESTS => Ok(RateLimitRestriction::RawRequests),
+            BinanceRateLimitType::REQUEST_WEIGHT => Ok(RateLimitRestriction::Weight),
             BinanceRateLimitType::Unknown => {
                 Err(ETError::UnknownValue("BinanceRateLimitType".into()))
             }
@@ -90,30 +90,28 @@ impl TryFrom<BinanceRateLimitType> for RateLimitType {
 }
 
 impl RateLimits for BinanceRateLimits {
-    fn default(&self) -> HashMap<RateLimitType, Vec<RateLimit>> {
+    fn default_capacity(&self) -> HashMap<RateLimit, u32> {
         let mut map = HashMap::new();
         map.insert(
-            RateLimitType::Weight,
-            vec![RateLimit {
-                capacity_per_interval: 6000,
-                interval_nanos: Duration::from_mins(1).as_nanos(),
-                restriction: RateLimitRestriction::IP,
-            }],
+            RateLimit {
+                restriction: RateLimitRestriction::Weight,
+                interval_nanos: Duration::from_mins(1).as_nanos() as u64,
+            },
+            6_000,
         );
         map.insert(
-            RateLimitType::OrderCount,
-            vec![
-                RateLimit {
-                    capacity_per_interval: 50,
-                    interval_nanos: Duration::from_secs(10).as_nanos(),
-                    restriction: RateLimitRestriction::Account,
-                },
-                RateLimit {
-                    capacity_per_interval: 160_000,
-                    interval_nanos: Duration::from_hours(24).as_nanos(),
-                    restriction: RateLimitRestriction::Account,
-                },
-            ],
+            RateLimit {
+                restriction: RateLimitRestriction::OrderCount,
+                interval_nanos: Duration::from_secs(10).as_nanos() as u64,
+            },
+            50,
+        );
+        map.insert(
+            RateLimit {
+                restriction: RateLimitRestriction::OrderCount,
+                interval_nanos: Duration::from_hours(24).as_nanos() as u64,
+            },
+            160_000,
         );
         map
     }
