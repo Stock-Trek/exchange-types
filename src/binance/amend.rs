@@ -1,6 +1,7 @@
 use crate::{
     binance::{
         recv_window::BinanceRecvWindow,
+        request::BinanceRequestFactory,
         response::BinanceResponse,
         supporting_types::{
             BinanceExpiryReason, BinanceOrderListStatus, BinanceOrderStatus, BinanceOrderType,
@@ -8,7 +9,12 @@ use crate::{
             BinanceTimeInForce, BinanceWorkingFloor,
         },
     },
-    response::ResponseFor,
+    error::ETResult,
+    http::{HttpMethod, HttpRequest},
+    rate_limited::RateLimitRestriction,
+    request::{ETHttpRequest, ETRequest, ETWebsocketRequest},
+    signer::Signer,
+    websocket_id::ETWebsocketId,
 };
 use query_params::QueryParams;
 use rust_decimal::Decimal;
@@ -36,10 +42,6 @@ pub struct BinanceAmendOrderResponse {
     pub executionId: i64,
     pub listStatus: Option<BinanceOrderListStatus>,
     pub transactTime: i64,
-}
-
-impl ResponseFor for BinanceAmendOrderRequest {
-    type Response = BinanceResponse<BinanceAmendOrderResponse>;
 }
 
 #[allow(non_snake_case)]
@@ -76,4 +78,45 @@ pub struct BinanceAmendedOrder {
     pub usedSor: Option<bool>,
     pub workingFloor: Option<BinanceWorkingFloor>,
     pub workingTime: Option<i64>,
+}
+
+impl ETRequest for BinanceAmendOrderRequest {
+    type Response = BinanceResponse<BinanceAmendOrderResponse>;
+
+    fn is_signed(&self) -> bool {
+        true
+    }
+    fn rate_limit_usage(&self, restriction: RateLimitRestriction) -> u32 {
+        match restriction {
+            RateLimitRestriction::Weight => 4,
+            _ => 0,
+        }
+    }
+    fn set_api_key(&mut self, api_key: Option<String>) {
+        self.apiKey = api_key;
+    }
+    fn query_params(&self, percent_encode: bool) -> String {
+        self.query_params(true, percent_encode)
+    }
+}
+
+impl ETHttpRequest for BinanceAmendOrderRequest {
+    fn endpoint(&self) -> &'static str {
+        "order/amend/keepPriority"
+    }
+    fn method(&self) -> HttpMethod {
+        HttpMethod::PUT
+    }
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequestFactory::try_into_http(self, signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceAmendOrderRequest {
+    fn method(&self) -> &'static str {
+        "order.amend.keepPriority"
+    }
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequestFactory::try_into_websocket(self, signer, id)
+    }
 }

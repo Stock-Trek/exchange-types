@@ -2,12 +2,18 @@ use crate::{
     binance::{
         filters::{BinanceExchangeFilter, BinanceSymbolFilter},
         rate_limits::BinanceRateLimit,
+        request::BinanceRequestFactory,
         response::BinanceResponse,
         supporting_types::{BinanceOrderType, BinanceSelfTradeProtection},
     },
     encode::ByteEncoder,
-    response::ResponseFor,
+    error::ETResult,
+    http::{HttpMethod, HttpRequest},
+    rate_limited::RateLimitRestriction,
+    request::{ETHttpRequest, ETRequest, ETWebsocketRequest},
+    signer::Signer,
     ticker::Ticker,
+    websocket_id::ETWebsocketId,
 };
 use serde::{Deserialize, Serialize};
 use strum::Display;
@@ -75,10 +81,6 @@ pub struct BinanceExchangeInfoResponse {
     pub timezone: String,
 }
 
-impl ResponseFor for BinanceExchangeInfoRequest {
-    type Response = BinanceResponse<BinanceExchangeInfoResponse>;
-}
-
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceExchangeInfoSors {
@@ -118,7 +120,7 @@ pub struct BinanceExchangeInfoSymbol {
 }
 
 impl BinanceExchangeInfoRequest {
-    pub fn query_params(&self) -> String {
+    pub fn query_params(&self, _percent_encode: bool) -> String {
         let mut pairs = Vec::new();
         match self {
             Self::All { symbolStatus } => {
@@ -158,5 +160,44 @@ impl BinanceExchangeInfoRequest {
             .collect::<Vec<_>>()
             .join(",");
         format!("[{values}]")
+    }
+}
+
+impl ETRequest for BinanceExchangeInfoRequest {
+    type Response = BinanceResponse<BinanceExchangeInfoResponse>;
+
+    fn is_signed(&self) -> bool {
+        false
+    }
+    fn rate_limit_usage(&self, restriction: RateLimitRestriction) -> u32 {
+        match restriction {
+            RateLimitRestriction::Weight => 20,
+            _ => 0,
+        }
+    }
+    fn set_api_key(&mut self, _api_key: Option<String>) {}
+    fn query_params(&self, percent_encode: bool) -> String {
+        self.query_params(percent_encode)
+    }
+}
+
+impl ETHttpRequest for BinanceExchangeInfoRequest {
+    fn endpoint(&self) -> &'static str {
+        "exchangeInfo"
+    }
+    fn method(&self) -> HttpMethod {
+        HttpMethod::GET
+    }
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequestFactory::try_into_http(self, signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceExchangeInfoRequest {
+    fn method(&self) -> &'static str {
+        "exchangeInfo"
+    }
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequestFactory::try_into_websocket(self, signer, id)
     }
 }

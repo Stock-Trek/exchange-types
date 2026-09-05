@@ -1,6 +1,7 @@
 use crate::{
     binance::{
         recv_window::BinanceRecvWindow,
+        request::BinanceRequestFactory,
         response::BinanceResponse,
         supporting_types::{
             BinanceExpiryReason, BinanceOrderListOrder, BinanceOrderStatus, BinanceOrderType,
@@ -8,7 +9,12 @@ use crate::{
             BinanceTimeInForce, BinanceWorkingFloor,
         },
     },
-    response::ResponseFor,
+    error::ETResult,
+    http::{HttpMethod, HttpRequest},
+    rate_limited::RateLimitRestriction,
+    request::{ETHttpRequest, ETRequest, ETWebsocketRequest},
+    signer::Signer,
+    websocket_id::ETWebsocketId,
 };
 use query_params::QueryParams;
 use rust_decimal::Decimal;
@@ -49,7 +55,7 @@ pub enum BinanceCancelRestrictions {
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
-pub struct BinanceCancelOrderResult {
+pub struct BinanceCancelOrderResponse {
     pub clientOrderId: String,
     pub cummulativeQuoteQty: Option<Decimal>,
     pub executedQty: Option<Decimal>,
@@ -94,7 +100,7 @@ pub struct BinanceCancelOrderListResponse {
     pub listStatusType: String,
     pub orderListId: i64,
     #[serde(default)]
-    pub orderReports: Vec<BinanceCancelOrderResult>,
+    pub orderReports: Vec<BinanceCancelOrderResponse>,
     #[serde(default)]
     pub orders: Vec<BinanceOrderListOrder>,
     pub symbol: String,
@@ -106,14 +112,88 @@ pub struct BinanceCancelOrderListResponse {
 #[allow(clippy::large_enum_variant)]
 #[non_exhaustive]
 pub enum BinanceCancelResponse {
-    Order(BinanceCancelOrderResult),
+    Order(BinanceCancelOrderResponse),
     OrderList(BinanceCancelOrderListResponse),
 }
 
-impl ResponseFor for BinanceCancelAllOrdersRequest {
-    type Response = BinanceResponse<Vec<BinanceCancelResponse>>;
+impl ETRequest for BinanceCancelOrderRequest {
+    type Response = BinanceResponse<BinanceCancelOrderResponse>;
+
+    fn is_signed(&self) -> bool {
+        true
+    }
+    fn rate_limit_usage(&self, restriction: RateLimitRestriction) -> u32 {
+        match restriction {
+            RateLimitRestriction::Weight => 1,
+            _ => 0,
+        }
+    }
+    fn set_api_key(&mut self, api_key: Option<String>) {
+        self.apiKey = api_key;
+    }
+    fn query_params(&self, percent_encode: bool) -> String {
+        self.query_params(true, percent_encode)
+    }
 }
 
-impl ResponseFor for BinanceCancelOrderRequest {
-    type Response = BinanceResponse<BinanceCancelResponse>;
+impl ETHttpRequest for BinanceCancelOrderRequest {
+    fn endpoint(&self) -> &'static str {
+        "order"
+    }
+    fn method(&self) -> HttpMethod {
+        HttpMethod::DELETE
+    }
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequestFactory::try_into_http(self, signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceCancelOrderRequest {
+    fn method(&self) -> &'static str {
+        "order.cancel"
+    }
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequestFactory::try_into_websocket(self, signer, id)
+    }
+}
+
+impl ETRequest for BinanceCancelAllOrdersRequest {
+    type Response = BinanceResponse<Vec<BinanceCancelOrderResponse>>;
+
+    fn is_signed(&self) -> bool {
+        true
+    }
+    fn rate_limit_usage(&self, restriction: RateLimitRestriction) -> u32 {
+        match restriction {
+            RateLimitRestriction::Weight => 1,
+            _ => 0,
+        }
+    }
+    fn set_api_key(&mut self, api_key: Option<String>) {
+        self.apiKey = api_key;
+    }
+    fn query_params(&self, percent_encode: bool) -> String {
+        self.query_params(true, percent_encode)
+    }
+}
+
+impl ETHttpRequest for BinanceCancelAllOrdersRequest {
+    fn endpoint(&self) -> &'static str {
+        "openOrders"
+    }
+    fn method(&self) -> HttpMethod {
+        HttpMethod::DELETE
+    }
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequestFactory::try_into_http(self, signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceCancelAllOrdersRequest {
+    fn method(&self) -> &'static str {
+        "openOrders.cancelAll"
+    }
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequestFactory::try_into_websocket(self, signer, id)
+    }
 }
