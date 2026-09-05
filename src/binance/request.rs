@@ -48,7 +48,7 @@ impl BinanceRequestFactory {
                 vec![("X-MBX-APIKEY".into(), signer.api_key().clone())],
             )
         } else {
-            (query_params.into(), vec![])
+            (query_params, vec![])
         };
         let query = if query_params.is_empty() {
             Some(endpoint.to_string())
