@@ -2,6 +2,7 @@ use crate::{
     binance::{
         filters::{BinanceAssetFilter, BinanceExchangeFilter, BinanceSymbolFilter},
         recv_window::BinanceRecvWindow,
+        response::BinanceResponse,
     },
     response::ResponseFor,
 };
@@ -28,5 +29,5 @@ pub struct BinanceAssetLimitsResponse {
 }
 
 impl ResponseFor for BinanceAssetLimitsRequest {
-    type Response = BinanceAssetLimitsResponse;
+    type Response = BinanceResponse<BinanceAssetLimitsResponse>;
 }

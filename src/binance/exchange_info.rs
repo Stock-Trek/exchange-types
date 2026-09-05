@@ -2,6 +2,7 @@ use crate::{
     binance::{
         filters::{BinanceExchangeFilter, BinanceSymbolFilter},
         rate_limits::BinanceRateLimit,
+        response::BinanceResponse,
         supporting_types::{BinanceOrderType, BinanceSelfTradeProtection},
     },
     encode::ByteEncoder,
@@ -75,7 +76,7 @@ pub struct BinanceExchangeInfoResponse {
 }
 
 impl ResponseFor for BinanceExchangeInfoRequest {
-    type Response = BinanceExchangeInfoResponse;
+    type Response = BinanceResponse<BinanceExchangeInfoResponse>;
 }
 
 #[allow(non_snake_case)]

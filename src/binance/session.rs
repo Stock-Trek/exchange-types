@@ -1,4 +1,7 @@
-use crate::{binance::recv_window::BinanceRecvWindow, response::ResponseFor};
+use crate::{
+    binance::{recv_window::BinanceRecvWindow, response::BinanceResponse},
+    response::ResponseFor,
+};
 use query_params::QueryParams;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -31,5 +34,5 @@ impl ResponseFor for BinanceSessionLogonRequest {
 pub struct BinanceSessionLogoutRequest {}
 
 impl ResponseFor for BinanceSessionLogoutRequest {
-    type Response = BinanceSessionAuthenticationResponse;
+    type Response = BinanceResponse<BinanceSessionAuthenticationResponse>;
 }
