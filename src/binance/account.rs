@@ -87,7 +87,7 @@ impl ETHttpRequest for BinanceAccountRequest {
     fn endpoint(&self) -> &'static str {
         "account"
     }
-    fn method(&self) -> HttpMethod {
+    fn http_method(&self) -> HttpMethod {
         HttpMethod::GET
     }
     fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
@@ -96,7 +96,7 @@ impl ETHttpRequest for BinanceAccountRequest {
 }
 
 impl ETWebsocketRequest for BinanceAccountRequest {
-    fn method(&self) -> &'static str {
+    fn method_name(&self) -> &'static str {
         "account.status"
     }
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {

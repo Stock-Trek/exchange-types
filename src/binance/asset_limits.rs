@@ -58,7 +58,7 @@ impl ETHttpRequest for BinanceAssetLimitsRequest {
     fn endpoint(&self) -> &'static str {
         "myFilters"
     }
-    fn method(&self) -> HttpMethod {
+    fn http_method(&self) -> HttpMethod {
         HttpMethod::GET
     }
     fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
@@ -67,7 +67,7 @@ impl ETHttpRequest for BinanceAssetLimitsRequest {
 }
 
 impl ETWebsocketRequest for BinanceAssetLimitsRequest {
-    fn method(&self) -> &'static str {
+    fn method_name(&self) -> &'static str {
         "myFilters"
     }
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {

@@ -63,7 +63,7 @@ impl ETRequest for BinanceSessionLogonRequest {
 }
 
 impl ETWebsocketRequest for BinanceSessionLogonRequest {
-    fn method(&self) -> &'static str {
+    fn method_name(&self) -> &'static str {
         "session.logon"
     }
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
@@ -90,7 +90,7 @@ impl ETRequest for BinanceSessionStatusRequest {
 }
 
 impl ETWebsocketRequest for BinanceSessionStatusRequest {
-    fn method(&self) -> &'static str {
+    fn method_name(&self) -> &'static str {
         "session.status"
     }
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
@@ -117,7 +117,7 @@ impl ETRequest for BinanceSessionLogoutRequest {
 }
 
 impl ETWebsocketRequest for BinanceSessionLogoutRequest {
-    fn method(&self) -> &'static str {
+    fn method_name(&self) -> &'static str {
         "session.logout"
     }
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {

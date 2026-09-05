@@ -18,7 +18,7 @@ pub trait ETRequest: Serialize {
 }
 
 pub trait ETHttpRequest: ETRequest {
-    fn method(&self) -> HttpMethod;
+    fn http_method(&self) -> HttpMethod;
     fn endpoint(&self) -> &'static str;
     fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest>
     where
@@ -26,7 +26,7 @@ pub trait ETHttpRequest: ETRequest {
 }
 
 pub trait ETWebsocketRequest: ETRequest {
-    fn method(&self) -> &'static str;
+    fn method_name(&self) -> &'static str;
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String>
     where
         Self: Sized;

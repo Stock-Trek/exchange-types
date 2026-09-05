@@ -134,7 +134,7 @@ impl ETHttpRequest for BinanceSpotOrderRequest {
     fn endpoint(&self) -> &'static str {
         "order"
     }
-    fn method(&self) -> HttpMethod {
+    fn http_method(&self) -> HttpMethod {
         HttpMethod::POST
     }
     fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
@@ -143,7 +143,7 @@ impl ETHttpRequest for BinanceSpotOrderRequest {
 }
 
 impl ETWebsocketRequest for BinanceSpotOrderRequest {
-    fn method(&self) -> &'static str {
+    fn method_name(&self) -> &'static str {
         "order.place"
     }
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
