@@ -1,11 +1,15 @@
 use crate::{
     binance::{
         exchange_info::BinanceExchangeInfoPermission, recv_window::BinanceRecvWindow,
-        response::BinanceResponse,
+        request::BinanceRequestFactory, response::BinanceResponse,
     },
-    response::ResponseFor,
+    error::ETResult,
+    http::{HttpMethod, HttpRequest},
+    rate_limited::RateLimitRestriction,
+    request::{ETHttpRequest, ETRequest, ETWebsocketRequest},
+    signer::Signer,
+    websocket_id::ETWebsocketId,
 };
-
 use query_params::QueryParams;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -42,10 +46,6 @@ pub struct BinanceAccountResponse {
     pub updateTime: i64,
 }
 
-impl ResponseFor for BinanceAccountRequest {
-    type Response = BinanceResponse<BinanceAccountResponse>;
-}
-
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceAccountBalance {
@@ -61,4 +61,45 @@ pub struct BinanceAccountCommissionRates {
     pub maker: Decimal,
     pub seller: Decimal,
     pub taker: Decimal,
+}
+
+impl ETRequest for BinanceAccountRequest {
+    type Response = BinanceResponse<BinanceAccountResponse>;
+
+    fn is_signed(&self) -> bool {
+        true
+    }
+    fn rate_limit_usage(&self, restriction: RateLimitRestriction) -> u32 {
+        match restriction {
+            RateLimitRestriction::Weight => 20,
+            _ => 0,
+        }
+    }
+    fn set_api_key(&mut self, api_key: Option<String>) {
+        self.apiKey = api_key;
+    }
+    fn query_params(&self, percent_encode: bool) -> String {
+        self.query_params(true, percent_encode)
+    }
+}
+
+impl ETHttpRequest for BinanceAccountRequest {
+    fn endpoint(&self) -> &'static str {
+        "account"
+    }
+    fn method(&self) -> HttpMethod {
+        HttpMethod::GET
+    }
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequestFactory::try_into_http(self, signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceAccountRequest {
+    fn method(&self) -> &'static str {
+        "account.status"
+    }
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequestFactory::try_into_websocket(self, signer, id)
+    }
 }
