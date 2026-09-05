@@ -41,7 +41,7 @@ impl ETHttpRequest for BinanceTimeRequest {
     fn endpoint(&self) -> &'static str {
         "time"
     }
-    fn method(&self) -> HttpMethod {
+    fn http_method(&self) -> HttpMethod {
         HttpMethod::GET
     }
     fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
@@ -50,7 +50,7 @@ impl ETHttpRequest for BinanceTimeRequest {
 }
 
 impl ETWebsocketRequest for BinanceTimeRequest {
-    fn method(&self) -> &'static str {
+    fn method_name(&self) -> &'static str {
         "time"
     }
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {

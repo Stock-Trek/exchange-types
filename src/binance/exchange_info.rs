@@ -185,7 +185,7 @@ impl ETHttpRequest for BinanceExchangeInfoRequest {
     fn endpoint(&self) -> &'static str {
         "exchangeInfo"
     }
-    fn method(&self) -> HttpMethod {
+    fn http_method(&self) -> HttpMethod {
         HttpMethod::GET
     }
     fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
@@ -194,7 +194,7 @@ impl ETHttpRequest for BinanceExchangeInfoRequest {
 }
 
 impl ETWebsocketRequest for BinanceExchangeInfoRequest {
-    fn method(&self) -> &'static str {
+    fn method_name(&self) -> &'static str {
         "exchangeInfo"
     }
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {

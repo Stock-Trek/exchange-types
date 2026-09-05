@@ -32,7 +32,7 @@ impl BinanceRequestFactory {
     where
         R: ETHttpRequest,
     {
-        let method = request.method();
+        let method = request.http_method();
         let endpoint = request.endpoint();
         let is_signed = request.is_signed();
         let query_params = request.query_params(true);
@@ -71,7 +71,7 @@ impl BinanceRequestFactory {
     where
         R: ETWebsocketRequest,
     {
-        let method = request.method();
+        let method = request.method_name();
         let query_params = request.query_params(false);
         let params = if query_params.is_empty() {
             None

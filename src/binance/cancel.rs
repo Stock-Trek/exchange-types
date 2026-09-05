@@ -140,7 +140,7 @@ impl ETHttpRequest for BinanceCancelOrderRequest {
     fn endpoint(&self) -> &'static str {
         "order"
     }
-    fn method(&self) -> HttpMethod {
+    fn http_method(&self) -> HttpMethod {
         HttpMethod::DELETE
     }
     fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
@@ -149,7 +149,7 @@ impl ETHttpRequest for BinanceCancelOrderRequest {
 }
 
 impl ETWebsocketRequest for BinanceCancelOrderRequest {
-    fn method(&self) -> &'static str {
+    fn method_name(&self) -> &'static str {
         "order.cancel"
     }
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
@@ -181,7 +181,7 @@ impl ETHttpRequest for BinanceCancelAllOrdersRequest {
     fn endpoint(&self) -> &'static str {
         "openOrders"
     }
-    fn method(&self) -> HttpMethod {
+    fn http_method(&self) -> HttpMethod {
         HttpMethod::DELETE
     }
     fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
@@ -190,7 +190,7 @@ impl ETHttpRequest for BinanceCancelAllOrdersRequest {
 }
 
 impl ETWebsocketRequest for BinanceCancelAllOrdersRequest {
-    fn method(&self) -> &'static str {
+    fn method_name(&self) -> &'static str {
         "openOrders.cancelAll"
     }
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {

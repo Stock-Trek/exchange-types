@@ -104,7 +104,7 @@ impl ETHttpRequest for BinanceAmendOrderRequest {
     fn endpoint(&self) -> &'static str {
         "order/amend/keepPriority"
     }
-    fn method(&self) -> HttpMethod {
+    fn http_method(&self) -> HttpMethod {
         HttpMethod::PUT
     }
     fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
@@ -113,7 +113,7 @@ impl ETHttpRequest for BinanceAmendOrderRequest {
 }
 
 impl ETWebsocketRequest for BinanceAmendOrderRequest {
-    fn method(&self) -> &'static str {
+    fn method_name(&self) -> &'static str {
         "order.amend.keepPriority"
     }
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {

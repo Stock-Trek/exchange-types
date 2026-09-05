@@ -54,7 +54,7 @@ impl ETHttpRequest for BinanceOpenOrdersRequest {
     fn endpoint(&self) -> &'static str {
         "openOrders"
     }
-    fn method(&self) -> HttpMethod {
+    fn http_method(&self) -> HttpMethod {
         HttpMethod::GET
     }
     fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
@@ -63,7 +63,7 @@ impl ETHttpRequest for BinanceOpenOrdersRequest {
 }
 
 impl ETWebsocketRequest for BinanceOpenOrdersRequest {
-    fn method(&self) -> &'static str {
+    fn method_name(&self) -> &'static str {
         "openOrders.status"
     }
     fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
