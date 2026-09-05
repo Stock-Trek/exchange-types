@@ -1,5 +1,8 @@
 use crate::{
-    binance::{recv_window::BinanceRecvWindow, supporting_types::BinanceOrderResponse},
+    binance::{
+        recv_window::BinanceRecvWindow, response::BinanceResponse,
+        supporting_types::BinanceOrderResponse,
+    },
     response::ResponseFor,
 };
 use query_params::QueryParams;
@@ -17,5 +20,5 @@ pub struct BinanceOpenOrdersRequest {
 }
 
 impl ResponseFor for BinanceOpenOrdersRequest {
-    type Response = Vec<BinanceOrderResponse>;
+    type Response = BinanceResponse<Vec<BinanceOrderResponse>>;
 }

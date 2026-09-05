@@ -1,5 +1,8 @@
 use crate::{
-    binance::{exchange_info::BinanceExchangeInfoPermission, recv_window::BinanceRecvWindow},
+    binance::{
+        exchange_info::BinanceExchangeInfoPermission, recv_window::BinanceRecvWindow,
+        response::BinanceResponse,
+    },
     response::ResponseFor,
 };
 
@@ -40,7 +43,7 @@ pub struct BinanceAccountResponse {
 }
 
 impl ResponseFor for BinanceAccountRequest {
-    type Response = BinanceAccountResponse;
+    type Response = BinanceResponse<BinanceAccountResponse>;
 }
 
 #[allow(non_snake_case)]

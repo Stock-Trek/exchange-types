@@ -1,6 +1,7 @@
 use crate::{
     binance::{
         recv_window::BinanceRecvWindow,
+        response::BinanceResponse,
         supporting_types::{
             BinanceExpiryReason, BinanceOrderListOrder, BinanceOrderStatus, BinanceOrderType,
             BinancePegOffsetType, BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide,
@@ -110,9 +111,9 @@ pub enum BinanceCancelResponse {
 }
 
 impl ResponseFor for BinanceCancelAllOrdersRequest {
-    type Response = Vec<BinanceCancelResponse>;
+    type Response = BinanceResponse<Vec<BinanceCancelResponse>>;
 }
 
 impl ResponseFor for BinanceCancelOrderRequest {
-    type Response = BinanceCancelResponse;
+    type Response = BinanceResponse<BinanceCancelResponse>;
 }

@@ -1,6 +1,7 @@
 use crate::{
     binance::{
         recv_window::BinanceRecvWindow,
+        response::BinanceResponse,
         supporting_types::{
             BinanceExpiryReason, BinanceOrderStatus, BinanceOrderType, BinancePegOffsetType,
             BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide, BinanceTimeInForce,
@@ -91,10 +92,6 @@ pub struct BinanceSpotOrderResponse {
     pub workingTime: Option<i64>,
 }
 
-impl ResponseFor for BinanceSpotOrderRequest {
-    type Response = BinanceSpotOrderResponse;
-}
-
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BinanceFill {
@@ -105,4 +102,8 @@ pub struct BinanceFill {
     pub price: Decimal,
     pub qty: Decimal,
     pub tradeId: i64,
+}
+
+impl ResponseFor for BinanceSpotOrderRequest {
+    type Response = BinanceResponse<BinanceSpotOrderResponse>;
 }

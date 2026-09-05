@@ -1,6 +1,7 @@
 use crate::{
     binance::{
         recv_window::BinanceRecvWindow,
+        response::BinanceResponse,
         supporting_types::{
             BinanceExpiryReason, BinanceOrderListStatus, BinanceOrderStatus, BinanceOrderType,
             BinancePegOffsetType, BinancePegPriceType, BinanceSelfTradeProtection, BinanceSide,
@@ -38,7 +39,7 @@ pub struct BinanceAmendOrderResponse {
 }
 
 impl ResponseFor for BinanceAmendOrderRequest {
-    type Response = BinanceAmendOrderResponse;
+    type Response = BinanceResponse<BinanceAmendOrderResponse>;
 }
 
 #[allow(non_snake_case)]
