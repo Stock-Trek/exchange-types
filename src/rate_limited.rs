@@ -8,24 +8,17 @@ pub trait RateLimited {
 }
 
 pub trait RateLimits {
-    fn default(&self) -> HashMap<RateLimitType, Vec<RateLimit>>;
+    fn default_capacity(&self) -> HashMap<RateLimit, u32>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct RateLimit {
-    pub interval_nanos: u128,
-    pub capacity_per_interval: u32,
     pub restriction: RateLimitRestriction,
-}
-
-#[derive(Debug, Display, Clone, Copy, PartialEq, Eq)]
-pub enum RateLimitRestriction {
-    IP,
-    Account,
+    pub interval_nanos: u64,
 }
 
 #[derive(Debug, Clone, Copy, Display, Hash, PartialEq, Eq)]
-pub enum RateLimitType {
+pub enum RateLimitRestriction {
     Connection,
     OrderCount,
     RawRequests,
