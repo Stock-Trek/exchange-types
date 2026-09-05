@@ -1,11 +1,15 @@
 use crate::{
-    error::ETResult, http::HttpMethod, http::HttpRequest, rate_limited::RateLimitRestriction,
-    signer::Signer, websocket_id::ETWebsocketId,
+    error::ETResult,
+    http::{HttpMethod, HttpRequest},
+    rate_limited::RateLimitRestriction,
+    response::ETResponse,
+    signer::Signer,
+    websocket_id::ETWebsocketId,
 };
 use serde::Serialize;
 
 pub trait ETRequest: Serialize {
-    type Response;
+    type Response: ETResponse;
 
     fn rate_limit_usage(&self, restriction: RateLimitRestriction) -> u32;
     fn is_signed(&self) -> bool;
