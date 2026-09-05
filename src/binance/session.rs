@@ -27,7 +27,7 @@ pub struct BinanceSessionAuthenticationResponse {
 }
 
 impl ResponseFor for BinanceSessionLogonRequest {
-    type Response = BinanceSessionAuthenticationResponse;
+    type Response = BinanceResponse<BinanceSessionAuthenticationResponse>;
 }
 
 #[derive(Serialize, Debug, Clone, Default, Hash, QueryParams)]

@@ -1,4 +1,4 @@
-use crate::response::ResponseFor;
+use crate::{binance::response::BinanceResponse, response::ResponseFor};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Debug, Clone, Default, Hash)]
@@ -11,7 +11,7 @@ pub struct BinanceTimeResponse {
 }
 
 impl ResponseFor for BinanceTimeRequest {
-    type Response = BinanceTimeResponse;
+    type Response = BinanceResponse<BinanceTimeResponse>;
 }
 
 impl BinanceTimeRequest {

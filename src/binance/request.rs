@@ -249,3 +249,147 @@ impl ETWebsocketRequest for BinanceRequest {
         Ok(message)
     }
 }
+
+impl ETHttpRequest for BinanceAccountRequest {
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequest::Account(self).try_into_http(signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceAccountRequest {
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequest::Account(self).try_into_websocket(signer, id)
+    }
+}
+
+impl ETHttpRequest for BinanceAmendOrderRequest {
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequest::AmendOrderRequest(self).try_into_http(signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceAmendOrderRequest {
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequest::AmendOrderRequest(self).try_into_websocket(signer, id)
+    }
+}
+
+impl ETHttpRequest for BinanceAssetLimitsRequest {
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequest::AssetLimits(self).try_into_http(signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceAssetLimitsRequest {
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequest::AssetLimits(self).try_into_websocket(signer, id)
+    }
+}
+
+impl ETHttpRequest for BinanceCancelAllOrdersRequest {
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequest::CancelAllOrdersRequest(self).try_into_http(signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceCancelAllOrdersRequest {
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequest::CancelAllOrdersRequest(self).try_into_websocket(signer, id)
+    }
+}
+
+impl ETHttpRequest for BinanceCancelOrderRequest {
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequest::CancelOrderRequest(self).try_into_http(signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceCancelOrderRequest {
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequest::CancelOrderRequest(self).try_into_websocket(signer, id)
+    }
+}
+
+impl ETHttpRequest for BinanceExchangeInfoRequest {
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequest::ExchangeInfo(self).try_into_http(signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceExchangeInfoRequest {
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequest::ExchangeInfo(self).try_into_websocket(signer, id)
+    }
+}
+
+impl ETHttpRequest for BinanceOpenOrdersRequest {
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequest::OpenOrders(self).try_into_http(signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceOpenOrdersRequest {
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequest::OpenOrders(self).try_into_websocket(signer, id)
+    }
+}
+
+impl ETHttpRequest for BinanceQueryOrderRequest {
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequest::QueryOrder(self).try_into_http(signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceQueryOrderRequest {
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequest::QueryOrder(self).try_into_websocket(signer, id)
+    }
+}
+
+impl ETHttpRequest for BinanceSpotOrderRequest {
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequest::SpotOrderRequest(self).try_into_http(signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceSpotOrderRequest {
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequest::SpotOrderRequest(self).try_into_websocket(signer, id)
+    }
+}
+
+impl ETHttpRequest for BinanceTimeRequest {
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequest::Time(self).try_into_http(signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceTimeRequest {
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequest::Time(self).try_into_websocket(signer, id)
+    }
+}
+
+impl ETHttpRequest for BinanceSessionLogonRequest {
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequest::WebsocketSessionLogon(self).try_into_http(signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceSessionLogonRequest {
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequest::WebsocketSessionLogon(self).try_into_websocket(signer, id)
+    }
+}
+
+impl ETHttpRequest for BinanceSessionLogoutRequest {
+    fn try_into_http(self, signer: &Signer) -> ETResult<HttpRequest> {
+        BinanceRequest::WebsocketSessionLogout(self).try_into_http(signer)
+    }
+}
+
+impl ETWebsocketRequest for BinanceSessionLogoutRequest {
+    fn try_into_websocket(self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
+        BinanceRequest::WebsocketSessionLogout(self).try_into_websocket(signer, id)
+    }
+}
