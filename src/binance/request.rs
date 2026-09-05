@@ -78,10 +78,10 @@ struct WebsocketRequest {
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize)]
-struct WebsocketParams {
+pub struct WebsocketParams {
     #[serde(flatten)]
-    request: BinanceRequest,
-    signature: Option<String>,
+    pub request: BinanceRequest,
+    pub signature: Option<String>,
 }
 
 impl RateLimited for BinanceRequest {
@@ -170,26 +170,34 @@ impl BinanceRequest {
             BinanceRequest::WebsocketSessionLogout(..) => WebsocketMethod::Logout,
         }
     }
+    fn http_metadata(&self) -> Option<(HttpMethod, &'static str, bool)> {
+        match self {
+            BinanceRequest::Account(..) => Some((HttpMethod::GET, "account", true)),
+            BinanceRequest::AmendOrderRequest(..) => {
+                Some((HttpMethod::PUT, "order/amend/keepPriority", true))
+            }
+            BinanceRequest::AssetLimits(..) => Some((HttpMethod::GET, "myFilters", true)),
+            BinanceRequest::CancelAllOrdersRequest(..) => {
+                Some((HttpMethod::DELETE, "openOrders", true))
+            }
+            BinanceRequest::CancelOrderRequest(..) => Some((HttpMethod::DELETE, "order", true)),
+            BinanceRequest::ExchangeInfo(..) => Some((HttpMethod::GET, "exchangeInfo", false)),
+            BinanceRequest::OpenOrders(..) => Some((HttpMethod::GET, "openOrders", true)),
+            BinanceRequest::QueryOrder(..) => Some((HttpMethod::GET, "order", true)),
+            BinanceRequest::SpotOrderRequest(..) => Some((HttpMethod::POST, "order", true)),
+            BinanceRequest::Time(..) => Some((HttpMethod::GET, "time", false)),
+            BinanceRequest::WebsocketSessionLogon(..)
+            | BinanceRequest::WebsocketSessionLogout(..) => None,
+        }
+    }
 }
 
 impl ETHttpRequest for BinanceRequest {
     fn try_into_http(mut self, signer: &Signer) -> ETResult<HttpRequest> {
         self.set_api_key(None);
-        let (method, endpoint, is_signed) = match self {
-            BinanceRequest::Account(..) => (HttpMethod::GET, "account", true),
-            BinanceRequest::AmendOrderRequest(..) => {
-                (HttpMethod::PUT, "order/amend/keepPriority", true)
-            }
-            BinanceRequest::AssetLimits(..) => (HttpMethod::GET, "myFilters", true),
-            BinanceRequest::CancelAllOrdersRequest(..) => (HttpMethod::DELETE, "openOrders", true),
-            BinanceRequest::CancelOrderRequest(..) => (HttpMethod::DELETE, "order", true),
-            BinanceRequest::ExchangeInfo(..) => (HttpMethod::GET, "exchangeInfo", false),
-            BinanceRequest::OpenOrders(..) => (HttpMethod::GET, "openOrders", true),
-            BinanceRequest::QueryOrder(..) => (HttpMethod::GET, "order", true),
-            BinanceRequest::SpotOrderRequest(..) => (HttpMethod::POST, "order", true),
-            BinanceRequest::Time(..) => (HttpMethod::GET, "time", false),
-            BinanceRequest::WebsocketSessionLogon(..)
-            | BinanceRequest::WebsocketSessionLogout(..) => {
+        let (method, endpoint, is_signed) = match self.http_metadata() {
+            Some(metadata) => metadata,
+            None => {
                 let websocket_method = self.websocket_method();
                 let request_type =
                     serde_json::to_string(&websocket_method).map_err(ETError::SerializeRequest)?;
@@ -226,22 +234,49 @@ impl ETHttpRequest for BinanceRequest {
             body,
         })
     }
+    fn http_method(&self) -> HttpMethod {
+        match self.http_metadata() {
+            Some((method, ..)) => method,
+            None => unreachable!("websocket session requests cannot be sent over HTTP"),
+        }
+    }
+    fn endpoint(&self) -> &str {
+        match self.http_metadata() {
+            Some((_, endpoint, _)) => endpoint,
+            None => unreachable!("websocket session requests cannot be sent over HTTP"),
+        }
+    }
+    fn is_signed(&self) -> bool {
+        match self.http_metadata() {
+            Some((_, _, is_signed)) => is_signed,
+            None => unreachable!("websocket session requests cannot be sent over HTTP"),
+        }
+    }
 }
 
 impl ETWebsocketRequest for BinanceRequest {
+    fn into_websocket_params(self) -> Option<WebsocketParams> {
+        match self {
+            BinanceRequest::Time(..) | BinanceRequest::WebsocketSessionLogout(..) => None,
+            request => Some(WebsocketParams {
+                request,
+                signature: None,
+            }),
+        }
+    }
     fn try_into_websocket(mut self, signer: &Signer, id: ETWebsocketId) -> ETResult<String> {
         self.set_api_key(Some(signer.api_key()));
         let method = self.websocket_method();
-        let params = match self {
-            BinanceRequest::Time(..) | BinanceRequest::WebsocketSessionLogout(..) => None,
-            BinanceRequest::ExchangeInfo(..) => Some(WebsocketParams {
-                request: self,
-                signature: None,
-            }),
-            request => {
-                let signature = Some(signer.signature(request.query_params(false).as_bytes())?);
-                Some(WebsocketParams { request, signature })
+        let params = match self.into_websocket_params() {
+            Some(mut params) => {
+                if !matches!(params.request, BinanceRequest::ExchangeInfo(..)) {
+                    let signature =
+                        signer.signature(params.request.query_params(false).as_bytes())?;
+                    params.signature = Some(signature);
+                }
+                Some(params)
             }
+            None => None,
         };
         let websocket_request = WebsocketRequest { id, method, params };
         let message =
