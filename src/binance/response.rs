@@ -142,7 +142,7 @@ where
         let retry_after: Option<u64> = match response
             .headers
             .iter()
-            .find(|tuple| tuple.0.to_ascii_uppercase() == "RETRY-AFTER")
+            .find(|tuple| tuple.0.eq_ignore_ascii_case("Retry-After"))
         {
             None => None,
             Some(tuple) => match tuple.1.parse::<u64>() {
